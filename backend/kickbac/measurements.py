@@ -29,11 +29,6 @@ def upload(
     session_id = str(body.session_id)
     measurement_id = str(body.measurement_id)
     with session_transaction(request) as db:
-        session = db.execute(
-            "SELECT * FROM sessions WHERE id=? AND device_id=?", (session_id, device_id)
-        ).fetchone()
-        if session is None:
-            fail(404, "not_found")
         existing = db.execute(
             "SELECT * FROM measurements WHERE id=?", (measurement_id,)
         ).fetchone()
@@ -44,6 +39,11 @@ def upload(
                 fail(409, "idempotency_conflict")
             response.status_code = 200
             return measurement_response(existing)
+        session = db.execute(
+            "SELECT * FROM sessions WHERE id=? AND device_id=?", (session_id, device_id)
+        ).fetchone()
+        if session is None:
+            fail(404, "not_found")
         if session["status"] == "EXPIRED":
             fail(410, "session_expired")
         if session["status"] not in ("ARMED", "SAMPLING"):

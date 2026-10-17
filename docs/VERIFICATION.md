@@ -20,7 +20,9 @@ An independent spec reviewer identified three gaps. Each was reproduced by a fai
 - Session creation and measurement upload OpenAPI now declare typed200 retry responses alongside201.
 - Public NFC/QR resolution uses a closing query-only connection. Tests verify known and unknown GETs leave expired sessions and all other rows unchanged; authenticated state operations still persist expiry.
 
-Parent reread the exact fixes and reran the full101-test suite and simulator. **Spec recheck: PASS. Independent security/code-quality review: pending.** Do not treat this pending report as merge approval.
+Parent reread the exact fixes and reran the full101-test suite and simulator. **Spec recheck: PASS. Independent security/code-quality review: APPROVED for the documented local hackathon-demo scope**, with no blocking security concerns or logic errors. This is local milestone review, not approval of unverified external integrations.
+
+Non-blocking follow-ups before production use: disable or bound PyJWT's per-key LRU cache (its `lifespan` bounds the JWKS-set cache, not individually cached keys), and test the actual PyJWKClient HTTP retrieval path for timeout/unavailability, unknown kid and key rotation/removal. Existing local provider tests verify signed tokens and exception mapping but not the complete remote retrieval/cache behavior.
 
 ## Coverage of the requested demo risks
 - Correct device and user association, private ownership, exclusive concurrent arming.

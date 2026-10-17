@@ -1,4 +1,5 @@
 import hashlib
+import math
 import re
 
 import jwt
@@ -19,7 +20,14 @@ class JWTVerifier:
             if jwt.get_unverified_header(token).get("alg") != "RS256":
                 fail(401, "unauthorized")
             # Parse before network IO; never trust unverified claims.
-            jwt.decode(token, options={"verify_signature": False})
+            unverified = jwt.decode(token, options={"verify_signature": False})
+            expiry = unverified.get("exp")
+            if (
+                isinstance(expiry, bool)
+                or not isinstance(expiry, (int, float))
+                or (isinstance(expiry, float) and not math.isfinite(expiry))
+            ):
+                fail(401, "unauthorized")
             claims = jwt.decode(
                 token,
                 self.key_provider(token),

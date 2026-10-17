@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from typing import Annotated
 
 from fastapi import FastAPI
@@ -7,7 +8,7 @@ from .db import check_schema, connect
 from .settings import Settings
 
 
-def create_app(settings=None, verifier=None):
+def create_app(settings=None, verifier=None, clock=None):
     settings = settings or Settings.from_env()
 
     @asynccontextmanager
@@ -25,6 +26,7 @@ def create_app(settings=None, verifier=None):
     install_errors(app)
     app.state.settings = settings
     app.state.verifier = verifier
+    app.state.clock = clock or (lambda: datetime.now(UTC))
 
     @app.get("/health")
     def health():
@@ -40,6 +42,9 @@ def create_app(settings=None, verifier=None):
     def me(subject: Annotated[str, Depends(user_subject)]):
         return {"user_id": subject}
 
+    from .sessions import router
+
+    app.include_router(router)
     return app
 
 

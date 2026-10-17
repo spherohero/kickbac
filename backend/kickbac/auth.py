@@ -1,8 +1,10 @@
+import hashlib
 import re
 
 import jwt
 from fastapi import Request
 
+from .db import connect
 from .errors import fail
 
 
@@ -69,3 +71,14 @@ def bearer_token(request: Request):
 
 def user_subject(request: Request):
     return request.app.state.verifier(bearer_token(request))
+
+
+def device_identity(request: Request):
+    digest = hashlib.sha256(bearer_token(request).encode()).hexdigest()
+    with connect(request.app.state.settings.db_path) as db:
+        row = db.execute(
+            "SELECT id FROM devices WHERE credential_hash=?", (digest,)
+        ).fetchone()
+    if row is None:
+        fail(401, "unauthorized")
+    return row["id"]

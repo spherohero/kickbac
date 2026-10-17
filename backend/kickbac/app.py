@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from typing import Annotated
 
 from fastapi import FastAPI
 
@@ -12,9 +13,16 @@ def create_app(settings=None, verifier=None):
     @asynccontextmanager
     async def lifespan(app):
         check_schema(settings.db_path)
+        if app.state.verifier is None:
+            from .auth import auth0_verifier
+
+            app.state.verifier = auth0_verifier(settings)
         yield
 
     app = FastAPI(title="kickBAC", lifespan=lifespan)
+    from .errors import install_errors
+
+    install_errors(app)
     app.state.settings = settings
     app.state.verifier = verifier
 
@@ -23,6 +31,14 @@ def create_app(settings=None, verifier=None):
         with connect(settings.db_path) as db:
             db.execute("SELECT 1").fetchone()
         return {"status": "ok"}
+
+    from fastapi import Depends
+
+    from .auth import user_subject
+
+    @app.get("/v1/me")
+    def me(subject: Annotated[str, Depends(user_subject)]):
+        return {"user_id": subject}
 
     return app
 

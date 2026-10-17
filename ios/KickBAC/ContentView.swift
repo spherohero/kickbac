@@ -8,9 +8,12 @@
 import SwiftUI
 
 struct ContentView: View {
-    @Environment(\.colorScheme) private var systemAppearance
-    @State private var appearance: ColorScheme?
+    @State private var appearance: ColorScheme
     @State private var selectedTab: AppTab = .home
+
+    init(initialAppearance: ColorScheme = .dark) {
+        _appearance = State(initialValue: initialAppearance)
+    }
 
     var body: some View {
         TabView(selection: $selectedTab) {
@@ -27,6 +30,7 @@ struct ContentView: View {
             }
         }
         .tint(.primary)
+        .background(pageBackground.ignoresSafeArea())
         .tabBarMinimizeBehavior(.never)
         .overlay(alignment: .topTrailing) {
             appearanceButton
@@ -37,12 +41,16 @@ struct ContentView: View {
     }
 
     private var blankPage: some View {
-        Color(.systemBackground)
+        pageBackground
             .ignoresSafeArea()
     }
 
+    private var pageBackground: Color {
+        appearance == .dark ? Color("SplashBackground") : Color(.systemBackground)
+    }
+
     private var appearanceButton: some View {
-        let isDark = (appearance ?? systemAppearance) == .dark
+        let isDark = appearance == .dark
 
         return Button(isDark ? "Light mode" : "Dark mode") {
             appearance = isDark ? .light : .dark
@@ -61,11 +69,9 @@ private enum AppTab: Hashable {
 }
 
 #Preview("Light") {
-    ContentView()
-        .preferredColorScheme(.light)
+    ContentView(initialAppearance: .light)
 }
 
 #Preview("Dark") {
     ContentView()
-        .preferredColorScheme(.dark)
 }

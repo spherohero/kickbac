@@ -123,7 +123,12 @@ def get_device(device_id: str, request: Request, subject: User):
 
 
 @router.post(
-    "/v1/devices/{device_id}/sessions", response_model=SessionResponse, status_code=201
+    "/v1/devices/{device_id}/sessions",
+    response_model=SessionResponse,
+    status_code=201,
+    responses={
+        200: {"model": SessionResponse, "description": "Existing owner session"}
+    },
 )
 def arm(
     device_id: str, body: Empty, request: Request, response: Response, subject: User

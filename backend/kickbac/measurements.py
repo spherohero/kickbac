@@ -18,7 +18,12 @@ router = APIRouter()
 
 
 @router.post(
-    "/v1/device/measurements", response_model=MeasurementResponse, status_code=201
+    "/v1/device/measurements",
+    response_model=MeasurementResponse,
+    status_code=201,
+    responses={
+        200: {"model": MeasurementResponse, "description": "Identical upload replay"}
+    },
 )
 def upload(
     body: MeasurementUpload, request: Request, response: Response, device_id: Device

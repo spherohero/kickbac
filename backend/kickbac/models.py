@@ -1,4 +1,4 @@
-from datetime import UTC
+from datetime import UTC, datetime
 from typing import Annotated, Literal
 from uuid import UUID
 
@@ -42,6 +42,8 @@ class MeasurementUpload(Empty):
     def iso_string_only(cls, value):
         if value is not None and not isinstance(value, str):
             raise ValueError("Expected timezone-aware ISO timestamp")
+        if value is not None:
+            datetime.fromisoformat(value.replace("Z", "+00:00"))
         return value
 
     @field_validator("measured_at")

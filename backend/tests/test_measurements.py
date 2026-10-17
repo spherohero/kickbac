@@ -126,3 +126,14 @@ def test_replay_canonicalizes_equivalent_timestamp_and_missing_null(world):
     payload["measured_at"] = "2026-10-17T00:00:00Z"
     second = c.post("/v1/device/measurements", headers=d["one"], json=payload)
     assert second.status_code == 200 and second.json() == first.json()
+
+
+def test_numeric_timestamp_string_is_not_iso_acquisition_time(world):
+    c, u, d, _, _ = world
+    sid = c.post("/v1/devices/one/sessions", headers=u["alice"], json={}).json()["id"]
+    response = c.post(
+        "/v1/device/measurements",
+        headers=d["one"],
+        json={**sample(sid), "measured_at": "1729123456"},
+    )
+    assert response.status_code == 422

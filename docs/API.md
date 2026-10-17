@@ -9,6 +9,8 @@ Device routes use `Authorization: Bearer <per-device credential>`, issued throug
 
 No demo auth endpoint exists. Local simulator identities and measurements must be explicitly labeled as simulated; they do not prove live Auth0 login.
 
+Initial Auth0 audience: `https://kickbac-api` (no trailing slash). This is a logical API identifier, not the deployed base URL. For Nicholas's account setup steps and the public-only report-back template, see [SETUP.md](SETUP.md).
+
 ## Endpoint summary
 | Method | Path | Auth | Purpose |
 |---|---|---|---|

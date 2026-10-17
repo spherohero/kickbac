@@ -21,8 +21,8 @@ use **Bash / Git Bash**, including on Windows; run from the repository root.
 ```bash
 cd backend
 uv sync --locked
-cp .env.example .env
-# Edit .env with your actual tenant domain and API audience (no secrets needed).
+test -e .env || cp .env.example .env
+# Preserve an existing .env; edit it with your actual tenant domain and audience.
 # Explicitly export the file; neither uv sync nor the app auto-loads .env.
 set -a
 . ./.env

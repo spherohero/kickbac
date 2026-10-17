@@ -7,7 +7,7 @@
 
 ## Auth and sponsor resources
 - **Choice:** Auth0 access-token validation with RS256/JWKS, exact issuer/audience/expiry; no passwords or login endpoint in the backend. Vultr is the proposed host; user confirms account/credits ready, but no VM/region/budget or hosted service is verified.
-- **Why:** sponsor-supported authentication with documented SwiftUI SDK. Auth0 tenant is not set up yet. Native callback/bundle configuration belongs to Liam; coordinate before changes.
+- **Why:** sponsor-supported authentication with documented SwiftUI SDK. Auth0 tenant/API/Native app creation is reported complete, and public discovery/JWKS were independently verified. Native login remains unverified pending Liam's exact bundle ID and saved callbacks. Native callback/bundle configuration belongs to Liam; coordinate before changes.
 - **Rejected for now:** DeepSpace browser-oriented auth, whose native Swift handoff has not been verified; combining two identity providers; Tiger Data merely for sponsor coverage.
 - **Sources:** https://www.mlh.com/events/swamphacks-xii/prizes ; https://auth0.com/docs/quickstart/native/ios-swift ; https://docs.deep.space/guides/authentication . Account credits are not proof of free deployment or successful integration.
 

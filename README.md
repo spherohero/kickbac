@@ -10,6 +10,7 @@ certified BAC instrument.
 - `backend/`: Python/FastAPI, versioned SQLite migrations, tests and simulator.
 - [`docs/API.md`](docs/API.md): frozen v0 paths, bodies, errors and lifecycle.
 - [`docs/SETUP.md`](docs/SETUP.md): Auth0 account/Native app and hosting checklist.
+- [`docs/PHONE_LOGIN.md`](docs/PHONE_LOGIN.md): approved primary SMS OTP flow, Twilio prerequisites, verified-recipient explanation and Liam's handoff; real provider setup is still pending.
 - [`docs/CLOUDFLARE_DNS.md`](docs/CLOUDFLARE_DNS.md): verified Cloudflare records and the pending registrar nameserver step.
 - `ios/`: Liam's separately owned SwiftUI client; the starter is in [PR #1](https://github.com/spherohero/kickbac/pull/1), not this backend change.
 - ESP32 firmware and physical calibration are separate integration work.

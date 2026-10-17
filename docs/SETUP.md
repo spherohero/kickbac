@@ -2,6 +2,10 @@
 
 This checklist is for Nicholas. It does not claim any account or deployment is configured. The backend/API contract is `API.md`; Liam owns SwiftUI. Do not send client secrets, passwords, bearer/refresh/device tokens, recovery codes, private SSH keys, or unredacted credential screenshots in chat.
 
+## Primary login decision and provider gate
+
+Nicholas approved phone number + SMS OTP as the primary signup/login method, **not MFA**, for team-only demo testing. Follow [PHONE_LOGIN.md](PHONE_LOGIN.md) before changing connections. The authenticated Auth0 tenant currently reports **No Valid Phone Provider Configured**; no Twilio account/sender is ready yet. Current new Twilio trials restrict custom SMS bodies, so verifying team recipients alone does not make the Auth0 integration ready. Do not purchase an account upgrade/sender or disable fallback access without the specific cost/approval and real delivery checks.
+
 ## Initial Auth0 public configuration
 
 Nicholas supplied domain `dev-c87oxm4dkbyatvrn.us.auth0.com`, audience `https://kickbac-api`, Native client ID `5gJK2T71UkL0fbVj9pbzzEzKeMWZoYlC`, and reported RS256 plus enabled Native API access/login connection. Public OIDC discovery and RS256 RSA JWKS were independently fetched successfully. This does not verify API registration, application grants or a real user login. Liam's bundle ID is `com.liam.KickBAC`. The exact supplied callback/logout URL is `com.liam.KickBAC://dev-c87oxm4dkbyatvrn.us.auth0.com/ios/com.liam.KickBAC/callback`. Nicholas reports both callback/logout allowlists saved. A fresh public prompt=none request now returns302 login_required to the URI-equivalent callback, with no Callback URL mismatch. The redirect canonicalizes only the scheme to lowercase; the case-sensitive bundle path is preserved. Logout behavior and actual user login remain unverified. Preserve spelling/case; do not silently normalize the bundle or callback. Planned API host is `https://api.kickbac.vodka`, not yet deployed. Backend configuration is saved in git-ignored `backend/.env`; the Native client ID is for Liam, not a backend secret.
@@ -26,8 +30,8 @@ If the dashboard labels differ or an option is unavailable, report the exact lab
    - Type: **Native** (not Single Page, Regular Web or Machine to Machine).
 2. Record its **Domain** and **Client ID**. These are public configuration and safe to report. Do not copy its Client Secret.
 3. Confirm **Token Endpoint Authentication Method = None**. A Native app is a public client using Authorization Code + PKCE; it must not embed a client secret.
-4. Go back to **kickBAC API -> Application Access**. Find `kickBAC iOS`, select **Edit**, and grant **User-Delegated Access**. Select **Always grant all permissions** if that is the available grant option; no custom API permissions currently exist. Do not grant Client Access. The login request must explicitly request OIDC scopes (e.g. `openid profile email`) and audience `https://kickbac-api`; scopes and credentials management remain Liam's implementation responsibility.
-5. Under the Native app's **Connections**, make sure a user login connection is enabled (the default username/password database connection is sufficient). No Google/Apple provider setup is required for milestone one. Test-account passwords must remain private.
+4. Go back to **kickBAC API -> Application Access**. Find `kickBAC iOS`, select **Edit**, and grant **User-Delegated Access**. Select **Always grant all permissions** if that is the available grant option; no custom API permissions currently exist. Do not grant Client Access. The hosted PKCE request must explicitly select `connection=sms`, OIDC scopes `openid profile` and audience `https://kickbac-api`; email is not required for phone-only users. SDK credentials management remains Liam's responsibility.
+5. After Twilio delivery is configured and tested, enable the SMS connection for the Native app and use it as primary, following `PHONE_LOGIN.md`. Preserve existing database fallback until actual phone login/API acceptance succeeds. Do not turn on SMS MFA as a substitute. No Google/Apple provider setup is required for milestone one. Test-account passwords and OTPs must remain private.
 6. Ask Liam for the app target's exact **Bundle Identifier** from Xcode. Do not guess or change his bundle ID. For the simplest custom-URL-scheme callback, add the following to BOTH **Allowed Callback URLs** and **Allowed Logout URLs**, replacing the placeholders with the actual values:
 
    ```text
@@ -49,7 +53,7 @@ Registered domain is kickbac.vodka; API origin remains https://api.kickbac.vodka
 
 ## iOS starter PR integration check
 
-Review of [PR #1](https://github.com/spherohero/kickbac/pull/1) at `6262cb7334ffb07982159805f6c8bb6591faa60b` found that `ios/KickBAC/Auth0.plist` and `ios/README.md` use `https://kickbac-api/`. This differs from the configured/shared audience **`https://kickbac-api` without a trailing slash**. A changes-requested review records the required two-value correction. No SwiftUI source or teammate branch was changed. Check the latest PR before assuming this snapshot still applies.
+Liam corrected the audience in `ios/KickBAC/Auth0.plist` and `ios/README.md` to **`https://kickbac-api` without a trailing slash** in `c5939d5`. [PR #1](https://github.com/spherohero/kickbac/pull/1) was re-reviewed and merged at `8b222c1`; the actual merge tree and iOS source were read back and checked. No teammate source was rewritten. His separate navigation branch still needs to incorporate that correction before login integration.
 
 The starter's bundle ID, custom URL scheme and tenant match the handoff. It does not yet include Auth0.swift or implement login. Liam must explicitly request the correct API audience during Native PKCE login and send the resulting **access token**, not the ID token, as `Authorization: Bearer <access_token>` to `GET /v1/me`; a successful response is `{"user_id":"auth0|example-subject"}`. A plist value alone does not implement that request. Credentials stay in the SDK's secure credential store; no backend client secret or device credential belongs in the app.
 

@@ -45,3 +45,9 @@ Liam's separate initial iOS PR was structurally inspected at `6262cb7`: two XML 
 - ESP32 firmware, actual breath-presence validation, sensor wiring/calibration or certified BAC accuracy. Raw ADC and simulated values are explicitly labeled; estimated_bac_percent remains null.
 
 See `API.md` for the contract, `SETUP.md` for Auth0 and `DEPLOYMENT_SETUP.md` for proposed hosting. The full branch is a local backend milestone, not a completed hosted/iOS/hardware product.
+
+## Phone-first login compatibility branch
+
+On `backend/phone-otp`, six new local signed-fixture checks verify SMS-subject identity without email, exact audience validation, OTP/phone-number bearer rejection, separate subject ownership despite matching contact claims, and private-history persistence after a fresh application restart. Existing production API code, migrations and dependencies are unchanged. Fresh full execution: **107 passed**, Ruff lint passed, **31 files already formatted**, byte compilation passed, and the real-HTTP simulator again returned one completed measurement, zero duplicate rows, foreign-owner404 and restartok.
+
+Authenticated Auth0 inspection confirmed the correct tenant uses New Universal Login and has **No Valid Phone Provider Configured** for the SMS connection. The Identifier First save confirmation warns that custom prompts will reset; it was cancelled. No SMS provider, app assignment, primary-login rollout, MFA change, OTP send or paid Twilio resource was configured. Nicholas is creating the missing Twilio account. See `PHONE_LOGIN.md` for new-trial message-body restrictions, sender requirements, private credential entry and the exact client handoff. Real SMS signup/native login remains blocked and is not represented by these passing compatibility tests.

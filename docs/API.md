@@ -11,6 +11,8 @@ No demo auth endpoint exists. Local simulator identities and measurements must b
 
 Initial Auth0 audience: `https://kickbac-api` (no trailing slash). This is a logical API identifier, not the deployed base URL. For Nicholas's account setup steps and the public-only report-back template, see [SETUP.md](SETUP.md).
 
+Approved primary login is **phone number + SMS OTP through Auth0/Twilio, not SMS MFA**. Provider delivery and native login remain pending; see [PHONE_LOGIN.md](PHONE_LOGIN.md) for the setup gates and client handoff. The Native hosted PKCE request selects `connection=sms` with the same audience. The backend still receives only an API access token, never a raw phone number or OTP, and does not require an email claim or a particular subject prefix. `/v1/me` and all ownership rules are unchanged. Separate SMS/database subjects are separate users; matching contact claims do not link accounts or history.
+
 ## Endpoint summary
 | Method | Path | Auth | Purpose |
 |---|---|---|---|

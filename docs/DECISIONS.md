@@ -24,3 +24,10 @@
 ## Local authentication demonstration
 - **Choice:** a standalone simulator may generate an ephemeral RSA identity fixture and exercise real HTTP and signed-token validation on loopback, explicitly labeled simulated OIDC. Normal server configuration accepts only the configured Auth0 tenant.
 - **Why:** test without hardware/accounts, without adding a public dev-login endpoint or silently bypassing production authentication. This is NOT proof of real Auth0 login, live sensor calibration, public HTTPS or iPhone integration.
+
+## Primary phone signup/login — approved, provider pending
+- **Choice:** Auth0-hosted Universal Login with Native PKCE, `connection=sms`, and Twilio delivering Auth0-generated OTPs. Phone/code is the primary factor, not SMS MFA. Team members are the demo testers.
+- **Why:** phone-first signup without an email/password requirement, while keeping verification and credentials outside the kickBAC backend. Existing signed-token validation and opaque-subject ownership already work for SMS identities; no new route/table/provider secret is needed in the API.
+- **Rejected:** a second backend OTP service, silently switching to Twilio Verify's own codes, automatic account linking by phone/email, editing Liam's app, or treating a provider test/fixture as native login proof.
+- **Gate:** no Twilio account/sending-capable provider is ready; authenticated Auth0 inspection reports no valid phone provider. New Twilio trials disallow custom SMS body content; recipient verification does not remove that restriction or sender/carrier requirements. Do not spend or promise immediate delivery without checking the actual account/quote.
+- **Status:** local compatibility tests and `PHONE_LOGIN.md` prepare the handoff, not a live rollout. The Identifier First save confirmation warns that custom prompts will reset; it was cancelled pending review/provider readiness. No fallback connection or MFA setting was changed.

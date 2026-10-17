@@ -10,6 +10,7 @@ certified BAC instrument.
 - `backend/`: Python/FastAPI, versioned SQLite migrations, tests and simulator.
 - [`docs/API.md`](docs/API.md): frozen v0 paths, bodies, errors and lifecycle.
 - [`docs/SETUP.md`](docs/SETUP.md): Auth0 account/Native app and hosting checklist.
+- [`docs/CLOUDFLARE_DNS.md`](docs/CLOUDFLARE_DNS.md): verified Cloudflare records and the pending registrar nameserver step.
 - `ios/`: Liam's separately owned SwiftUI client (not implemented here).
 - ESP32 firmware and physical calibration are separate integration work.
 

@@ -1,3 +1,4 @@
+import json
 import logging
 from contextlib import contextmanager
 from datetime import UTC, datetime, timedelta
@@ -64,8 +65,29 @@ def device_row(db, device_id):
     return row
 
 
-def session_response(row):
-    return {**dict(row), "measurement": None}
+def measurement_response(row):
+    payload = json.loads(row["payload"])
+    return {
+        key: value
+        for key, value in {
+            **payload,
+            "id": row["id"],
+            "device_id": row["device_id"],
+            "received_at": row["received_at"],
+            "estimated_bac_percent": None,
+        }.items()
+        if key != "measurement_id"
+    }
+
+
+def session_response(row, db):
+    measurement = db.execute(
+        "SELECT * FROM measurements WHERE session_id=?", (row["id"],)
+    ).fetchone()
+    return {
+        **dict(row),
+        "measurement": measurement_response(measurement) if measurement else None,
+    }
 
 
 @router.get("/d/{device_id}")
@@ -114,7 +136,7 @@ def arm(
             if active["user_id"] != subject:
                 fail(409, "device_busy")
             response.status_code = 200
-            return session_response(active)
+            return session_response(active, db)
         now = instant(request)
         session_id = str(uuid4())
         db.execute(
@@ -134,7 +156,7 @@ def arm(
             session_id,
             subject,
         )
-        return session_response(row)
+        return session_response(row, db)
 
 
 @router.get("/v1/sessions/{session_id}", response_model=SessionResponse)
@@ -146,7 +168,7 @@ def get_session(session_id: UUID, request: Request, subject: User):
         ).fetchone()
         if row is None:
             fail(404, "not_found")
-        return session_response(row)
+        return session_response(row, db)
 
 
 def device_session(row):
@@ -223,4 +245,4 @@ def cancel(session_id: UUID, body: Empty, request: Request, subject: User):
                 session_id,
                 subject,
             )
-        return {**session_response(row), "status": "CANCELLED"}
+        return {**session_response(row, db), "status": "CANCELLED"}

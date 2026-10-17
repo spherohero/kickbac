@@ -42,9 +42,11 @@ def create_app(settings=None, verifier=None, clock=None):
     def me(subject: Annotated[str, Depends(user_subject)]):
         return {"user_id": subject}
 
+    from .measurements import router as measurements_router
     from .sessions import router
 
     app.include_router(router)
+    app.include_router(measurements_router)
     return app
 
 

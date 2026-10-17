@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Domain</key>
+	<string>dev-c87oxm4dkbyatvrn.us.auth0.com</string>
+	<key>ClientId</key>
+	<string>5gJK2T71UkL0fbVj9pbzzEzKeMWZoYlC</string>
+	<key>Audience</key>
+	<string>https://kickbac-api</string>
+</dict>
+</plist>

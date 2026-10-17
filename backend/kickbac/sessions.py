@@ -23,7 +23,8 @@ from .models import (
 router = APIRouter()
 User = Annotated[str, Depends(user_subject)]
 Device = Annotated[str, Depends(device_identity)]
-log = logging.getLogger("kickbac.transitions")
+# Inherit uvicorn's runtime level/handler without changing root or adding handlers.
+log = logging.getLogger("uvicorn.error.kickbac.transitions")
 
 
 def instant(request):

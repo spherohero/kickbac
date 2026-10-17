@@ -19,14 +19,14 @@ aaden.ns.cloudflare.com
 ali.ns.cloudflare.com
 ```
 
-Public delegation STILL points to Porkbun, and Cloudflare zone status is **pending**. The DNS record is staged and works when querying Cloudflare's nameservers directly, but normal public resolvers are not yet using it.
+Nicholas reports the registrar nameservers have been updated. The follow-up checks still find Porkbun in registry RDAP, a direct parent-delegation query to `a.nic.vodka`, and public resolvers `1.1.1.1` and `8.8.8.8`. Public API lookups still return Porkbun parking. Cloudflare remains **pending** after an explicitly triggered activation check and readback. This is not yet a verified migration; check the saved registrar nameserver list and its final confirmation. The staged Cloudflare record still returns the correct origin IP when querying the assigned servers directly.
 
 At [Porkbun Domain Management](https://porkbun.com/):
 1. Find `kickbac.vodka` and open **Details**.
 2. Under **Nameservers**, click the edit icon.
 3. Replace the old Porkbun entries with ONLY the two Cloudflare names above, one per line.
 4. Save Nameservers and confirm/Submit if prompted.
-5. Reply `nameservers updated`.
+5. Confirm the saved list contains only those two names; report its public values if verification still shows the old delegation. Do not send credentials or an unredacted account screenshot.
 
 Do not add these as ordinary NS records in the Cloudflare zone; they must replace the domain's nameservers at its REGISTRAR. The registrar remains Porkbun. The connector can manage Cloudflare but cannot change a Porkbun registration; local browser automation could not access the locked Chrome profile, and no browser was closed.
 

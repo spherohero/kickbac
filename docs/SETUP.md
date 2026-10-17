@@ -47,6 +47,14 @@ Report one of:
 
 Registered domain is kickbac.vodka; API origin remains https://api.kickbac.vodka. Cloudflare DNS setup is documented in CLOUDFLARE_DNS.md. DNS staging is not a deployed HTTPS service; neither Cloudflare DNS nor a laptop loopback URL proves physical-iPhone reachability.
 
+## iOS starter PR integration check
+
+Review of [PR #1](https://github.com/spherohero/kickbac/pull/1) at `6262cb7334ffb07982159805f6c8bb6591faa60b` found that `ios/KickBAC/Auth0.plist` and `ios/README.md` use `https://kickbac-api/`. This differs from the configured/shared audience **`https://kickbac-api` without a trailing slash**. A changes-requested review records the required two-value correction. No SwiftUI source or teammate branch was changed. Check the latest PR before assuming this snapshot still applies.
+
+The starter's bundle ID, custom URL scheme and tenant match the handoff. It does not yet include Auth0.swift or implement login. Liam must explicitly request the correct API audience during Native PKCE login and send the resulting **access token**, not the ID token, as `Authorization: Bearer <access_token>` to `GET /v1/me`; a successful response is `{"user_id":"auth0|example-subject"}`. A plist value alone does not implement that request. Credentials stay in the SDK's secure credential store; no backend client secret or device credential belongs in the app.
+
+The project currently targets iOS 27.0. This Windows host has no Xcode, and the PR has no build checks, so parsed plist/JSON resources and reviewed source are **not** a successful iOS build or physical-phone login test. Liam must verify his Xcode/demo-device target and build/run the app. His separate `ios` navigation branch is not part of the starter PR and must not be merged implicitly.
+
 ## Copy-paste report-back template
 
 The following fields are public configuration/status; omit unavailable fields instead of guessing.

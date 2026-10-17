@@ -1,6 +1,6 @@
 # Local verification report
 
-Implementation reviewed at `31e872f`, before the separate integration-setup documentation commit. No code was pushed or merged into main. These are real local executions, not predicted results.
+Implementation reviewed at `31e872f`, before the separate integration-setup documentation commits. The same backend code is now being published from `backend/initial-setup`; consult GitHub for current PR/merge state. These are real local executions, not predicted results.
 
 ## Parent execution
 From `backend/`:
@@ -32,6 +32,12 @@ Non-blocking follow-ups before production use: disable or bound PyJWT's per-key 
 - Correct public device resolution without mutations or private data.
 - Real RSA signature/issuer/audience/expiry/subject validation in local fixtures, wrong user/device/M2M/ID-token rejection and fail-closed normal configuration.
 - End-to-end simulated device flow over real HTTP and persisted restart recovery.
+
+## Initial setup PR recheck
+
+After fetching Liam's published starter/navigation branches, the existing backend was assembled on a dedicated `backend/initial-setup` branch from current `main`. No iOS files were added or changed. A fresh `uv sync --locked`, all **101 tests**, Ruff lint, the **30-file** format check, byte compilation and the standalone real-HTTP simulator passed again. The simulator returned `COMPLETE`, one measurement, zero duplicate rows, foreign-owner `404` and successful restart. The backend tree remains identical to the previously reviewed implementation. This PR publishes that existing local foundation, including authentication, sessions and the simulator; it does not claim hosted deployment or native login.
+
+Liam's separate initial iOS PR was structurally inspected at `6262cb7`: two XML plists, three asset JSON manifests and workspace XML parsed, and both target bundle/Info.plist settings matched. Its trailing-slash audience mismatch is a requested correction, and no Xcode build was available on this Windows host. See `SETUP.md` for the precise handoff and latest-PR caveat.
 
 ## Not verified / not implemented by this milestone
 - Real Auth0 user login, application grant/audience issuance and callback/logout behavior: Bundle ID is com.liam.KickBAC; after reported allowlist saving, the public callback probe now returns login_required to a URI-equivalent callback, not a mismatch. Actual Native login/token acceptance/logout remain unverified.

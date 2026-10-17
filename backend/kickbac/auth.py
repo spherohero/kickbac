@@ -1,9 +1,11 @@
 import hashlib
 import math
 import re
+from typing import Annotated
 
 import jwt
-from fastapi import Request
+from fastapi import Request, Security
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from .db import connect
 from .errors import fail
@@ -77,11 +79,31 @@ def bearer_token(request: Request):
     return match[1]
 
 
-def user_subject(request: Request):
+user_scheme = HTTPBearer(
+    scheme_name="UserAccessToken",
+    auto_error=False,
+    description="Auth0 RS256 user-delegated API access token (not an ID/M2M token).",
+)
+device_scheme = HTTPBearer(
+    scheme_name="DeviceCredential",
+    auto_error=False,
+    description="Privately provisioned per-device credential; never a user JWT.",
+)
+
+
+def user_subject(
+    request: Request,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Security(user_scheme)],
+):
     return request.app.state.verifier(bearer_token(request))
 
 
-def device_identity(request: Request):
+def device_identity(
+    request: Request,
+    credentials: Annotated[
+        HTTPAuthorizationCredentials | None, Security(device_scheme)
+    ],
+):
     digest = hashlib.sha256(bearer_token(request).encode()).hexdigest()
     with connect(request.app.state.settings.db_path) as db:
         row = db.execute(

@@ -5,6 +5,7 @@ from typing import Annotated
 from fastapi import FastAPI
 
 from .db import check_schema, connect
+from .models import ErrorEnvelope, MeResponse
 from .settings import Settings
 
 
@@ -20,7 +21,14 @@ def create_app(settings=None, verifier=None, clock=None):
             app.state.verifier = auth0_verifier(settings)
         yield
 
-    app = FastAPI(title="kickBAC", lifespan=lifespan)
+    app = FastAPI(
+        title="kickBAC",
+        lifespan=lifespan,
+        responses={
+            status: {"model": ErrorEnvelope}
+            for status in (401, 404, 409, 410, 422, 500, 503)
+        },
+    )
     from .errors import install_errors
 
     install_errors(app)
@@ -38,7 +46,7 @@ def create_app(settings=None, verifier=None, clock=None):
 
     from .auth import user_subject
 
-    @app.get("/v1/me")
+    @app.get("/v1/me", response_model=MeResponse)
     def me(subject: Annotated[str, Depends(user_subject)]):
         return {"user_id": subject}
 

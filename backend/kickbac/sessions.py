@@ -16,6 +16,7 @@ from .models import (
     DeviceSession,
     Empty,
     HeartbeatResponse,
+    ResolveResponse,
     SessionResponse,
 )
 
@@ -90,7 +91,7 @@ def session_response(row, db):
     }
 
 
-@router.get("/d/{device_id}")
+@router.get("/d/{device_id}", response_model=ResolveResponse)
 def resolve(device_id: str, request: Request):
     with session_transaction(request) as db:
         device_row(db, device_id)

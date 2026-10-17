@@ -16,6 +16,23 @@ class Empty(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class ErrorDetail(BaseModel):
+    code: str
+    message: str
+
+
+class ErrorEnvelope(BaseModel):
+    error: ErrorDetail
+
+
+class MeResponse(BaseModel):
+    user_id: str
+
+
+class ResolveResponse(BaseModel):
+    device_id: str
+
+
 class DeviceResponse(BaseModel):
     id: str
     state: Literal["AVAILABLE", "ARMED", "SAMPLING"]

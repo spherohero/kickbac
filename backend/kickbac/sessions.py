@@ -8,7 +8,7 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 from .auth import device_identity, user_subject
-from .db import transaction
+from .db import connect, transaction
 from .errors import fail
 from .models import (
     DevicePoll,
@@ -94,7 +94,9 @@ def session_response(row, db):
 
 @router.get("/d/{device_id}", response_model=ResolveResponse)
 def resolve(device_id: str, request: Request):
-    with session_transaction(request) as db:
+    # Public NFC/QR lookup must not persist lazy expiry or other state changes.
+    with connect(request.app.state.settings.db_path) as db:
+        db.execute("PRAGMA query_only=ON")
         device_row(db, device_id)
     return {"device_id": device_id}
 

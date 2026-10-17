@@ -102,7 +102,7 @@ def test_transition_logs_under_normal_uvicorn_startup(tmp_path):
         "fixture-user-token",
         "Authorization",
         "adc_counts",
-        "1234",
-        "2500",
+        "breath_duration_ms",
+        '"raw"',
     ):
         assert sensitive not in output

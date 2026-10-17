@@ -7,6 +7,6 @@
 	<key>ClientId</key>
 	<string>5gJK2T71UkL0fbVj9pbzzEzKeMWZoYlC</string>
 	<key>Audience</key>
-	<string>https://kickbac-api/</string>
+	<string>https://kickbac-api</string>
 </dict>
 </plist>

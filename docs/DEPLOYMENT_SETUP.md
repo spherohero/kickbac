@@ -1,24 +1,26 @@
 # Vultr and domain setup — proposed, not yet provisioned
 
-Nicholas reports $100 Vultr credits visible and no VM/domain. Credit balance is not unlimited spending approval. No cloud resources were created by the agent. Public Vultr plans/region-availability endpoints currently list `vc2-1c-2gb` in Miami: 1 vCPU, 2048 MB RAM, 55 GB disk, advertised $10/month base. Dashboard pricing/credit application and actual capacity must be confirmed at deployment. The $5/month 1 GB option also exists; 2 GB provides headroom without a managed database or Kubernetes.
+Nicholas reports $100 Vultr credits visible, no VM, and registered domain `kickbac.vodka`; he requested a stronger VM for this project. Recommended upgrade: Shared CPU -> High Performance -> AMD, plan `vhp-2c-4gb-amd`, with 2 vCPUs, 4 GB RAM, 100 GB NVMe disk, advertised $24/month base. The public catalog and Miami availability endpoint list this plan as available. This supersedes the earlier $10/month recommendation; confirm the dashboard's final quote, credit eligibility/expiry and capacity before deploying. No cloud resources were created by the agent. This is ample headroom for the initial backend without GPU, managed database or Kubernetes complexity.
 
 ## User actions
 
 1. Add an SSH PUBLIC key in Vultr Account -> SSH Keys -> Add SSH Key. A validated ED25519 public key already exists locally at `C:/Users/nicho/.ssh/id_ed25519.pub`, with a matching private-key file on this laptop. Open/copy the `.pub` file only. Never upload/share `id_ed25519` (without `.pub`), paste a private key into chat, or relay its passphrase. Existing key fingerprint: `SHA256:mtp1PCn/DMqKCq8jRkVuSglhhx0U5Y/W8ETh6jQKUdc`. We have not verified agent loading/passphrase availability or remote SSH authentication yet. A dedicated new project key is optional; do not overwrite existing keys.
-2. If comfortable with the advertised $10/month base rate, create ONE regular/shared Cloud Compute VM (`vc2-1c-2gb`), not GPU/dedicated/Kubernetes/managed database:
+2. If comfortable with the advertised $24/month base rate, create ONE Shared CPU -> High Performance -> AMD VM (`vhp-2c-4gb-amd`), not GPU/dedicated/Kubernetes/managed database:
    - Miami, or Atlanta if unavailable.
    - Ubuntu 24.04 LTS x64.
-   - 1 vCPU / 2 GB RAM / 55 GB disk, public IPv4.
+   - 2 vCPUs / 4 GB RAM / 100 GB NVMe disk, public IPv4.
    - Hostname/label `kickbac-api`.
    - Select the uploaded SSH key.
    - No paid add-ons (automatic backups, extra storage or paid DDoS). This is a hackathon demo; durable disk is still required, and application backups remain a deployment task.
-   - Confirm the final dashboard quote and credits apply. If the displayed base rate is above $10/month, the intended plan is unavailable, or credits do not apply, STOP and report the quote rather than selecting a larger plan. Read credit expiry/eligibility and remember a stopped VM may still incur charges; deprovision explicitly after the project when appropriate.
+   - Confirm the final dashboard quote and credits apply. If the displayed base rate is above $24/month, the intended plan is unavailable, or credits do not apply, STOP and report the quote rather than selecting a larger plan. Read credit expiry/eligibility. Vultr bills hourly and stopped-but-not-destroyed instances remain billable; export needed data then destroy the VM after the project when appropriate. Destroying the VM deletes its data.
 3. Attach a Vultr firewall group: TCP22 only from your current public IP (use My IP), TCP80/443 publicly reachable for HTTP challenge/HTTPS. Keep8000 and database ports private. If enabling IPv6, apply equivalent restrictions; don't leave IPv6 as an unrestricted bypass. Moving networks may require updating the SSH source IP. No service should be exposed solely because a firewall allows the port.
 4. Report public IP, OS, region, final advertised monthly price and SSH key label/fingerprint. Do not send root passwords, access/API tokens or private keys. Remote host SSH fingerprint and actual BatchMode key authentication must be verified before deployment; never blindly disable host-key checking.
 
 ## Domain
 
-Redeem the event GoDaddy credit only if eligible registration is actually covered by the promotion; do not infer eligibility or availability from a brand suggestion. Choose a domain you want, confirm checkout costs/renewal terms, and skip paid hosting/SSL/website-builder extras. A domain is useful but not required for local development. Send only the registered domain. Do not change nameservers or existing DNS records yet; after the VM IP is verified, use a dedicated `api.<domain>` A record and trusted HTTPS. The Auth0 audience remains `https://kickbac-api` regardless of hostname.
+Registered domain: `kickbac.vodka`. Planned API origin: `https://api.kickbac.vodka` (NOT yet deployed); the apex can remain available for a later product/landing page. Public DNS currently delegates to Porkbun nameservers and API lookups resolve through `pixie.porkbun.com` parking. Manage DNS at the authoritative provider rather than assuming GoDaddy controls the zone. Once the VM IPv4 is known, create an explicit A record named `api` pointing to that IPv4. If an explicit `api` CNAME already exists, replace only that conflicting entry; leave unrelated apex/wildcard/email records alone. Do not add an AAAA record until IPv6 is actually configured. No DNS writes have been performed. Trusted HTTPS still needs to be configured/verified. The Auth0 audience stays `https://kickbac-api`, not the deployed URL.
+
+Liam's bundle ID is `com.liam.KickBAC`. Exact Auth0 callback/logout URL: `com.liam.KickBAC://dev-c87oxm4dkbyatvrn.us.auth0.com/ios/com.liam.KickBAC/callback`. A public authorization check currently returns Callback URL mismatch, so save it in both allowlists for the correct Native client; this is different from the NFC/QR link `https://api.kickbac.vodka/d/kb-demo-01`.
 
 ## Report-back template
 
@@ -30,8 +32,8 @@ Plan / displayed monthly price:
 Credits applied: yes/no
 SSH public-key label/fingerprint:
 Firewall attached (22 My IP, 80/443 public): yes/no
-Registered domain: [domain or pending]
-Liam's actual bundle ID: [ID or pending]
+Registered domain: kickbac.vodka
+Liam's actual bundle ID: com.liam.KickBAC
 Callback/logout URL saved: [URL or pending]
 ```
 
@@ -39,5 +41,6 @@ Deployment still needs read-only host inspection, isolated service/config/data d
 
 ## Pricing evidence sources
 - https://api.vultr.com/v2/plans?per_page=500
-- https://api.vultr.com/v2/regions/mia/availability?type=vc2
+- https://api.vultr.com/v2/regions/mia/availability?type=vhp
 - https://www.vultr.com/pricing/ (notes region-specific dashboard pricing and paid add-ons)
+- https://docs.vultr.com/support/platform/billing/how-am-i-billed-for-my-servers

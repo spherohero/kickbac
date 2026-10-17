@@ -4,7 +4,7 @@ This checklist is for Nicholas. It does not claim any account or deployment is c
 
 ## Initial Auth0 public configuration
 
-Nicholas supplied domain `dev-c87oxm4dkbyatvrn.us.auth0.com`, audience `https://kickbac-api`, Native client ID `5gJK2T71UkL0fbVj9pbzzEzKeMWZoYlC`, and reported RS256 plus enabled Native API access/login connection. Public OIDC discovery and RS256 RSA JWKS were independently fetched successfully. This does not verify API registration, application grants or a real user login. Liam's bundle ID and callback/logout URLs remain pending. Backend configuration is saved in git-ignored `backend/.env`; the Native client ID is for Liam, not a backend secret.
+Nicholas supplied domain `dev-c87oxm4dkbyatvrn.us.auth0.com`, audience `https://kickbac-api`, Native client ID `5gJK2T71UkL0fbVj9pbzzEzKeMWZoYlC`, and reported RS256 plus enabled Native API access/login connection. Public OIDC discovery and RS256 RSA JWKS were independently fetched successfully. This does not verify API registration, application grants or a real user login. Liam's bundle ID is `com.liam.KickBAC`. The exact supplied callback/logout URL is `com.liam.KickBAC://dev-c87oxm4dkbyatvrn.us.auth0.com/ios/com.liam.KickBAC/callback`. A public prompt=none authorization probe returned HTTP403 with Callback URL mismatch, so save that exact value in Allowed Callback URLs and Allowed Logout URLs of Native app client `5gJK2T71UkL0fbVj9pbzzEzKeMWZoYlC`; logout allowlist and actual login remain unverified. Preserve spelling/case; do not silently normalize the bundle or callback. Planned API host is `https://api.kickbac.vodka`, not yet deployed. Backend configuration is saved in git-ignored `backend/.env`; the Native client ID is for Liam, not a backend secret.
 
 ## 1. Auth0 tenant and API — do this first
 
@@ -39,7 +39,7 @@ If the dashboard labels differ or an option is unavailable, report the exact lab
 
 ## 3. Vultr — inspect before creating anything billable
 
-Nicholas confirms account/credits ready, but no server is verified. Open https://my.vultr.com/ . Confirm credits are visible and check whether a VM already exists. Do not create another instance yet or paste billing/payment information.
+Nicholas confirms $100 credits visible, no VM, and requests a stronger instance. The current recommendation is Shared CPU -> High Performance -> AMD, 2 vCPUs / 4 GB RAM / 100 GB NVMe at advertised $24/month base, Miami (plan vhp-2c-4gb-amd). See DEPLOYMENT_SETUP.md for exact steps. Confirm the final quote and credit eligibility before creating one VM; do not share billing details or root credentials.
 
 Report one of:
 - No VM yet: available credit confirmed, preferred US region, and acceptable advertised monthly VM price limit. We will choose one small persistent-disk instance and confirm before spending/provisioning.
@@ -59,7 +59,7 @@ Native app name: kickBAC iOS
 Native app Client ID:
 Native app user-delegated API access granted: yes/no
 Enabled login connection:
-Liam's exact iOS bundle ID: [value or pending]
+Liam's exact iOS bundle ID: com.liam.KickBAC
 Callback + logout URLs saved: [yes/no/pending bundle ID]
 Any dashboard option that differs / error text:
 

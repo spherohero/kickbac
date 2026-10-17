@@ -48,7 +48,7 @@ Authorization: Bearer <access_token>
 ```
 
 ### Resolve NFC/QR
-The NFC sticker and QR contain the same future public HTTPS URL, e.g. `https://<api-host>/d/kb-demo-01`. This example host is NOT a configured deployment. GET does not arm, log in, or consume a session. Initial response is JSON; Liam must handle the device path and preserve its ID across login before explicitly calling arm. Universal links/associated domains are not configured yet.
+The NFC sticker and QR contain the same planned public HTTPS URL, `https://api.kickbac.vodka/d/kb-demo-01`. This host is NOT yet a configured deployment. GET does not arm, log in, or consume a session. Initial response is JSON; Liam must handle the device path and preserve its ID across login before explicitly calling arm. Universal links/associated domains are not configured yet.
 ```http
 GET /d/kb-demo-01
 ```

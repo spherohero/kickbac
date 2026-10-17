@@ -34,7 +34,7 @@ Non-blocking follow-ups before production use: disable or bound PyJWT's per-key 
 - End-to-end simulated device flow over real HTTP and persisted restart recovery.
 
 ## Not verified / not implemented by this milestone
-- Real Auth0 user login, application grant/audience issuance and callback/logout behavior: Liam's bundle ID/callbacks pending.
+- Real Auth0 user login, application grant/audience issuance and callback/logout behavior: Bundle ID is now com.liam.KickBAC, but a public probe rejects the exact supplied callback with Callback URL mismatch; allowlists and real login still need verification.
 - Vultr VM, trusted public HTTPS, DNS, physical iPhone reachability or NFC/QR app routing.
 - ESP32 firmware, actual breath-presence validation, sensor wiring/calibration or certified BAC accuracy. Raw ADC and simulated values are explicitly labeled; estimated_bac_percent remains null.
 

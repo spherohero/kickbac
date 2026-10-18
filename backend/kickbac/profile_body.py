@@ -3,6 +3,12 @@ from starlette.responses import JSONResponse
 from .errors import MESSAGES
 
 PROFILE_BODY_LIMIT = 1024 * 1024
+GAME_BODY_LIMIT = 32768
+PRIVATE_BODY_POLICIES = {
+    "/v1/me/profile": ("PUT", PROFILE_BODY_LIMIT),
+    "/v1/me/game-results": ("POST", GAME_BODY_LIMIT),
+    "/v1/me/stats": (None, 0),
+}
 
 
 class ProfileBodyLimit:
@@ -12,8 +18,12 @@ class ProfileBodyLimit:
         self.app = app
 
     async def __call__(self, scope, receive, send):
-        if scope["type"] != "http" or scope["path"].rstrip("/") != "/v1/me/profile":
+        if scope["type"] != "http":
             return await self.app(scope, receive, send)
+        policy = PRIVATE_BODY_POLICIES.get(scope["path"].rstrip("/"))
+        if policy is None:
+            return await self.app(scope, receive, send)
+        method, body_limit = policy
 
         async def private_send(message):
             if message["type"] == "http.response.start":
@@ -40,13 +50,13 @@ class ProfileBodyLimit:
             )
             await response(scope, receive, private_send)
 
-        if scope["method"] != "PUT":
+        if scope["method"] != method:
             return await self.app(scope, receive, private_send)
         for key, value in scope.get("headers", []):
             if key.lower() == b"content-length" and value.isdigit():
                 # Compare as decimal text, avoiding unbounded int conversion.
                 length = value.lstrip(b"0") or b"0"
-                limit = str(PROFILE_BODY_LIMIT).encode("ascii")
+                limit = str(body_limit).encode("ascii")
                 if len(length) > len(limit) or (
                     len(length) == len(limit) and length > limit
                 ):
@@ -57,7 +67,7 @@ class ProfileBodyLimit:
             if message["type"] == "http.disconnect":
                 return
             chunk = message.get("body", b"")
-            if len(body) + len(chunk) > PROFILE_BODY_LIMIT:
+            if len(body) + len(chunk) > body_limit:
                 return await too_large()
             body.extend(chunk)
             if not message.get("more_body", False):

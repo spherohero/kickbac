@@ -12,7 +12,7 @@ def test_explicit_migration_health_and_restart(tmp_path):
     initialize(path)
     initialize(path)
     with sqlite3.connect(path) as db:
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 3
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 4
         assert {r[1] for r in db.execute("PRAGMA table_info(devices)")} == {
             "id",
             "credential_hash",

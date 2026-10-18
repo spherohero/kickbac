@@ -1,6 +1,6 @@
 # kickBAC API contract — v0
 
-Status: backend and additive profile routes are live at **https://api.kickbac.vodka**; the profile checkpoint exposes 14 operations. Profile source is published in merged [PR #3](https://github.com/spherohero/kickbac/pull/3); see `PROFILE_VERIFICATION.md` for deployment evidence. Display name **kickBAC**. REST JSON uses snake_case, opaque UUID session/measurement IDs, a provisioned device slug, and ISO 8601 UTC timestamps (`Z` or `+00:00`). Users are opaque verified Auth0 `sub` strings, not client-chosen IDs. No certified BAC or safe-to-drive interpretation is provided.
+Status: backend/profile checkpoint is live at **https://api.kickbac.vodka** with14 operations. This candidate adds3 private game-result/stats operations (17 total) and requires schema4; publication/review/deployment must pass before treating games as live. Exact game payloads, limits, errors and points policy: [GAMES.md](GAMES.md). Profile source is published in merged [PR #3](https://github.com/spherohero/kickbac/pull/3); see `PROFILE_VERIFICATION.md` for the earlier deployment evidence. Display name **kickBAC**. REST JSON uses snake_case, opaque UUID session/measurement/result IDs, a provisioned device slug, and ISO 8601 UTC timestamps (`Z` or `+00:00`). Users are opaque verified Auth0 `sub` strings, not client-chosen IDs. No certified BAC or safe-to-drive interpretation is provided.
 
 ## Authentication
 User routes require `Authorization: Bearer <Auth0 API access token>` (not an ID token). RS256 signature, issuer, audience, expiry and subject must be validated. `/v1/me` returns only the verified subject. The Native app's SMS connection and Passwordless OTP grant are enabled for Liam's reported embedded Auth0 phone/code flow; hosted Authorization Code + PKCE remains supported. Native client ID/domain/audience/bundle/callback values must be coordinated with Liam. There is no kickBAC password/OTP endpoint or native client secret.
@@ -21,6 +21,9 @@ Approved primary login is **phone number + SMS OTP through Auth0/Twilio, not SMS
 | GET | `/v1/me` | user | identity |
 | GET | `/v1/me/profile` | user | load own display name/picture or null fields for new user |
 | PUT | `/v1/me/profile` | user | atomically save own display name/picture |
+| POST | `/v1/me/game-results` | user | persist completed client-reported game, award10 participation points once |
+| GET | `/v1/me/game-results` | user | own paginated game ledger, optional game_id filter |
+| GET | `/v1/me/stats` | user | profile-wide points/games/wins and per-game aggregates |
 | GET | `/v1/devices/{device_id}` | user | current derived availability and online state |
 | POST | `/v1/devices/{device_id}/sessions` | user | arm known unit; empty JSON `{}` |
 | GET | `/v1/sessions/{session_id}` | owning user | session and optional result |
@@ -31,7 +34,7 @@ Approved primary login is **phone number + SMS OTP through Auth0/Twilio, not SMS
 | POST | `/v1/device/sessions/{session_id}/sampling` | device | report valid breath sampling start; `{}` |
 | POST | `/v1/device/measurements` | device | idempotent sample upload |
 
-Normal server must be configured with Auth0 and an explicitly migrated persistent DB (schema 3 for profiles). `/docs` and `/openapi.json` document the implemented schema; keep examples in this document synchronized. The simulator starts an isolated loopback instance. Trusted public HTTPS is verified; real native access-token/history acceptance, universal links and NFC writing are separate integration steps. See [PROFILES.md](PROFILES.md) for complete onboarding fields, image limits, save/retry/removal semantics and client handoff. Phone stays in the Auth0 SMS identity; profile writes never accept a client-supplied owner or verified phone.
+Normal server must be configured with Auth0 and an explicitly migrated persistent DB (schema4 for games; profile-era schema3 requires an explicit backed-up upgrade). `/docs` and `/openapi.json` document the implemented schema; keep examples in this document synchronized. The simulator starts an isolated loopback instance. Trusted public HTTPS is verified; real native access-token/history acceptance, universal links and NFC writing are separate integration steps. See [PROFILES.md](PROFILES.md) for complete onboarding fields, image limits, save/retry/removal semantics and client handoff. Phone stays in the Auth0 SMS identity; profile writes never accept a client-supplied owner or verified phone.
 
 ## Lifecycle and concurrency
 Session status is one of `ARMED`, `SAMPLING`, `COMPLETE`, `CANCELLED`, `EXPIRED`. Creation sets `ARMED` with 60-second server-owned expiry. Device state is `AVAILABLE`, `ARMED` or `SAMPLING`, derived from an active unexpired session. `online` is separately derived from a heartbeat within the last 30 seconds; heartbeat does not extend an arming session. An offline device may be armed; app should show online state and timeout honestly.

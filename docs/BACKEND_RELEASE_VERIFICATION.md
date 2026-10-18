@@ -49,7 +49,7 @@ uv run --locked python -m kickbac.simulator
 node --test auth0/test-twilio-verify.cjs
 ```
 
-Node22 matches the hosted Action runtime; local78-fixture publication check usedNode24. No SMS is sent by mocked Action tests. CI workflow is prepared locally on `backend/integration`, but GitHub rejected publication because the saved OAuth login lacks `workflow`scope. **No CI-green claim.** Backend/auth/deploy/game branches were successfully published/merged independently. User can approve `gh auth refresh -h github.com -s workflow` privately; do not paste codes/tokens.
+**GitHub CI is now published, merged and verified**, superseding the earlier missing-workflow-scope blocker. [PR #11](https://github.com/spherohero/kickbac/pull/11), exact head `35d98776cae433283fb276e9e4551ec38d8631e0`, merged as `e7af213036a29de75f9273af03f8219a6d12c1e6`; reviewed/remote merge trees matched. Successful [PR run](https://github.com/spherohero/kickbac/actions/runs/39085572064) and [merged-main run](https://github.com/spherohero/kickbac/actions/runs/39085675988) ran the Python3.11/3.12 matrix and Node22 Action fixtures. Logs confirmed338 tests for each Python version, Ruff53-file formatting, lint/compile, real-loopback `SIMULATOR_OK` and78 passing Auth0 fixtures. Immutable action revisions, read-only permissions and disabled checkout-credential persistence are versioned in `.github/workflows/backend.yml`. No SMS is sent by fixtures, and backend CI does not compile/verify Liam's iOS app or hardware. Initial local Action checks used Node24; CI now matches the hosted Node22 runtime.
 
 ## Remaining acceptance / limits
 

@@ -18,6 +18,41 @@ git branch -r
 
 Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his branch. If main has not been integrated, read these shared docs directly from `origin/main`; do not reset, stash automatically, overwrite local edits or merge blindly. Documentation publication cannot prove an already-running remote agent has read it. Liam/his agent should report the main and client SHAs read when next giving a substantive integration update; no repeated acknowledgment pings or new user-run native tests are requested.
 
+### Requested party/profile implementation — contract candidate, not live
+
+- Owner: backend Bot, `backend/party-profile-contract`, base
+  `dd19b404210517b1b0c8b8f8a1809ba988bb250d`. Nicholas authorized continuing
+  implementation of the recorded profile/history and party create/join requirements.
+- [Party contract candidate](PARTIES.md) specifies new authenticated create/code-or-
+  device join/lifecycle/host-binding operations, game instances, one private completed
+  result per user/instance, exact owned measurement links and rich all-game history.
+  [Implementation plan](plans/party-profile-backend.md) orders test-first vertical
+  slices. Both are designs until actual tested implementation/release evidence.
+- **Additive / NON-BREAKING proposed:** all existing 17 routes, schemas, Auth0 access
+  tokens, 60-second sessions, required duration, null BAC and 10 participation points
+  remain unchanged. New reads: `GET /v1/me/reading-summary` (SQL count/latest accepted
+  measurement), `GET /v1/me/game-history` (all own results, nullable party/placement/
+  measurement context). Existing exact lifetime games/wins/points stay on `/v1/me/stats`.
+- Examples: `POST /v1/parties` with `{"party_id":"<UUID>","name":"Friday"}`;
+  `POST /v1/parties/join` with exactly one of `{"join_code":"ABCDEFGH"}` or
+  `{"device_id":"kb-demo-01"}`. New game-result route accepts the original five
+  fields plus optional owned `measurement_id` and nullable `placement`; canonical
+  complete request/response/status/error examples are in the candidate, not live API.
+- Liam: preserve existing app/UI; consume new fields only after published implementation
+  and production availability. Join does not arm. Group by stable party UUID and use
+  its server UTC creation date; legacy context/null BAC remain unavailable. QR/manual
+  remains fallback; current Personal Team NFC capability/Universal Links are not fixed
+  by a backend change. No action for firmware; device upload/polling remains identical.
+- Security decision: public device ID/NFC is not ownership. Binding requires host role
+  plus a backend-operator grant for that subject/device; no phone/device credentials
+  sent to iOS. Join invitation locators do not prove physical presence. No production
+  grant, user write, SMS, device arm, migration or deployment is authorized by publishing
+  the design. New join limits are per-subject persisted10/60s, not global anti-abuse.
+- Verification at proposal publication: refreshed main/remote branches/open PRs;
+  inspected actual app/DB/models/games/session/measurement/middleware/error/tests;
+  design links/fences and diff checks. Independent design review pending; no runtime
+  implementation, passing new feature tests or production availability is claimed.
+
 ### Backend review of iOS PR #22 and requested profile/party follow-up
 
 - Owner: backend Bot, isolated `review/ios-pr22`, live base

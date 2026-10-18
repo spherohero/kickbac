@@ -81,8 +81,25 @@ and checked against the expected device-safe JSON shape using pinned
 `bblanchon/ArduinoJson@6.21.6`. Host fake-network tests exercise the actual C++
 adapter's exact methods/paths/body/header expectations, independent cadence,
 ongoing keepalive after PASS, required trust configuration, no bearer logging
-and401stop/clearing. These tests do **not** implement or simulate real TLS
-cryptography or replace physical HTTPS acceptance.
+and401stop/clearing. The expanded fault matrix now exercises both authenticated
+endpoints with unknown/zero/oversized Content-Length, partial/zero-byte reads,
+malformed JSON, wrong device identity, failed HTTP begin, transport errors,
+503, redirects and401. It also checks the accepted768-byte upper boundary,
+embedded-NUL rejection, Wi-Fi loss and an incorrectly successful negative-auth
+probe. Assertions cover the failure stage/status, cleared bearer bytes, request
+cleanup, no follow-on request, no credential/body logging and a latched stop even
+after another USB credential frame. All inputs and transport/clock behavior here
+are **synthetic fixtures**, not physical fault injection.
+
+Fresh Windows verification on `test/device-adapter-faults` (base `e8368eb`):
+`bash firmware/test_host.sh`, helper Ruff lint/format and all three pinned XIAO
+cross-builds passed. A local scratch-only negative-control experiment compiled
+an unchanged copy successfully and detected all seven deliberate mutations:
+omitted credential clearing, omitted failure latch, rejected exact upper bound,
+accepted zero length, ignored short read, ignored embedded NUL and ignored Wi-Fi
+loss. The experiment never changed production source or operated USB; it is not
+a new physical run or a CI mutation-testing gate. These tests do **not** implement
+or simulate real TLS cryptography or replace physical HTTPS acceptance.
 
 The client never arms a session, starts sampling, extends an expiry, uploads a
 measurement, inserts a user, or fabricates ADC/duration metadata. Polling may
@@ -172,7 +189,9 @@ the exact PR head before merge; CI is not physical hardware acceptance.
 Independent full-diff review passed with no concrete
 blocking security/logic findings. Its old unmerged-index observation was from
 the review's concurrent snapshot; final local checks confirm no unmerged paths
-and the published synchronized head. Nonblocking follow-up: expand the HTTP/
-clock adapter fixtures beyond success/401 to fault-inject unknown/oversized
-Content-Length, short reads, malformed JSON, Wi-Fi loss and transport errors.
-Those implemented fail-closed paths are not all fixture- or physically exercised.
+and the published synchronized head. The later test-only adapter follow-up above
+now covers the previously requested length/read/JSON/Wi-Fi/transport failures.
+Physical fault injection, resilient production reconnect, sensor acquisition and
+measurement acceptance remain separate, unverified work. Production adapter
+source, API payloads, duration meaning and existing disabled-upload behavior are
+unchanged by the fixture expansion.

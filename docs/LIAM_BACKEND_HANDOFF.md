@@ -35,11 +35,17 @@ Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his bran
   Do not infer battery-percentage support from the earlier battery proposal.
 - Local verification passed: seven Markdown files, 49 relative link targets,
   balanced fences, `git diff --check`, divider/RC/current arithmetic and safety
-  text assertions. Independent engineering/doc review is pending; publication
-  alone is not merge readiness. No sensor measurements, rated USB path, physical
-  execution or app acceptance is established by these checks. ADC remains physically isolated; MCU+heater power path/current,
+  text assertions. Independent engineering/doc review passed for conditional
+  documentation, not electrical approval. Its clarity suggestions were applied:
+  explicitly historical old parts/revision text and maximum-bound divider testing.
+  No sensor measurements, rated USB path, physical execution or app acceptance
+  is established by these checks. ADC remains physically isolated; MCU+heater power path/current,
   capacitor identification and full-scale divider tests remain physical gates.
   Duration proposal remains unapproved; hardware completion/uploads stay disabled.
+  Publication: [PR #23](https://github.com/spherohero/kickbac/pull/23), initial
+  reviewed head `d3c58cb2b9528186157cc0efaf97eb26a4f62873` plus the focused
+  review-clarification commit shown in that PR. PR state/merge commit are
+  authoritative for subsequent merge status. No deployment.
 
 ### Actual-app phone login troubleshooting
 

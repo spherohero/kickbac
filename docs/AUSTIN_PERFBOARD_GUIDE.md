@@ -7,9 +7,9 @@
 > separate-supply nets below are an alternate reference, not the current build.
 > ADC connection remains physically OPEN; capacitor markings remain unverified.
 
-> **Latest group clarification:** parts are only placed in isolated-pad perfboard, not soldered or connected; **no boost converter, no pressure sensor, no installed JP1**. Neither this original design nor the later battery/boost proposal is an as-built report. The final MQ supply is unresolved; do not infer heater power from XIAO GPIO/3V3 or connect AO without checked protection. Software-only backend/firmware communication testing does not require a completed assembly or electrical report.
+> **Historical placement checkpoint:** parts were only placed in isolated-pad perfboard, not soldered or connected; **no boost converter, no pressure sensor, no installed JP1**. This is still the latest construction evidence, not the current power decision. Nicholas now chooses USB-C-only per the guide above; its actual source/current/path acceptance remains unresolved. Software communication testing does not require completed construction.
 
-> **Revision boundary:** This document specifies the original USB-powered XIAO / separate regulated external 5 V supply with JP1. Nicholas's later group attachment proposes **LiPo + switched boost, no installed JP1** on isolated-pad perfboard. Read [the battery/boost commissioning hold and updated checklist](BATTERY_BOOST_COMMISSIONING.md) for that revision; this older guide does not approve it. In the no-JP1 proposal, keep the XIAO ADC connection physically isolated using a removable disconnected lead or socket isolation during tests. Battery/protection, boost bounds, charge/load paths and actual assembly remain unverified.
+> **Historical revision boundary:** the original separate regulated 5 V supply/JP1 design below and the [subsequent battery/boost proposal](BATTERY_BOOST_COMMISSIONING.md) are both superseded for the current USB-only topology. Keep the ADC physically isolated by a removable disconnected lead/socket link; no installed JP1 is required by the current build. Do not mix positive-rail wiring from these alternatives.
 
 **Build specification for review, not a tested sensor assembly.** The XIAO now runs the `xiao_device` diagnostic: real USB execution, Wi-Fi/trusted HTTPS, authenticated heartbeat/poll and persisted ongoing heartbeat are verified. MQ power, divider and ADC are NOT physically verified and remain disabled. Confirm actual parts, supply and meter checks below before connecting the ADC. This guide supersedes the earlier mistaken bare-sensor description. Current network/firmware evidence is in [DEVICE_CONNECTIVITY.md](DEVICE_CONNECTIVITY.md); earlier USB-only/PDF status text is historical, not a change to these wiring safeguards.
 
@@ -74,7 +74,7 @@ The divider presents roughly 20 kOhm load to AO; it can alter module response. L
 
 ## 2. Parts and perfboard assembly
 
-### Parts to gather and verify before construction
+### Historical separate-supply parts list — not current USB-only BOM
 
 | Ref | Part | Quantity / notes |
 | --- | --- | --- |

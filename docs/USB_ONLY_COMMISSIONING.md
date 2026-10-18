@@ -136,6 +136,10 @@ and capacitors discharged. Battery remains absent throughout.
    suitably current-limited test source with both boards absent and ADC link open.
    With power OFF, temporarily connect the approved source to TP_AO. Apply power;
    record source and TP_ADC, compare measured-resistor ratio and approved maximum.
+   Test at the approved maximum AO/source bound, or use the measured ratio to
+   calculate the node at that bound with measurement uncertainty included; a
+   lower test voltage alone does not establish worst-case protection. Static
+   testing does not establish startup/shutdown transient behavior.
    Then power OFF, discharge and REMOVE the temporary AO-to-supply test wire.
    If no suitable test source/instrument is available, this gate is not passed;
    do not probe a loose circuit with an unprotected laptop supply as a shortcut.

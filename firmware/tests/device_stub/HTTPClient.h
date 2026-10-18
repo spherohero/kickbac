@@ -17,6 +17,12 @@ extern int fixture_length; // -2 means derive from body; -1 models unknown lengt
 extern bool fixture_override_body;
 extern bool fixture_override_heartbeat;
 extern std::string fixture_response_body;
+#if defined(KICKBAC_MOCK_UPLOAD)
+#include <ArduinoJson.h>
+extern int fixture_upload_status;
+extern std::string fixture_upload_override;
+extern std::vector<std::string> fixture_upload_payloads;
+#endif
 class HTTPClient {
 public:
     void setConnectTimeout(unsigned value) { assert(value == 7000); }
@@ -39,6 +45,28 @@ public:
         authenticated = true;
     }
     int POST(const char* value) {
+#if defined(KICKBAC_MOCK_UPLOAD)
+        if (url == "https://api.kickbac.vodka/v1/device/measurements") {
+            assert(authenticated && json_type);
+            fixture_upload_payloads.emplace_back(value);
+            StaticJsonDocument<1024> request;
+            assert(!deserializeJson(request, value));
+            StaticJsonDocument<1024> reply;
+            reply["id"] = request["measurement_id"];
+            reply["session_id"] = request["session_id"];
+            reply["device_id"] = "kb-demo-01";
+            reply["raw"] = request["raw"];
+            reply["breath_duration_ms"] = request["breath_duration_ms"];
+            reply["source"] = request["source"];
+            reply["measured_at"] = nullptr;
+            reply["estimated_bac_percent"] = nullptr;
+            reply["received_at"] = "2026-10-18T12:00:10.123456+00:00";
+            fixture_body.clear();
+            serializeJson(reply, fixture_body);
+            if (!fixture_upload_override.empty()) fixture_body = fixture_upload_override;
+            return fixture_upload_status;
+        }
+#endif
         assert(url == "https://api.kickbac.vodka/v1/device/heartbeat");
         assert(authenticated && json_type && std::strcmp(value, "{}") == 0);
         ++fixture_posts;

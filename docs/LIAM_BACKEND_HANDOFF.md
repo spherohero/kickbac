@@ -4,6 +4,17 @@ This replaces the older local/unpublished-profile handoff. **Backend profile, ph
 
 ### Firmware communication runtime — no client action
 
+New firmware-owned explicit mock uploader: `firmware/explicit-mock-uploader`,
+base `8f60967`; exact publishing head/PR records state. [MOCK_DEMO.md](../firmware/MOCK_DEMO.md)
+documents one USB session-bound command AFTER actual signed-in app arm. Uses
+existing device POST `/v1/device/measurements` with synthetic1200adc_counts/2500ms,
+`source:simulator`, `measured_at:null`; full matching200/201 ACK and immutable
+bounded original-payload retries. **NON-BREAKING/no app edits**: existing paths/
+schemas/states/identity/units and simulator interpretation unchanged. Full host,
+15operator tests/Ruff/all3builds/independent review and isolated real-HTTP ACK/
+replay/history/restart pass; actual user→ESP32 upload remains physical gate.
+No owner selection, fake user, live operator arm, ADC or BAC. Liam owns all iOS.
+
 Flashed/runtime source `49e8d5a4dfc41b193fffdc2cfa9f857d98e900aa`; actualCOM3
 capture heartbeat12..28/idle poll31..73. Startup/PASS marker missed, observer
 returned1 for missing marker, not a captured network failure. Independent

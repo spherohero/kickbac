@@ -1,4 +1,57 @@
-# Party UI preview
+# Party integration — current checkpoint, October 18, 2026
+
+Owner Liam/iOS. Branch `liam/party-setup`; implementation head `c06192f73e5c2755f4961aa6c65e0c47811ad81f`.
+User base `ef08fa8`; latest main `a0bd77bcb79766f91de6746e0ab02fa992f4b337` integrated by merge `de47523`, preserving Liam's commits without rebasing, resetting or switching branches. Working tree was clean at entry.
+
+## Current behavior and boundaries
+
+- The default Party tab requires existing Auth0 sign-in for server effects. Create, own-party list/read, join by server code or QR/manual official device link, host bind/unbind/close, member leave, and Trivia game-instance create/read/close use the deployed API. Joining never arms a test. No NFC entitlement or Universal Link support is claimed.
+- Server-issued eight-character codes replace KICK26 in the live flow. The old approved Party artwork/card stack remains in the explicitly labeled Debug-only local preview; its create/join/invite/game screens disclose unsaved/local state. No fixture membership or scores are presented as server data.
+- Host binding requires a preexisting backend operator grant. There is no client grant operation. Missing authorization/binding, busy/conflicting units, closed contexts, rate limiting, expiry and network/storage failures have recovery copy. Online/offline is shown independently of arming permission.
+- Explicit Start my test creates a private party-only check-in. Starting from a selected server game instance creates an explicitly game-specific check-in. The app adopts the returned session into ContentView's existing DeviceSessionStore; it never calls legacy arm afterward or allocates a separate game store. Home and Trivia use the same owned session, existing foreground polling/backoff/cancel path and accepted result.
+- My check-ins reads paginated owner-private history, retaining loaded rows on failure, deduplicating pages, rejecting mixed-owner/session/acquisition data and clearing visible data on account changes. Active entries can resume their existing session without rearming. Completed manual samples retain null BAC and the measured sample window; never call it validated breath.
+- The API supplies member count, not a public name/photo roster or shared leaderboard. Trivia remains local, with continuously visible/accessibly exposed local/unsaved provenance on invitations, play and podium. It submits no score/result or lifetime reward. A server game instance is saved context only. Local rounds/results survive closing/reopening within that party view; account changes clear them.
+
+## Exact retry/session contract
+
+`POST /v1/parties` sends `{"party_id":"<persisted UUID>","name":"<name>"}`.
+`POST /v1/parties/{party_id}/games` sends `{"game_instance_id":"<persisted UUID>","game_id":"trivia"}`.
+`POST /v1/parties/{party_id}/check-ins` sends `{"check_in_id":"<persisted UUID>","device_id":"<assigned unit>","game_instance_id":null}`; null means party-only, never current game. An explicitly selected instance supplies its exact UUID instead.
+
+PartyWrite stores canonical UUIDs, route context and exact encoded body before any send in account-hashed Application Support files with atomic/protected writes. Persistence failure prevents sending. Timeout/offline/cancellation retains the same request across retry/relaunch/account switching. Changed/new requests cannot replace an ambiguous request. Exact replay adopts the original active or terminal session and never extends it. A new deliberate attempt after a resolved terminal session gets a new UUID. Only a current, explicit domain rejection (not found/busy/invalid state/expired/validation) enables Discard rejected request; transport failures, unstructured errors and idempotency conflicts cannot be discarded. After relaunch, rejection must be reconfirmed before discard.
+
+Response checks cover UUID, route-party, game, device, session and current owner. Existing unrelated active tests cannot be replaced. Real readiness requires that exact session's COMPLETE measurement with valid acquisition; Home's Debug demo cannot advance it. Release never auto-runs a fake sample. Explicit local practice continues without a test/BAC.
+
+## Verification and publication limits
+
+- Live public OpenAPI fetched this run exposes 33 operations, party/check-in routes and nullable manual-acquisition metadata. The latest backend handoff records deployed schema6/source172e54c; no host/database inspection or deployment was performed here.
+- Actual Swift PartyIntegrationChecks passed: durable-before-send/exact replay, canonical UUIDs, relaunch, changed-request rejection, account switch/stale response, mixed owner, unrelated active session, expiry/cancel, manual null BAC, pagination/recovery/deduplication, API access-token/body/path/code decoding, rejection discard versus ambiguous/conflict retention and storage failure.
+- Acquisition, DeviceSession, AuthContract, Profile, RecentGames, PartyPreview, Trivia and HomeGauge Swift checks passed. Branding, five acquisition source guards and four local/Release source guards passed. Source guards do not execute native UI semantics.
+- Final unsigned generic-iOS Release and signed Debug builds passed using Xcode-beta and `/tmp/kickbac-profile-build`; only the standard no-AppIntents metadata notice appeared. Earlier unsigned Debug also passed. Logs: `/tmp/kickbac-party-live-release.log`, `/tmp/kickbac-party-live-signed.log`, `/tmp/kickbac-party-live-debug.log`.
+- `devicectl` confirmed installation and launch of `com.liam.KickBAC --show-party` on Liam's connected iPhone. No screenshots, vision, Device Hub, visual inspection, real party/check-in write, SMS delivery, physical sensing, NFC, VoiceOver or shared-gameplay acceptance was performed. Install/launch alone does not establish those outcomes.
+
+## PR32 disposition and remaining work
+
+PR32 `ios/manual-acquisition-notice@f9cbce63553712806b8d39760261975e5f817088` was inspected against current main and Liam's newer branch. It remains OPEN/DRAFT/UNMERGED, with its existing green native job predating these fixes. No cherry-pick, push, merge or branch deletion was applied to PR32. Its acquisition compatibility is already on main; integrating main preserved the newer `ef08fa8` UI instead of replacing it with the older bundled preview.
+
+Remaining acceptance: real signed-account create/join/bind with an operator-approved unit; concurrent physical test reservation, expiry/retry/relaunch/account switching against the live API; real acquisition/private readback. Personal-device check-ins still require the server's assigned-device policy. NFC/Universal Links need provisioning/configuration and separate phone acceptance. Shared questions, answers, turns, roster/visibility, scoring/reconnect and consent-based member BAC sharing remain separate backend contracts.
+
+## Reproduce checks
+
+```sh
+xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/KickBACAPI.swift ios/KickBAC/PartyAPI.swift ios/KickBAC/DeviceSessionStore.swift ios/KickBAC/PartyStore.swift ios/checks/PartyIntegrationChecks.swift -o /tmp/kickbac-party-integration-checks
+/tmp/kickbac-party-integration-checks
+python3 ios/checks/PartyTransparencyChecks.py
+python3 ios/checks/AcquisitionContractChecks.py
+xcodebuild -project ios/KickBAC.xcodeproj -scheme KickBAC -configuration Release -destination 'generic/platform=iOS' -derivedDataPath /tmp/kickbac-profile-build CODE_SIGNING_ALLOWED=NO build
+# Debug uses the same project/scheme/cache; omit CODE_SIGNING_ALLOWED=NO for the existing signed profile.
+git diff --check
+```
+
+The following is historical implementation/design evidence. Behavior statements below are superseded by the current checkpoint above and DESIGN.md.
+
+## Historical Party UI preview
+
 
 Debug tap shortcut: hold the shared Tap your phone to the breathalyzer text for 0.7 seconds to simulate `kb-demo-01`. The gesture attaches directly to the caption with a minimum 44-point target; the animation stays touch-transparent. This replaces the illustration-wide overlay after Liam reported the hold did not respond. Create uses the entered valid party name and that fixture device; invalid names remain on the form. Tap to join enters the local guest party. Trivia advances to the breath screen, which now automatically plays a local reading sequence before marking the player Ready; see TRIVIA_HANDOFF.md. Invite people acknowledges the simulated tap without replacing the current room or game. A named VoiceOver Debug action on the caption provides the same shortcut. The gesture, feedback and simulation alert compile only in Debug; Release gesture behavior is unchanged. No NFC session, hardware, live party, private measurement or server result is created. People shows the profile name and role without the redundant You label; an unavailable name falls back to Player.
 

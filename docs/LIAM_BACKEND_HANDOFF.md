@@ -1,5 +1,61 @@
 # kickBAC backend handoff — Liam / iOS agents
 
+
+### Latest Liam client integration — deployed-party consumers, local Trivia
+
+Owner Liam/iOS; branch `liam/party-setup`, implementation head `c06192f73e5c2755f4961aa6c65e0c47811ad81f`;
+base `ef08fa8`, main `a0bd77bcb79766f91de6746e0ab02fa992f4b337` integrated by merge `de47523`.
+This supersedes the older client0e5a6e4/PR32-only status below. No PR merge,
+branch deletion, backend deployment or firmware change was performed.
+
+**=== LIAM / iOS IMPACT === NON-BREAKING consumer adoption; server contract unchanged.**
+The Party tab now calls authenticated create/join/read, host bind/unbind/close,
+member leave and Trivia game-instance create/read/close. Server codes and QR/manual
+fallback replace live KICK26/NFC claims. Device binding still requires the existing
+backend-only operator grant; the phone cannot grant itself permission.
+
+Explicit POST `/v1/parties/{party_id}/check-ins` sends
+`{"check_in_id":"<persisted UUID>","device_id":"<assigned unit>","game_instance_id":null}`;
+null is party-only. Selecting a server instance supplies that exact game UUID.
+Canonical UUID, exact body and route are account-scoped and durably saved before
+send. Retry/relaunch reuses them after ambiguous failures; changed UUID/payload
+cannot replace a pending request or bypass idempotency conflict. Only a fresh
+explicit domain rejection enables deliberate discard. Accepted terminal replay
+recovers the original session; a new deliberate attempt gets a new UUID.
+
+The returned session is adopted into Home's existing DeviceSessionStore, with
+owner/device/session/acquisition validation, existing polling/cancellation and no
+second legacy arm. Private GET `/v1/me/check-ins?limit=50&offset=0` supports paging,
+retry/deduplication, same-session resume and account isolation. Manual acquisition
+keeps `breath_duration_ms:null`, actual `sample_duration_ms`, manual notice and null
+BAC. Release never auto-runs a demo sample or uses one to advance a real check-in.
+
+Trivia questions/turns/answers/points/podium remain visibly and accessibly local,
+unsaved and unshared. No result/award is submitted. Member count is server data;
+no public roster/leaderboard is fabricated from private histories. Old Party
+fixtures remain clearly labeled and Debug-only. Existing logos/cards are retained.
+
+Evidence: public live OpenAPI fetched as33 operations with manual metadata; actual
+Swift retry/session/API/account/history/acquisition fixtures passed, alongside
+Auth/Profile/RecentGames/PartyPreview/Trivia/HomeGauge and source/branding guards.
+Final unsigned Release and signed Debug passed with Xcode-beta using
+`/tmp/kickbac-profile-build`. `devicectl` confirmed install/launch on Liam's iPhone.
+No screenshots/vision/Device Hub or rendering/native NFC/physical sensing/real
+party write/shared-gameplay acceptance was performed. Full commands, source map,
+logs and limitations: `ios/PARTY_HANDOFF.md`, `ios/TRIVIA_HANDOFF.md`.
+
+PR32 remains OPEN/DRAFT/UNMERGED at f9cbce63553712806b8d39760261975e5f817088.
+Its existing green native job is not evidence for this newer branch. Main already
+contains its acquisition compatibility; its older bundled UI was not cherry-picked
+or merged over Liam's newer work. No teammate notification is claimed.
+
+Remaining client acceptance: real signed-account create/join with server code,
+operator-approved binding, live same-session reservation/result/history recovery,
+concurrent-user exclusion and account/relaunch tests. NFC provisioning/Universal
+Links, physical acquisition and shared gameplay/consented BAC visibility remain
+separate gates. No existing API consumer action is required beyond adopting this
+updated app; old required-Int clients still need the documented manual decoder fix.
+
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
 ### Latest ownership — Liam controls all remaining iOS work

@@ -1,6 +1,9 @@
 # kickBAC firmware — USB/Wi-Fi bring-up and local signal experiments
 
 **Latest physical checkpoint:**
+Latest readback became stale and a subsequent reset/private reprovision exhausted
+all three reconnect health attempts. Current online state is NOT restored; the
+earlier bounded pass below is not uninterrupted connectivity. No root cause claim.
 [`DEVICE_SESSION_VERIFICATION.md`](../docs/DEVICE_SESSION_VERIFICATION.md) records
 the exact flashed `xiao_device` follow-up at `17ed04b`, USB identity/image hashes,
 actual network/auth9heartbeat/24idle-poll run and independently advancing server

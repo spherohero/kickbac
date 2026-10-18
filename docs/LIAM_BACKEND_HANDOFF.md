@@ -34,13 +34,23 @@ No production user creation/grant/arm/measurement was performed by deployment.
 
 ### Physical diagnostic follow-up — reconnect failure investigation
 
+- **Latest status / MERGED, but not currently online:**
+  [PR31](https://github.com/spherohero/kickbac/pull/31) integrated head `aadca18`
+  merged `97b30a17739ed84cec562dfdfe365c28fa8a5c26`; exact remote merge/tree and
+  [main firmware CI](https://github.com/spherohero/kickbac/actions/runs/39109491333)
+  verified. Earlier physical pass is bounded evidence, NOT uninterrupted uptime:
+  later heartbeat stale57.797157s; final reset/private reprovision exhausted
+  reconnect health attempts2..4, HTTP/TLS-1 around7s each, before device auth.
+  Current online state NOT restored; serial released. No root cause inferred.
+  Current public OpenAPI has33operations/manual metadata; no physical upload.
+  Docs closeout `docs/device-session-closeout`, base that merge; no runtime change.
 - **New physical result:** [DEVICE_SESSION_VERIFICATION.md](DEVICE_SESSION_VERIFICATION.md)
   records exact flashed runtime `17ed04ba393f8d5e6124c65d0eb07d926db85d43`, app
   SHA256, actual9heartbeat200/24idle-poll200 continuous serial run and independent
   advancing persisted heartbeat after helper exit. Serial released. Earlier two
   reconnect failures and a stale short-helper readback are preserved, not hidden;
   root cause/reliability remain unestablished. Extra retries were not needed in
-  the successful run; their coverage is synthetic. No ADC/user-arm/upload/native
+  the successful run; later physical exhaustion is recorded above. No ADC/user-arm/upload/native
   acceptance. Current source checkpoint paragraphs below preceded this run.
 - Owner firmware Bot, `firmware/session-guard-device-verification`, base
   `3fd50c7f2520982696a4f2e4ac095a06e34d1887`; publishing commits/PR record exact

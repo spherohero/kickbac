@@ -1,5 +1,23 @@
 # kickBAC firmware bot — current startup handoff
 
+## Operational communication restored — current evidence supersedes offline below
+
+Flashed reviewed `firmware/operational-connectivity@49e8d5a4dfc41b193fffdc2cfa9f857d98e900aa`
+(`xiao_device`, target identity reverified); image SHA256
+`1bbb8e0861e8228db305283efd278e002ae5d23ee3241e8603a421cec03b5d8d`.
+Normal boot skips intentional Wi-Fi disconnect, while `xiao_wifi` keeps that
+separate fault test. Bounded transport/5xx retries invalidate tickets immediately;
+auth/schema corruption/exhaustion still fail closed. No ADC/upload/app changes.
+Actual serial observed heartbeat12..28 and idle poll31..73; startup marker was
+missed, not fabricated. After helper exit, exact persisted `kb-demo-01` heartbeat
+advanced08:50:19.816042→08:50:35.474722UTC with ages0.749303/5.572119s on schema6.
+Serial released, no reset loop. `firmware/build/operational-network-serial.log`
+and `operational-network-server-ongoing.json` retain sanitized local evidence.
+Host/Ruff/all3builds and focused independent review passed. PR/remote head gives
+publication state; this is bounded current-online evidence, not long-term soak.
+Forced-reconnect-1 root cause remains unresolved; do not mistake skipping a test
+for fixing it. Read source `network_runtime.hpp` for exact recovery limits.
+
 ## Latest physical checkpoint — no-ADC image flashed, real device auth passed
 
 **Latest state supersedes the earlier pass:** at07:56:14UTC heartbeat was stale

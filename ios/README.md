@@ -1,6 +1,10 @@
 # KickBAC iOS
 
-Open `KickBAC.xcodeproj` in Xcode. This is the SwiftUI starter project.
+Open `KickBAC.xcodeproj` in Xcode. Resolve Swift packages when prompted.
+
+[Design direction](DESIGN.md) records the approved Home style and conventions for the rest of the app.
+
+Home uses a plain dark background. The Welcome star uses a bundled Metal shader, and the white onboarding pages stay plain. If Xcode reports a missing Metal Toolchain, install Apple's compiler once with `xcodebuild -downloadComponent MetalToolchain`.
 
 ## Auth0 handoff
 
@@ -10,4 +14,76 @@ Open `KickBAC.xcodeproj` in Xcode. This is the SwiftUI starter project.
 | URL scheme | `com.liam.KickBAC` |
 | Auth0 domain | `dev-c87oxm4dkbyatvrn.us.auth0.com` |
 | Client ID | `5gJK2T71UkL0fbVj9pbzzEzKeMWZoYlC` |
-| API audience | `https://kickbac-api/` |
+| API audience | `https://kickbac-api` |
+| Connection | `sms` |
+| Scopes | `openid profile` |
+| API base | `https://api.kickbac.vodka` |
+
+Both Allowed Callback URLs and Allowed Logout URLs must contain:
+
+```text
+com.liam.KickBAC://dev-c87oxm4dkbyatvrn.us.auth0.com/ios/com.liam.KickBAC/callback
+```
+
+The app uses Auth0.swift 3.1 through Swift Package Manager. Following Liam's confirmed native flow, `startPasswordless` requests an SMS for the E.164 phone number, then `login(phoneNumber:code:audience:scope:)` exchanges the entered six-digit code using the Passwordless OTP grant. This replaces the earlier hosted Authorization Code + PKCE flow: no browser sign-in session opens. Auth0 verifies the code, and the SDK validates the returned ID token's claims before credentials are saved. This is primary login, not MFA. Phone delivery stays server-side; iOS contains no Twilio SDK, client secret, device credential, or new kickBAC send/verify endpoint.
+
+Credentials are stored with the SDK's Keychain-backed `CredentialsManager`. The requested scopes intentionally omit `email` and `offline_access`; when the stored access token can no longer be used, the app asks the user to sign in again. Logout clears Keychain credentials; native SMS login creates no browser session. Account changes clear in-memory private data; results from an older session are discarded.
+
+Nicholas's October 17 backend handoff reports the Native SMS connection and Passwordless OTP grant are enabled, the provider feedback Action is deployed/bound, and HTTPS plus profile persistence are live. Do not repeat provider setup based on older notes. The app still requires a consenting user's real iPhone login to accept the full Auth0/API flow.
+
+The Me tab supports sign-in, sign-out, and retrying the private API connection. After login or session restoration, the app calls `GET /v1/me` and `GET /v1/measurements` with `Authorization: Bearer <credentials.accessToken>`. It preserves `user_id` as an opaque string and never links accounts by phone. Transient API downtime preserves sign-in and cached data. Profile loading errors show a retry instead of treating the account as new; onboarding completes only after a successful server save. Sensor counts, null BAC estimates, and simulator source labels remain distinct in the API models; Home's demo readings are not uploaded or mixed with private history.
+
+`APIBaseURL` in `KickBAC/Auth0.plist` is separate from the audience. Both match the handoff: HTTPS base `https://api.kickbac.vodka`, exact audience `https://kickbac-api` with no trailing slash. The actual SDK OTP request is checked against that audience. The authoritative deployed contract is [live OpenAPI](https://api.kickbac.vodka/openapi.json); Nicholas's profile source was still unpublished at handoff, so GitHub main may lag deployment.
+
+## Validation
+
+Run the isolated request/response checks from the repository root:
+
+```sh
+swiftc ios/KickBAC/AuthConfiguration.swift ios/KickBAC/KickBACAPI.swift ios/checks/AuthContractChecks.swift -o /tmp/kickbac-auth-checks
+/tmp/kickbac-auth-checks ios/KickBAC/Auth0.plist
+```
+
+These checks use a local URLProtocol stub, send no SMS, and prove configuration, bearer-header construction, opaque subject decoding, pagination, nullable measurements, and 401/503 handling. They do not prove a real Auth0 login or a deployed API.
+
+Check the native Auth0 SDK requests and failure handling with:
+
+```sh
+bash ios/checks/run-authentication-checks.sh
+```
+
+This uses the real SDK with a local transport stub and in-memory credential storage. It checks SMS/token request payloads, connection/grant failures, resend cooldown, invalid codes, and rejection of invalid ID tokens. It sends no real SMS and does not touch the user's Keychain.
+
+Live acceptance still requires:
+
+- Complete signup on an iPhone through the native phone and code screens. Incorrect or expired codes must not complete sign-in. Check change-number and resend behavior.
+- Relaunch and confirm Keychain restoration, then sign out and sign in again.
+- Against the deployed API, confirm `/v1/me` accepts the API access token and private history contains only the authenticated account's records. Repeat with a second account to check isolation.
+- Have Nicholas verify the bound Auth0 delivery-feedback Action actually executes on a real login. SMS delivery alone does not prove native login, token acceptance, or private-history access.
+
+Birthday remains local to the existing age step. Phone identity remains in Auth0; name/photo use the profile endpoints below. Neither a client-supplied user ID nor a phone number is sent in profile writes.
+
+## Me and profiles
+
+Me uses a softly rounded square photo, an editable name, saved-reading count, last check-in, and private reading history. Profile photos use the existing camera and square crop. Name/photo load from `GET /v1/me/profile` after login and session restoration, and save together with `PUT /v1/me/profile` at onboarding completion and profile edits. Both use the SDK API access token. A successful GET with null name starts profile onboarding; an error does not. Returning users skip name/photo setup. Saves await the normalized server response before dismissing, and failed saves retain form/photo input for a deliberate retry. Settings supports editing the profile, opening iOS camera permissions, refreshing the account, and signing out.
+
+PUT always includes `display_name` and `profile_picture`, including an explicit JSON null when no photo is selected. Name validation matches 1–80 Unicode code points after trimming, without control characters. Selected images are downsampled off the main thread, oriented, flattened onto white, and encoded as JPEG at no more than 512px per edge and 512 KiB. Name-only edits resend the current server picture without re-encoding; Remove photo sends null only when Save changes is pressed.
+
+The per-subject local cache is retained for offline display and old local-only profiles become drafts when the server confirms a first-time account. They are never uploaded automatically. Account switches/logout clear the displayed profile; stale network responses cannot update another account. A cache-write failure after a successful server save is reported separately from a failed server save.
+
+History includes loading, empty, retry, and pagination states. Test readings are labeled, missing BAC estimates stay distinct from raw sensor counts, and Home's demo readings never enter this history. Game statistics wait for a real backend source.
+
+Run the local storage and timestamp checks alongside the authentication checks above:
+
+```sh
+swiftc ios/KickBAC/ProfileStore.swift ios/KickBAC/ProfilePhoto.swift ios/KickBAC/KickBACAPI.swift ios/checks/ProfileChecks.swift -o /tmp/kickbac-profile-checks
+/tmp/kickbac-profile-checks
+```
+
+These checks cover server-confirmed onboarding, cache restoration, Unicode limits, real PNG-to-JPEG conversion/dimensions/byte limits, name-only picture preservation, deliberate removal, network-save failures, account isolation, delayed responses, and cache-write failures. Authentication integration checks cover restored identity, authenticated profile GET/PUT, wrong-owner responses, paginated history, temporary API failures, and clearing private data on session expiry.
+
+## Integration status
+
+The simulator build and local stub/image checks are separate from real acceptance. No unattended SMS is sent and no test bypass is added to production authentication. Complete onboarding on an iPhone, save a real photo, force-quit/relaunch, logout/relogin, test offline retry, and repeat with a second account before calling the live profile flow accepted.
+
+Home still contains its existing demo gauge/reading flow. NFC/QR resolution, explicit hardware arming, active-session polling/cancellation and hardware result rendering are a separate client integration; the profile work does not claim to implement or verify them. Nicholas owns firmware/device readiness and must publish the deployed backend source so the repository can reproduce the live release.

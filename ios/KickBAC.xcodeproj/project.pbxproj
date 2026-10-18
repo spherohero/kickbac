@@ -6,6 +6,10 @@
 	objectVersion = 110;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A72C3E112F10000100000001 /* Auth0 in Frameworks */ = {isa = PBXBuildFile; productRef = A72C3E112F10000100000002 /* Auth0 */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXFileReference section */
 		B4F7B98D3083388800FB9D85 /* KickBAC.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = KickBAC.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -22,6 +26,7 @@
 		B4F7B98A3083388800FB9D85 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
+				A72C3E112F10000100000001 /* Auth0 in Frameworks */,
 			);
 		};
 /* End PBXFrameworksBuildPhase section */
@@ -60,6 +65,9 @@
 				B4F7B98F3083388800FB9D85 /* KickBAC */,
 			);
 			name = KickBAC;
+			packageProductDependencies = (
+				A72C3E112F10000100000002 /* Auth0 */,
+			);
 			productName = KickBAC;
 			productReference = B4F7B98D3083388800FB9D85 /* KickBAC.app */;
 			productType = "com.apple.product-type.application";
@@ -88,6 +96,9 @@
 			);
 			mainGroup = B4F7B9843083388800FB9D85;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				A72C3E112F10000100000003 /* XCRemoteSwiftPackageReference "Auth0" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = B4F7B98E3083388800FB9D85 /* Products */;
 			projectDirPath = "";
@@ -241,6 +252,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 72WBVRXR2X;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
@@ -272,6 +284,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 72WBVRXR2X;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Config/Info.plist;
@@ -316,6 +329,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		A72C3E112F10000100000003 /* XCRemoteSwiftPackageReference "Auth0" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/auth0/Auth0.swift";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 3.1.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		A72C3E112F10000100000002 /* Auth0 */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A72C3E112F10000100000003 /* XCRemoteSwiftPackageReference "Auth0" */;
+			productName = Auth0;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = B4F7B9853083388800FB9D85 /* Project object */;
 	validationLevel = 1;

@@ -8,6 +8,7 @@ struct CameraCapture: View {
     let camera: ProfileCamera
     @Binding var previewSize: CGSize
     var isActive = true
+    @State private var previewOwner = UUID()
 
     var body: some View {
         VStack(spacing: 20) {
@@ -56,14 +57,10 @@ struct CameraCapture: View {
         .padding(.top, 32)
         .frame(maxWidth: 480)
         .frame(maxWidth: .infinity)
-        .task(id: isActive && scenePhase == .active) {
-            if isActive && scenePhase == .active && camera.photo == nil {
-                await camera.start()
-            } else {
-                await camera.stop()
-            }
+        .onChange(of: isActive && scenePhase == .active, initial: true) {
+            camera.setActive(isActive && scenePhase == .active, owner: previewOwner)
         }
-        .onDisappear { Task { await camera.stop() } }
+        .onDisappear { camera.setActive(false, owner: previewOwner) }
     }
 
     private var cameraPlaceholder: some View {
@@ -139,6 +136,7 @@ struct CameraCaptureControls: View {
 @MainActor @Observable
 final class ProfileCamera {
     private let session = ProfileCameraSession()
+    private var activity = CameraActivity()
     private var rotationCoordinator: AVCaptureDevice.RotationCoordinator?
     private(set) var previewSource: CameraPreviewSource?
     private(set) var photo: UIImage?
@@ -147,6 +145,20 @@ final class ProfileCamera {
     private(set) var needsSettings = false
     private(set) var isUnavailable = false
     private(set) var error: String?
+
+    func setActive(_ active: Bool, owner: UUID) {
+        if active {
+            let revision = activity.activate(owner: owner)
+            if photo == nil {
+                Task { await start(revision: revision) }
+            } else {
+                Task { await session.stop(revision: revision) }
+            }
+        } else if let revision = activity.deactivate(owner: owner) {
+            isReady = false
+            Task { await session.stop(revision: revision) }
+        }
+    }
 
     func requestAccess() {
         switch AVCaptureDevice.authorizationStatus(for: .video) {
@@ -160,32 +172,36 @@ final class ProfileCamera {
     }
 
     func start() async {
-        guard !isReady else { return }
+        guard let revision = activity.nextRequest() else { return }
+        await start(revision: revision)
+    }
+
+    private func start(revision: Int) async {
+        guard activity.isCurrent(revision), activity.owner != nil else { return }
+        isReady = false
         isUnavailable = false
         error = nil
         var authorized = AVCaptureDevice.authorizationStatus(for: .video) == .authorized
         if AVCaptureDevice.authorizationStatus(for: .video) == .notDetermined {
             authorized = await AVCaptureDevice.requestAccess(for: .video)
         }
-        guard !Task.isCancelled else { return }
+        guard activity.isCurrent(revision), activity.owner != nil else { return }
         needsSettings = !authorized
         guard authorized else {
             previewSource = nil
             return
         }
         do {
-            let source = try await session.start()
-            guard !Task.isCancelled else {
-                await session.stop()
-                return
-            }
+            guard let source = try await session.start(revision: revision), activity.isCurrent(revision) else { return }
             previewSource = source
             rotationCoordinator = AVCaptureDevice.RotationCoordinator(device: source.device, previewLayer: nil)
             isReady = true
         } catch CameraFailure.unavailable {
+            guard activity.isCurrent(revision) else { return }
             previewSource = nil
             isUnavailable = true
         } catch {
+            guard activity.isCurrent(revision) else { return }
             previewSource = nil
             self.error = "The camera couldn't start. Go back and try again."
             isUnavailable = true
@@ -193,22 +209,26 @@ final class ProfileCamera {
     }
 
     func stop() async {
+        guard let revision = activity.nextRequest() else { return }
         isReady = false
-        await session.stop()
+        await session.stop(revision: revision)
     }
 
     func capture() async {
         guard isReady, !isCapturing else { return }
         isCapturing = true
+        let revision = activity.revision
         error = nil
         defer { isCapturing = false }
         do {
             let angle = rotationCoordinator?.videoRotationAngleForHorizonLevelCapture ?? 90
             let data = try await session.capture(rotation: angle)
+            guard activity.isCurrent(revision) else { return }
             guard let image = UIImage(data: data) else { throw CameraFailure.noPhoto }
             photo = image
             await stop()
         } catch {
+            guard activity.isCurrent(revision) else { return }
             self.error = "Couldn't take your photo. Try again."
         }
     }
@@ -235,8 +255,10 @@ private actor ProfileCameraSession {
     private let output = AVCapturePhotoOutput()
     private var previewSource: CameraPreviewSource?
     private var captureDelegate: ProfilePhotoDelegate?
+    private var requestOrder = CameraRequestOrder()
 
-    func start() throws -> CameraPreviewSource {
+    func start(revision: Int) throws -> CameraPreviewSource? {
+        guard requestOrder.accept(revision) else { return nil }
         let source: CameraPreviewSource
         if let previewSource {
             source = previewSource
@@ -245,7 +267,7 @@ private actor ProfileCameraSession {
             previewSource = source
         }
         if !session.isRunning { session.startRunning() }
-        guard session.isRunning else { throw CameraFailure.unavailable }
+        guard session.isRunning, !session.isInterrupted else { throw CameraFailure.unavailable }
         return source
     }
 
@@ -277,7 +299,8 @@ private actor ProfileCameraSession {
         return CameraPreviewSource(session: session, device: device)
     }
 
-    func stop() {
+    func stop(revision: Int) {
+        guard requestOrder.accept(revision) else { return }
         if session.isRunning { session.stopRunning() }
     }
 
@@ -332,6 +355,7 @@ private struct CameraPreview: UIViewRepresentable {
     }
 
     func updateUIView(_ view: CameraPreviewView, context: Context) {
+        view.bind(source)
         view.photoView.image = image
         view.photoView.isHidden = image == nil
         view.accessibilityLabel = image == nil ? "Front camera preview" : "Your photo"
@@ -353,17 +377,13 @@ private final class CameraPreviewView: UIView {
     private var blurAnimator: UIViewPropertyAnimator?
     private var rotationCoordinator: AVCaptureDevice.RotationCoordinator?
     private var rotationObservation: NSKeyValueObservation?
+    private var boundSource: CameraPreviewSource?
 
     init(source: CameraPreviewSource?) {
         super.init(frame: .zero)
         clipsToBounds = true
         isAccessibilityElement = true
         previewLayer.videoGravity = .resizeAspectFill
-        previewLayer.session = source?.session
-        if let connection = previewLayer.connection, connection.isVideoMirroringSupported {
-            connection.automaticallyAdjustsVideoMirroring = false
-            connection.isVideoMirrored = true
-        }
         photoView.contentMode = .scaleAspectFill
         photoView.clipsToBounds = true
         addSubview(photoView)
@@ -379,6 +399,19 @@ private final class CameraPreviewView: UIView {
         animator.pauseAnimation()
         animator.fractionComplete = 0.08
         blurAnimator = animator
+        bind(source)
+    }
+
+    func bind(_ source: CameraPreviewSource?) {
+        guard boundSource !== source else { return }
+        rotationObservation = nil
+        rotationCoordinator = nil
+        boundSource = source
+        previewLayer.session = source?.session
+        if let connection = previewLayer.connection, connection.isVideoMirroringSupported {
+            connection.automaticallyAdjustsVideoMirroring = false
+            connection.isVideoMirrored = true
+        }
         guard let source else { return }
         let coordinator = AVCaptureDevice.RotationCoordinator(device: source.device, previewLayer: previewLayer)
         rotationCoordinator = coordinator
@@ -399,6 +432,7 @@ private final class CameraPreviewView: UIView {
         blurAnimator = nil
         rotationObservation = nil
         rotationCoordinator = nil
+        boundSource = nil
         previewLayer.session = nil
     }
 

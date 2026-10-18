@@ -6,7 +6,7 @@ The iOS review branch includes current main's published backend, games, deployme
 
 - Embedded Auth0 SMS OTP with exact audience `https://kickbac-api`, API base `https://api.kickbac.vodka`, and SDK Keychain credentials.
 - First-login storage handles absent Keychain items during SDK cleanup, while rejecting actual write/delete failures. The regression reproduces the former secure-sign-in error with an empty store; credentials remain Keychain-backed and prior session metadata is still cleared.
-- Profile GET/PUT, explicit null photo removal, normalized bounded JPEGs, server-confirmed saves, retries, account-scoped cache and stale-response protection. Concurrent profile loaders await one request. Camera denial does not trap onboarding: Skip photo is available.
+- Profile GET/PUT, explicit null photo removal in the editor, normalized bounded JPEGs, server-confirmed saves, retries, account-scoped cache and stale-response protection. Concurrent profile loaders await one request. Onboarding requires a captured photo; there is no Skip photo button. Camera preview ownership and ordered start/stop commands prevent stale views from stopping the current camera; native preview updates rebind their source.
 - Private paginated measurement history in server receipt order. Home uses actual loaded nonsimulated estimates; null stays unavailable/raw. Debug demo is labeled and isolated.
 - QR/manual trusted device selection, public resolver, authenticated availability, explicit empty-JSON arm, session poll/backoff/cancel/terminal result and history refresh. Pending sessions persist per subject. Authoritative 404 releases unavailable local tracking without automatic rearming.
 - Me loads server Games played/Wins/Points. Party gameplay and game-result submission remain separate work; no scores, completions or party totals are invented.
@@ -19,7 +19,7 @@ NFC Tag Reading cannot be provisioned by the current Apple Personal Team. The in
 
 ## Test on the iPhone
 
-1. Sign in with your own phone/code. A new account should enter name/photo setup; try Skip photo. A saved account should load its existing profile.
+1. Sign in with your own phone/code. A new account should enter name/photo setup. Allow camera access, check the live preview, capture, retake, and use the photo before completing setup. A saved account should load its existing profile. Auth0 sign-in can succeed before the name/photo profile is saved.
 2. Save/edit a name and real photo. Force-quit/reopen, then sign out/in: name/photo and private history should restore. Change only the name and confirm the picture remains. Remove photo deliberately and save.
 3. Turn connectivity off before saving an edit: input should remain and the error should permit retry after reconnecting. Switch accounts and confirm no prior private profile/history/stats appears.
 4. Home should show dashes when there are no real BAC estimates. Debug Demo must stay visibly labeled and must not add a private history entry.

@@ -65,6 +65,13 @@ Live acceptance still requires:
 
 Birthday remains local to the existing age step. Phone identity remains in Auth0; name/photo use the profile endpoints below. Neither a client-supplied user ID nor a phone number is sent in profile writes.
 
+Onboarding requires a captured photo; there is no camera skip action. Denied camera permission opens iOS Settings. Camera activity is owned by each preview and revision-ordered on the session actor, so late disposal or cancellation cannot stop a newer preview. The native preview rebinds changed sources. Check live image/capture/retake on the iPhone; lifecycle checks do not verify actual image rendering.
+
+```sh
+swiftc ios/KickBAC/CameraActivity.swift ios/checks/CameraActivityChecks.swift -o /tmp/kickbac-camera-checks
+/tmp/kickbac-camera-checks
+```
+
 ## Me and profiles
 
 Me uses a softly rounded square photo, an editable name, saved-reading count, last check-in, and private reading history. Profile photos use the existing camera and square crop. Name/photo load from `GET /v1/me/profile` after login and session restoration, and save together with `PUT /v1/me/profile` at onboarding completion and profile edits. Both use the SDK API access token. A successful GET with null name starts profile onboarding; an error does not. Returning users skip name/photo setup. Saves await the normalized server response before dismissing, and failed saves retain form/photo input for a deliberate retry. Settings supports editing the profile, opening iOS camera permissions, refreshing the account, and signing out.

@@ -146,16 +146,9 @@ struct OnboardingView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             Group {
                 if step == .photo {
-                    VStack(spacing: 0) {
-                        CameraCaptureControls(camera: camera, previewSize: cameraPreviewSize) { image in
-                            photo = image
-                            move(to: .complete)
-                        }
-                        Button("Skip photo") {
-                            photo = nil
-                            move(to: .complete)
-                        }
-                        .frame(minHeight: 44).padding(.bottom, 12)
+                    CameraCaptureControls(camera: camera, previewSize: cameraPreviewSize) { image in
+                        photo = image
+                        move(to: .complete)
                     }
                 } else {
                     footer(for: step)
@@ -518,6 +511,7 @@ struct OnboardingView: View {
         case .phone: isPhoneNumberValid
         case .code: code.count == 6 && session.pendingPhoneNumber != nil
         case .name: PartyProfile.isValidName(name)
+        case .complete: photo != nil
         default: true
         }
     }

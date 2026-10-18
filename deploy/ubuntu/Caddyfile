@@ -1,0 +1,6 @@
+# DNS must resolve directly to the authorized VM; allow inbound TCP 80/443.
+api.kickbac.vodka {
+    header -Server
+    # No access log: request paths/query strings may contain private data.
+    reverse_proxy 127.0.0.1:8000
+}

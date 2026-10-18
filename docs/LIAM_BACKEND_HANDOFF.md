@@ -2,6 +2,29 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+### Final consolidated scope — parties, App readings, saved Wi-Fi
+
+Nicholas's forwarded `combined.md` is the final reference. Finish atomic linked
+parties first; separately add private App reading persistence without touching
+Liam's existing local records/dirty app work. Frozen App contract:
+[APP_READINGS.md](APP_READINGS.md): authenticated POST/GET `/v1/me/app-readings`,
+GET `/v1/me/app-reading-summary`; existing local UUID/value/aware recorded_at/
+actual hold duration/source `app_generated`,201new/200exactretry/409changed.
+Strict finite value0..1, duration1..60000ms,32KiB body,60new saves/minute with
+accepted replay exempt. Separate owner ledger/summary, no device/session/rawADC/
+physical BAC or point fabrication. These routes are targets, NOT deployed yet;
+Liam adds owner-scoped outbox/receipt validation/dedupe only after release proof.
+Keep guest records local until explicit account assignment, preserve every local
+record on failures. Additive API; no backend takeover of iOS/presentation.
+
+Nicholas also explicitly requests the powered ESP32 continually try one privately
+saved Wi-Fi network at boot and after loss, with capped retry delays/no hot loop.
+Firmware owner handles private network entry/on-device persistence/reconnect;
+never request the password in chat, hardcode it in Git, change eFuses/security
+state or infer encrypted NVS. This does not change device/App reading semantics.
+Client/backend party/App work remains independent. Device bearer cold-boot
+bootstrap policy must be stated separately from saving a Wi-Fi connection.
+
 ### Device parties / one current party — requested implementation
 
 Owner backend, `backend/device-party-resolve`, base22c1215; frozen contractcdba99b

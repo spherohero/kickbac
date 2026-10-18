@@ -1,5 +1,21 @@
 # Architectural decisions
 
+## Private App readings, separate from device measurements
+
+- **Choice:** own authenticated App reading ledger/resource, preserving original
+  local UUID/value/client aware time/actual hold duration and immutable
+  `app_generated` source.201/200exact-replay/409changed, private page+snapshot
+  count/latest; no fabricated device/session/ADC/BAC or point award.
+- **Why:** cloud persistence/cross-phone reload must not impersonate firmware,
+  replace unavailable physical estimates, overwrite local-only records or mark
+  Synced without a matching server receipt. Existing user Auth0 subject owns rows.
+- **Limits:** finite numeric0..1, strict duration1..60000ms, aware ISO timestamps,
+ 32KiB streamed JSON,60new saves/minute/replay exempt; values remain generated,
+  not clinical/physical evidence.008migration follows007 and preserves old data.
+- **Client:** Liam owns durable account-scoped outbox/dedupe/relaunch/retry and
+  explicit guest assignment. No app changes by backend. Exact target APP_READINGS.md;
+  source/CI/deployment/actual multi-phone acceptance remain separate.
+
 ## Atomic device-party setup and one current OPEN party
 
 - **Choice:** additive authenticated POST/parties/resolve and GET/me/parties/current;

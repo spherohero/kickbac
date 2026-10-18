@@ -1,5 +1,12 @@
 # Parties and richer private profile history — reviewed backend source
 
+**Current release:** LIVE schema7/35operations, atomic resolve/current-party policy
+activated2026-10-18T10:29:53UTC, runtime768e992, PR40merge9d52390. Verified
+backup/old-object-row-BLOB-hash preservation/private-copy/target/public readback:
+[release proof](BACKEND_RELEASE_VERIFICATION.md). Lower schema6/33/source-target
+checkpoints are historical; device resolve/current is deployed, App reading8isnot.
+No production party cleanup/history deletion or iOS edits were performed.
+
 **Status: DEPLOYED after reviewed source/CI, backup/copy trial and target/public verification.** Owner:
 backend Bot, integration branch `backend/party-profile-completion`, publishing
 branch `backend/party-profile-contract` in [PR #26](https://github.com/spherohero/kickbac/pull/26),

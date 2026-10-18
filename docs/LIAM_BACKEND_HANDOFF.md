@@ -2,6 +2,36 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+### LIVE linked-party resolve — client can adopt now
+
+**Deployed2026-10-18T10:29:53UTC:** schema7/35operations, immutable runtime
+`768e992e15c9c7decfb963264e30159eb818abcd`, release
+`/opt/kickbac/releases/party-resolve-768e992-20261018T102303Z`.
+[PR40](https://github.com/spherohero/kickbac/pull/40) head9b59021 merged
+`9d523902dc97595fe5982fbd1fa3e54abfe59187`; parents/tree/remote ancestry verified.
+Public OpenAPI exactly matches candidate and protected new routes401/no-store
+without auth. Independent SPEC+QUALITY,588combined tests,36target tests,
+retained backup/private-copy6→7 exact old-data preservation, finalbackup/actual
+PID/cwd/92manifest hashes/schema integrity/FK/postbackup/services passed. No
+production fixture/user/arm/grant or party cleanup was performed.
+
+**Liam's exact action:** adopt already-frozen authenticated
+`POST /v1/parties/resolve` `{request_id:<persistedUUID>,device_id:"kb-demo-01",name?}`.
+Defaultname`Party`;201created/200joined or acceptedreplay, response`{action,party}`
+already device-bound. No operator grant or legacycreate/bind fallback. Preserve
+UUID/body across retry; changed409/foreign404. Current restoration may use
+`GET /v1/me/parties/current` →PartyResponse|null; legacyduplicates409
+`active_party_conflict` with own `current_parties`/`has_more`, no silent switching.
+Delete remains existinghostPOST/close{}; confirmCLOSED/device null before clearing
+activeUI, private readings/game histories remain. OneOPENuser policy is deliberate
+behavior change across all create/join paths; no app source altered by backend.
+Exact[contract](DEVICE_PARTY_RESOLVE.md)/[release proof](BACKEND_RELEASE_VERIFICATION.md).
+
+Appreading POST/GET/summary target remains NOTDEPLOYED and in separate worker;
+do not add upload claims/outbox acceptance until its own release. SavedWiFi task
+is firmware-owned. Lower pendingparty/schema6 entries are historical checkpoints.
+Native authenticated successful resolve/two-phone/NFC acceptance remains Liam's.
+
 ### Final consolidated scope — parties, App readings, saved Wi-Fi
 
 Nicholas's forwarded `combined.md` is the final reference. Finish atomic linked

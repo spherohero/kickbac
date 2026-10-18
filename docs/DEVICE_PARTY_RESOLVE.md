@@ -1,5 +1,20 @@
 # Device party resolution — implementation contract
 
+## Current deployment superseding implementation checkpoints below
+
+**LIVE schema7/35operations at2026-10-18T10:29:53UTC.**
+[PR40](https://github.com/spherohero/kickbac/pull/40), exact head9b59021, merged
+`9d523902dc97595fe5982fbd1fa3e54abfe59187`; complete reviewed-tree equality,
+parents and remote ancestry verified. Immutable runtime768e992/92manifestfiles,
+locked runtime, retained schema6 backup/private6→7 exact old-data preservation,
+36target tests/simulator, final writer-stopped backup/migration/readback passed.
+Public OpenAPI exactly matches candidate35operations; both new routes401/no-store
+without auth.8parties/8memberships/1profile/1measurement preserved, no cleanup.
+Parent588combined tests/lint/77files/compile/simulator and independentSPEC+QUALITY
+pass; exactPRCI39119170237green. App reading8target remains separate/not deployed.
+Detailed proof: [BACKEND_RELEASE_VERIFICATION.md](BACKEND_RELEASE_VERIFICATION.md).
+Every lower pending/not-deployed sentence is the historical implementation stage.
+
 Owner backend; branch `backend/device-party-resolve`, base
 `22c1215848aa17fdfd238c9b1759fd4be4575f00`. Requested by Nicholas from Liam's
 forwarded device-party/one-current-party handoff. This document freezes the

@@ -31,6 +31,10 @@ FixtureWiFi WiFi;
 #include "../src/device_probe.cpp"
 
 void reset_fixture() {
+    negative_retry = false;
+    wifi_setup_requested = false;
+    wifi_setup_command.clear();
+    recovery.clear();
     session_fence = kickbac::SessionFence{};
     credential.clear();
     failed = negative_checked = pass_reported = false;
@@ -109,9 +113,7 @@ void fault_matrix() {
          "{PRIVATE_RESPONSE_SENTINEL", 200, true},
         {"wrong identity", -2, std::string::npos, 200, true, true,
          "{\"device_id\":\"PRIVATE_RESPONSE_SENTINEL\",\"active_session\":null}", 200, true},
-        {"begin failure", -2, std::string::npos, 200, false, false, "", -1, false},
-        {"transport failure", -2, std::string::npos, -11, true, false, "", -11, false},
-        {"server error", -2, std::string::npos, 503, true, false, "", 503, false},
+
         {"redirect", -2, std::string::npos, 302, true, false, "", 302, false},
         {"unauthorized", -2, std::string::npos, 401, true, false, "", 401, false}
     };
@@ -188,8 +190,13 @@ void boundary_and_wifi_cases() {
     const unsigned before_begins = fixture_begins;
     fixture_wifi_status = 0;
     device_probe_loop();
-    assert_latched_stop("DEVICE_FAIL stage=wifi_lost status=-1 credential=cleared uploads=disabled\n");
+    assert(!failed && credential.ready() && session_fence.snapshot().id[0] == '\0');
+    assert(fixture_lines.back() == "device_network state=lost credential=ram_retained pending=0\n");
     assert(fixture_begins == before_begins);
+    fixture_wifi_status = WL_CONNECTED;
+    fixture_now = 2000;
+    device_probe_loop();
+    assert(!failed && credential.ready() && fixture_begins == before_begins + 1);
 
     reset_fixture();
     fixture_negative_status = 200;
@@ -226,6 +233,96 @@ void retained_session_cases() {
     std::cout << "PASS: actual adapter retains session UUID/expiry, fences idle and does not sample/upload/log IDs (fixtures)\n";
 }
 
+void transient_recovery_cases() {
+    for (const bool heartbeat : {true, false}) {
+        for (const int status : {-1, -11, 500, 502, 503, 504}) {
+            for (unsigned success_at = 1; success_at <= 4; ++success_at) {
+                reset_fixture();
+                provision_fixture();
+                fixture_now = heartbeat ? 10000U : 2000U;
+                kickbac::PollSnapshot live;
+                live.state = kickbac::PollState::Armed;
+                std::strcpy(live.id, "3b0c0a9e-2604-4b78-a487-3fd8fa1d4a4b");
+                const std::time_t deadline = std::time(nullptr) + 45;
+                assert(std::strftime(live.expires_at, sizeof(live.expires_at),
+                    "%Y-%m-%dT%H:%M:%SZ", std::gmtime(&deadline)) > 0);
+                assert(session_fence.observe(live, fixture_now, utc_upper_ms()));
+                kickbac::SessionTicket ticket;
+                assert(session_fence.begin(ticket, fixture_now, utc_upper_ms()));
+                kickbac::FrozenUpload pending;
+                const char* measurement = "026af7c9-d605-4291-a1db-5b230e10ef43";
+                const char* original = R"({"session_id":"3b0c0a9e-2604-4b78-a487-3fd8fa1d4a4b","measurement_id":"026af7c9-d605-4291-a1db-5b230e10ef43","fixture_only":true})";
+                assert(pending.seal(live.id, measurement, original));
+                fixture_status = status;
+                device_probe_loop();
+                assert(!failed && credential.ready() && recovery.active());
+                assert(session_fence.snapshot().id[0] == '\0');
+                assert(!session_fence.matches(ticket, fixture_now, utc_upper_ms()));
+                for (unsigned retry = 1; retry <= 3; ++retry) {
+                    const unsigned before_begins = fixture_begins;
+                    const unsigned before_posts = fixture_posts, before_gets = fixture_gets;
+                    const std::uint32_t delay_ms = 2000U << (retry - 1);
+                    fixture_now += delay_ms - 1;
+                    device_probe_loop();
+                    assert(fixture_begins == before_begins); // no busy retry or other endpoint
+                    ++fixture_now;
+                    fixture_status = success_at == retry ? 200 : status;
+                    device_probe_loop();
+                    assert(fixture_begins == before_begins + 1);
+                    assert(fixture_posts == before_posts + (heartbeat ? 1U : 0U));
+                    assert(fixture_gets == before_gets + (heartbeat ? 0U : 1U));
+                    assert(pending.ready() && std::strcmp(pending.body(), original) == 0);
+                    assert(!session_fence.matches(ticket, fixture_now, utc_upper_ms()));
+                    if (success_at == retry) {
+                        assert(!failed && credential.ready() && !recovery.active());
+                        break;
+                    }
+                    if (retry == 3) {
+                        assert_latched_stop(std::string("DEVICE_FAIL stage=") +
+                            (heartbeat ? "heartbeat" : "poll") + " status=" + std::to_string(status) +
+                            " credential=cleared uploads=disabled\n");
+                    } else assert(recovery.active() && recovery.count() == retry + 1);
+                }
+            }
+        }
+    }
+    // Recovery must not permit credential/schema corruption or changed identity.
+    for (const bool corrupt : {false, true}) {
+        reset_fixture();
+        provision_fixture();
+        fixture_now = 2000;
+        fixture_status = 502;
+        device_probe_loop();
+        fixture_now = 4000;
+        fixture_status = corrupt ? 200 : 401;
+        fixture_override_body = corrupt;
+        fixture_override_heartbeat = false;
+        fixture_response_body = R"({"device_id":"wrong","active_session":null})";
+        device_probe_loop();
+        assert_latched_stop(std::string("DEVICE_FAIL stage=poll status=") +
+            (corrupt ? "200" : "401") + " credential=cleared uploads=disabled\n");
+    }
+    std::cout << "PASS: same-endpoint bounded transport/5xx recovery, immediate ticket invalidation, immutable original pending bytes, exhaustion/auth/schema stop (fixtures)\n";
+}
+
+void negative_transport_recovery_case() {
+    reset_fixture();
+    fixture_negative_status = -11;
+    provision_fixture();
+    assert(!failed && credential.ready() && !negative_checked && negative_retry);
+    assert(recovery.active() && fixture_posts == 0);
+    fixture_wifi_status = 0;
+    device_probe_loop();
+    assert(!failed && credential.ready() && !negative_checked && !negative_retry);
+    fixture_wifi_status = WL_CONNECTED;
+    fixture_negative_status = 401;
+    fixture_now = 2000;
+    device_probe_loop();
+    assert(negative_checked && heartbeats == 1 && polls == 1 && !failed);
+    std::cout << "PASS: hotspot loss during initial negative-auth transport retains bearer and requires real401 before authenticated work (fixture)\n";
+}
+
+#if !defined(KICKBAC_ADAPTER_LIBRARY)
 int main() {
     device_probe_loop();
     assert(fixture_posts == 0 && fixture_gets == 0);
@@ -271,4 +368,7 @@ int main() {
     fault_matrix();
     boundary_and_wifi_cases();
     retained_session_cases();
+    transient_recovery_cases();
+    negative_transport_recovery_case();
 }
+#endif

@@ -1,5 +1,59 @@
 # kickBAC firmware bot — current startup handoff
 
+## One saved Wi-Fi / lifetime recovery — focused firmware change
+
+Physical update: [PR41](https://github.com/spherohero/kickbac/pull/41) runtime
+`9b0ca25` flashed/hashverified; explicit private save confirmed stored/saved1.
+Software reset restored Wi-Fi with NO Wi-Fi frame; bearer-only bootstrap passed.
+Operator hotspot-loss/return test observed attempts/backoff/trusted rejoin and
+authenticated heartbeat resume without reset/re-entry. Post-listener server
+heartbeat advanced10:38:32.407638→10:38:45.315899UTC inside30s; accepted demo remains
+exactly1/COMPLETE. See actual evidence/limits in the guide below. Serial released;
+no physical power-bank/cable cold-cycle or bearer persistence claim.
+
+`firmware/saved-wifi-recovery`, base `22c1215`; see
+[SAVED_WIFI.md](../firmware/SAVED_WIFI.md) for private unchecked opt-in, exact
+commands, single NVS key and tested1..60s jitter/30s association/lifetime retry.
+Network loss invalidates tickets and holds unresolved payloads without auto-upload;
+auth/schema failures remain separate. Cold boot restores Wi-Fi ONLY: bearer stays
+RAM-only, with explicit `--device-only` private bootstrap after trusted readiness.
+No NVS encryption claim, eFuse/security change, app or measurement-wire change.
+Host/Ruff/all3builds pass; corrected independent-review findings were regression-
+tested, not silently declared a second independent approval. Actual physical
+save/reboot/outage and exact source/PR state must be checked before claiming them.
+Preserve accepted mock measurement `ade105cf-2dd3-4f4e-8e38-3bf7ac982154` and
+session `21dbab79-4db0-4c8c-9c1e-7ab9525ba15f`; no new arm/upload for this task.
+
+## Explicit mock uploader — current source, physical acceptance still gated
+
+Branch `firmware/explicit-mock-uploader`, base `8f60967`. Read
+[the exact operator command and limits](../firmware/MOCK_DEMO.md). New `xiao_device`
+supports one deliberate USB command bound to exact live app-armed UUID, fresh
+server confirmation, frozen UUID/payload and verified200/201 ACK. Raw1200/duration
+2500 are SYNTHETIC with `source:simulator`, unknown acquisition UTC null, BAC null.
+No ADC/sampling/app edits, no upload merely from arming. Full host/Ruff/all3builds,
+isolated real-HTTP201/replay200/actual ACK/history/restart and focused independent
+review pass. Publishing PR/head gives readiness/flash state; do not presume a
+production measurement until actual user arm/USB/ACK/persisted readback.
+
+## Operational communication restored — current evidence supersedes offline below
+
+Flashed reviewed `firmware/operational-connectivity@49e8d5a4dfc41b193fffdc2cfa9f857d98e900aa`
+(`xiao_device`, target identity reverified); image SHA256
+`1bbb8e0861e8228db305283efd278e002ae5d23ee3241e8603a421cec03b5d8d`.
+Normal boot skips intentional Wi-Fi disconnect, while `xiao_wifi` keeps that
+separate fault test. Bounded transport/5xx retries invalidate tickets immediately;
+auth/schema corruption/exhaustion still fail closed. No ADC/upload/app changes.
+Actual serial observed heartbeat12..28 and idle poll31..73; startup marker was
+missed, not fabricated. After helper exit, exact persisted `kb-demo-01` heartbeat
+advanced08:50:19.816042→08:50:35.474722UTC with ages0.749303/5.572119s on schema6.
+Serial released, no reset loop. `firmware/build/operational-network-serial.log`
+and `operational-network-server-ongoing.json` retain sanitized local evidence.
+Host/Ruff/all3builds and focused independent review passed. PR/remote head gives
+publication state; this is bounded current-online evidence, not long-term soak.
+Forced-reconnect-1 root cause remains unresolved; do not mistake skipping a test
+for fixing it. Read source `network_runtime.hpp` for exact recovery limits.
+
 ## Latest physical checkpoint — no-ADC image flashed, real device auth passed
 
 **Latest state supersedes the earlier pass:** at07:56:14UTC heartbeat was stale

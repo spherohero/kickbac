@@ -23,7 +23,7 @@ def initialize(path):
     path.parent.mkdir(parents=True, exist_ok=True)
     with connect(path) as db:
         version = db.execute("PRAGMA user_version").fetchone()[0]
-        if version not in (0, 1, 2, 3, 4, 5, 6):
+        if version not in (0, 1, 2, 3, 4, 5, 6, 7, 8):
             raise RuntimeError("Unsupported database schema")
         migrations = [
             "001_initial.sql",
@@ -32,6 +32,8 @@ def initialize(path):
             "004_game_results.sql",
             "005_parties.sql",
             "006_party_check_ins.sql",
+            "007_party_resolve.sql",
+            "008_app_readings.sql",
         ]
         for migration in migrations[version:]:
             sql = (Path(__file__).parent.parent / "migrations" / migration).read_text()
@@ -42,7 +44,7 @@ def check_schema(path):
     if not Path(path).is_file():
         raise RuntimeError("Initialize database with python -m kickbac.cli init-db")
     with connect(path) as db:
-        if db.execute("PRAGMA user_version").fetchone()[0] != 6:
+        if db.execute("PRAGMA user_version").fetchone()[0] != 8:
             raise RuntimeError("Database schema is not initialized")
         db.execute("SELECT id,credential_hash,last_seen_at FROM devices LIMIT 0")
         db.execute(
@@ -59,6 +61,9 @@ def check_schema(path):
             "scoring_policy,source,created_at FROM game_results LIMIT 0"
         )
         for table, columns in {
+            "app_readings": "reading_id,user_id,value,recorded_at,duration_ms,source,received_at",
+            "app_reading_save_windows": "user_id,window_started,accepted",
+            "party_resolve_requests": "request_id,user_id,device_id,name,party_id,action",
             "parties": "party_id,host_user_id,name,join_code,created_at,state,closed_at",
             "party_members": "party_id,user_id,joined_at,left_at",
             "device_party_hosts": "device_id,user_id",

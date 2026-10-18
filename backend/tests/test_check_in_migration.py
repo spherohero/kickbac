@@ -113,7 +113,7 @@ def test_populated5_upgrade_repeat_backup_restart(tmp_path):
     initialize(path)
     initialize(path)
     with connect(path) as db:
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 6
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 8
         assert all(snapshot(db)[t] == v for t, v in before.items())
         db.execute(
             "INSERT INTO party_check_ins VALUES ('c','s','p','g','opaque-owner','old')"

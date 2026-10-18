@@ -17,18 +17,20 @@ logging change or new private provisioning was performed.
 
 Read [release verification](../../BACKEND_RELEASE_VERIFICATION.md) and the latest
 [shared client handoff](../../LIAM_BACKEND_HANDOFF.md) before the historical
-checkpoint below. The existing host is now on schema6/33 operations from immutable
-`172e54c1604356e3e83db2fc0672706829841795` (PR30 mergec78a042), activated
-2026-10-18T07:55:20UTC. Retained backup, production-copy4→6 preservation,56 target
-tests, runtime simulator, exact PR/main backend+native CI and external exact-source
-OpenAPI readback passed. No production user/arm/reading inserted. Actual phone
-acceptance and protected physical acquisition remain unverified. Firmware's latest
-reconnect failed, superseding earlier bounded online evidence; check current
-DEVICE_SESSION_VERIFICATION rather than reporting permanent connectivity.
-Nicholas subsequently lifted the04:00 client cutoff for necessary iOS work in
-isolated branches; preserve Liam's original worktree/ref/designs. PR32 preserves
-his latest preview plus compatible main; native CIgreen is not merge approval.
-This is continuity documentation, not a new request to redeploy or restart work.
+checkpoint below. The existing host is now on **schema 8 / 38 operations**, source
+`4a29218b1516f285d7b419edcfe0f18258064a6d`, PR #43 merge `d92a640`, activated
+2026-10-18T10:53:55 UTC. Read the concise **[final handoff](../../FINAL_BACKEND_HANDOFF.md)**.
+Atomic device-linked parties/current-party policy and App reading save/history/
+summary are deployed. Parent 641 tests, target 70, independent SPEC/QUALITY,
+exact PR/main CI, retained backups/private 7→8 preservation/final migration,
+actual PID/99 hashes/public exact-source OpenAPI and services were verified.
+Original accepted device demo remains COMPLETE/exactly once; heartbeat age
+1.751 s at 10:56:36 UTC. Saved-Wi-Fi firmware PR #41 is merged; bearer is still
+RAM-only, not standalone authenticated power-bank cold boot. No remote-start
+route was added. Liam owns app adoption and actual native offline/two-phone/NFC
+acceptance. Preserve his branch/worktree/designs; no temporary takeover resumes.
+Older schema/count/offline checkpoints below are historical. This is continuity
+documentation, not a request to redeploy or restart completed work/provider setup.
 
 ## 1. Identity, ownership and first reads
 

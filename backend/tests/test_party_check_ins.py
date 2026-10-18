@@ -140,7 +140,7 @@ def test_game_snapshot_must_match(party_world, case, expected):
         if case == "party":
             other = str(uuid4())
             db.execute(
-                "INSERT INTO parties VALUES (?,'auth0|alice','Other','JKLMNPQR',?,'OPEN',NULL)",
+                "INSERT INTO parties VALUES (?,'other-host','Other','JKLMNPQR',?,'OPEN',NULL)",
                 (other, now[0].isoformat()),
             )
             db.execute("UPDATE party_games SET party_id=?", (other,))

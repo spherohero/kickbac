@@ -208,25 +208,28 @@ def test_operator_grant_requires_registered_device_and_opaque_subject(
         assert db.execute("SELECT COUNT(*) FROM sessions").fetchone()[0] == 0
 
 
-def test_host_granted_binding_reassignment_and_device_join(world):
+def test_host_granted_binding_reassignment_and_device_join(world, identity):
     from kickbac.cli import grant_party_device
 
     c, users, _, _, path = world
 
-    def create():
+    users["carol"] = {"Authorization": "Bearer " + identity[1](sub="auth0|carol")}
+
+    def create(who):
         return c.post(
             "/v1/parties",
             json={"party_id": str(uuid4()), "name": "Friday"},
-            headers=users["alice"],
+            headers=users[who],
         ).json()
 
-    p, q = create(), create()
+    p, q = create("alice"), create("carol")
     url = "/v1/parties/" + p["party_id"] + "/device"
     assert (
         c.put(url, json={"device_id": "one"}, headers=users["alice"]).status_code == 404
     )
     grant_party_device(path, "one", "auth0|alice")
     grant_party_device(path, "two", "auth0|alice")
+    grant_party_device(path, "one", "auth0|carol")
     bound = c.put(url, json={"device_id": "one"}, headers=users["alice"])
     assert bound.status_code == 200
     assert bound.json()["device_id"] == "one"
@@ -243,7 +246,7 @@ def test_host_granted_binding_reassignment_and_device_join(world):
     conflict = c.put(
         "/v1/parties/" + q["party_id"] + "/device",
         json={"device_id": "one"},
-        headers=users["alice"],
+        headers=users["carol"],
     )
     assert conflict.status_code == 409
     assert conflict.json()["error"]["code"] == "device_assigned"
@@ -344,10 +347,18 @@ def test_random_join_code_collision_retries_without_partial_party(world, monkeyp
         )
         assert r.status_code == 201
         assert r.json()["join_code"] == code
+        assert (
+            c.post(
+                "/v1/parties/" + r.json()["party_id"] + "/close",
+                json={},
+                headers=users["alice"],
+            ).status_code
+            == 200
+        )
     assert len(c.get("/v1/me/parties", headers=users["alice"]).json()["items"]) == 2
 
 
-def test_concurrent_assignment_and_join_close_are_serializable(world):
+def test_concurrent_assignment_and_join_close_are_serializable(world, identity):
     from concurrent.futures import ThreadPoolExecutor
     from threading import Barrier
 
@@ -355,23 +366,26 @@ def test_concurrent_assignment_and_join_close_are_serializable(world):
     from kickbac.db import connect
 
     c, users, _, _, path = world
+    users["carol"] = {"Authorization": "Bearer " + identity[1](sub="auth0|carol")}
     parties = [
         c.post(
             "/v1/parties",
             json={"party_id": str(uuid4()), "name": "Friday"},
-            headers=users["alice"],
+            headers=users[who],
         ).json()
-        for _ in range(2)
+        for who in ["alice", "carol"]
     ]
     grant_party_device(path, "one", "auth0|alice")
     barrier = Barrier(2)
+
+    grant_party_device(path, "one", "auth0|carol")
 
     def assign(p):
         barrier.wait(timeout=5)
         return c.put(
             "/v1/parties/" + p["party_id"] + "/device",
             json={"device_id": "one"},
-            headers=users["alice"],
+            headers=users["alice" if p == parties[0] else "carol"],
         )
 
     with ThreadPoolExecutor(2) as pool:
@@ -387,7 +401,11 @@ def test_concurrent_assignment_and_join_close_are_serializable(world):
                 "/v1/parties/join", json={"device_id": "one"}, headers=users["bob"]
             )
         return c.post(
-            "/v1/parties/" + p["party_id"] + "/close", json={}, headers=users["alice"]
+            "/v1/parties/" + p["party_id"] + "/close",
+            json={},
+            headers=users[
+                "alice" if p["party_id"] == parties[0]["party_id"] else "carol"
+            ],
         )
 
     with ThreadPoolExecutor(2) as pool:
@@ -492,7 +510,16 @@ def test_party_reads_are_readonly_ordered_paginated_and_join_failures_rollback(w
             ).status_code
             == 201
         )
-    p = c.get("/v1/parties/" + ids[0], headers=users["alice"]).json()
+        if party_id != ids[-1]:
+            assert (
+                c.post(
+                    "/v1/parties/" + party_id + "/close",
+                    json={},
+                    headers=users["alice"],
+                ).status_code
+                == 200
+            )
+    p = c.get("/v1/parties/" + ids[-1], headers=users["alice"]).json()
     c.post("/v1/devices/one/sessions", json={}, headers=users["alice"])
     now[0] += timedelta(seconds=60)
     with connect(path) as db:

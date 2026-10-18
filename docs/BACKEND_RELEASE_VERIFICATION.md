@@ -1,6 +1,116 @@
 # Backend release verification — manual acquisition, NFC and private history
 
-## Current live release — schema6 /33 operations
+## Current release — App reading persistence / schema 8
+
+Activated **2026-10-18T10:53:55.947827+00:00**, immutable source
+`4a29218b1516f285d7b419edcfe0f18258064a6d`, tree
+`7fcea5497227e1c8ba7eef3c41a2818b25d39290`, release
+`/opt/kickbac/releases/app-readings-4a29218-20261018T104512Z`.
+Archive SHA256 `b4fa6cb2c4a2efd92beb677be9754a24bf43c6cda8decfdafef2794163fa09f5`.
+Requirements SHA256 `4ab20e6de5ab9b626560488ce55da24e74caa128af22fe0fe8789c2017ff9871`.
+[PR #43](https://github.com/spherohero/kickbac/pull/43) exact head
+`a8ade7a3cf1ed8d2bac786bfbcdc053de148e6f0` merged as
+`d92a640b9a6f68b3986d27e889085cc85937f002`; parents/tree/remote ancestry verified.
+Its backend/deploy/workflow subtrees equal the staged runtime; current-main
+firmware PR #41 and shared handoff were preserved, not overwritten or redeployed.
+
+- Parent **641 combined tests**, including **13 actual HTTP cases**, passed;
+  Ruff, 83-file formatting, compile and simulator passed. After integrating
+  current main, both real HTTP-to-current-C++ decoder tests passed locally.
+  Separate SPEC and QUALITY/security reviews approved exact runtime `4a29218`.
+- Exact-head [CI 39120683806](https://github.com/spherohero/kickbac/actions/runs/39120683806)
+  and merged-main [CI 39121048075](https://github.com/spherohero/kickbac/actions/runs/39121048075)
+  passed all four checks: Python 3.11/3.12, decoder compatibility and non-sending
+  Auth0 Action fixtures. These are not native or physical acquisition tests.
+- Target Python 3.12.3 final-path locked/hash-required runtime, root-owned release,
+  kickbac-user imports, all **99** manifest hashes and permissions verified.
+  **70 focused target tests** passed, including App real HTTP, complete-schema
+  populated backup restoration and party migration/resolver regressions;
+  production-venv real-loopback simulator returned `SIMULATOR_OK`.
+- Retained online schema-7 trial snapshot, under the release-specific 0700
+  backup directory (snapshot 0600):
+  `kickbac-backup-20261018T104515629510Z-200e5057b60341ef9efe1eab8d365e51.sqlite3`.
+  Private `/root/app-readings-4a29218-20261018T104512Z/production-copy-schema8.sqlite3`
+  preserved every old SQL object and exact typed-row multisets across **14 tables /
+  31 rows**, including BLOBs/hashes. Two new tables empty; repeat initialization,
+  integrity and FK checks passed. Parent independently repeated preservation
+  readback rather than relying only on the staging report.
+- Zero unexpired active sessions checked before maintenance and again after
+  stopping backup timer/API/backup job. Final retained stopped-writer backup:
+  `kickbac-backup-20261018T105353761973Z-de0384d93d4b428ba792d5eb13fbea1f.sqlite3`
+  under `/var/backups/kickbac/releases/app-readings-4a29218-20261018T104512Z`.
+  Migration 008 applied explicitly. Every original SQL object and typed row,
+  including credential hashes/profile BLOBs, was compared and preserved exactly.
+  Live schema **8**, integrity **OK**, FK violations **0**. Schema-7 runtime must
+  not be blindly selected over the migrated database; no downgrade occurred.
+- Atomic current pointer, actual new PID/cwd, all 99 hashes and process readiness
+  verified. Trusted public HTTPS OpenAPI equals the exact committed candidate:
+  **38 operations**, including POST/GET App readings and GET App summary, with
+  prior party/session/measurement paths retained. Public App reads and empty-body
+  POST reject missing auth with 401/no-store; no production fixture upload used.
+- Fresh complete-schema-8 post-upgrade backup:
+  `/var/backups/kickbac/kickbac-backup-20261018T105355929313Z-7ecac3c5acdf4cdd840e45308faa17b5.sqlite3`.
+  API/Caddy/backup timer active. Independent readback **10:56:36 UTC** verified
+  current/source/schema/PID/99 hashes/services and original accepted demo COMPLETE,
+  same session owner/device, exactly once. Dated aggregates: 0 App readings/windows,
+  1 device measurement, 2 profiles, 11 parties/memberships; heartbeat age 1.751 s.
+  These are read-only observations of concurrent user activity, not permanent
+  totals or claims that the release created/cleaned those rows.
+
+No production user, grant, arm, App fixture, bulk cleanup or iOS change was made.
+Actual native owner-scoped outbox/offline/relaunch/second-phone and NFC acceptance
+remain Liam-owned. Saved Wi-Fi PR #41 is a separately merged firmware change;
+the device bearer remains RAM-only and remote start was not implemented.
+Exact client instructions: **[FINAL_BACKEND_HANDOFF.md](FINAL_BACKEND_HANDOFF.md)**.
+The older release sections below are historical checkpoints, not current paths.
+
+## Historical release — atomic device parties / schema7
+
+Activated **2026-10-18T10:29:53.379548+00:00**, immutable source
+`768e992e15c9c7decfb963264e30159eb818abcd`, tree
+`00e02fd452bf86f16629b80c0dcda1efd6fa1ead`, release
+`/opt/kickbac/releases/party-resolve-768e992-20261018T102303Z`.
+ArchiveSHA256 `237a468972ed71eae922e76f9824810aaf0e2275cef838ac7655b46a60690801`.
+PR40 exacthead9b59021 (docs-only delta from staged runtime) merged
+`9d523902dc97595fe5982fbd1fa3e54abfe59187`; reviewed tree/parents/remote ancestry
+verified. No source/runtime drift from candidate; app/firmware/provider unaffected.
+
+- Parent588combined backend/deployment+11actualHTTPtests pass; Ruff/77files format,
+  compile/simulator pass. Independent SPEC/QUALITY approved; exactPR backendCI
+  [39119170237](https://github.com/spherohero/kickbac/actions/runs/39119170237) passed.
+  Exact merged-main [39119473402](https://github.com/spherohero/kickbac/actions/runs/39119473402)
+  also passed on merge9d52390 (not merely the PR's synthetic merge).
+- Target Python3.12.3 final-path locked/hash-required runtime and kickbac-user imports
+  passed.36focused target tests plus runtime real-loopback simulator passed.
+  All92source hashes/ownership/modes independently read back before/after activation.
+- Retained schema6 online backup/private populated6→7 trial preserved every old
+  SQLite object and exact typed row Counter across13tables/26rows, including BLOBs
+  and hashes; repeatinit/schema/integrity/FK pass. Synthetic legacyduplicates and
+  future SQL guard/replacement/rollback tests pass; no arbitrary cleanup occurred.
+- Active tests0rechecked before/after stopping timer/API/backup job. Final retained
+  stopped-writer snapshot under release-specific backup directory:
+  `kickbac-backup-20261018T102951292288Z-a4cbd8cfb21f4331b4d8886b13381537.sqlite3`.
+  Explicit007migration preserved all original schema/rows/BLOB/hash; schema7
+  check/integrityOK/FK0. No blind schema6 rollback after first migration attempt.
+- Atomiccurrent/PIDcwd/all92hashes/APIreadiness read back. Entire publicHTTPS
+  OpenAPI equals exactsource35operations, both resolver/current paths present;
+  missing-auth401/no-store tested, public `/d/kb-demo-01` unchanged. No production
+  fixture resolves, new grants, users or reading writes were used to claim success.
+- Fresh complete-schema7 postbackup verified:
+  `kickbac-backup-20261018T102953361870Z-b57d940330be41a1a051d82be61630ef.sqlite3`.
+  API/Caddy/timer active; production readback8parties/8memberships/1profile/
+  1measurement/0game-results,0resolve-ledger entries. Dated aggregates, not a
+  permanent current count. Every preexisting row retained; user cleanup before
+  staging is not attributed to this deployment.
+
+NewPOSTresolve and currentGET are additive; global oneOPENsubject and new-route
+nooperatorgrant are intentional policy changes. Existingclose means host-only
+Deletefromactivepage, not privatehistory purge. Appreading008resource is separate
+target, NOT deployed. Actual native signed-in multi-phone/NFC acceptance remains
+Liam-owned and unproved by source/HTTPfixtures/missing-auth probes. Lower schema6
+release evidence is retained historical context, not current runtime selection.
+
+## Historical release — schema6 /33 operations
 
 Activated at **2026-10-18T07:55:20.008568+00:00** on the existing authorized host:
 `/opt/kickbac/releases/manual-172e54c-20261018T075004Z`, source

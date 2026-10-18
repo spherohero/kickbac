@@ -54,7 +54,7 @@ def test_measurement_cannot_cross_check_in_context(party_world, context):
         if context == "other_party":
             party = str(uuid4())
             db.execute(
-                "INSERT INTO parties VALUES (?,'auth0|alice','Other','JKLMNPQR',?,'OPEN',NULL)",
+                "INSERT INTO parties VALUES (?,'other-host','Other','JKLMNPQR',?,'OPEN',NULL)",
                 (party, now[0].isoformat()),
             )
         db.execute(

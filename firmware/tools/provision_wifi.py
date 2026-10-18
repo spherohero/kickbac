@@ -1,16 +1,16 @@
-"""Private local Wi-Fi entry -> one RAM-only USB provisioning frame.
+"""Private local Wi-Fi entry -> one USB provisioning frame (RAM-only by default).
 
-Never reads OS Wi-Fi profiles, stores credentials, or prints USB input/credentials.
+Never reads OS Wi-Fi profiles, writes local credential files, or prints credentials.
+Only explicit opt-in permits replacing the device's single saved Wi-Fi network.
 Use a private local session; this is not encrypted serial provisioning.
 """
 
 import argparse
-import re
 import time
 from pathlib import Path
 
 
-def build_frame(ssid: str, password: str) -> bytearray:
+def build_frame(ssid: str, password: str, save: bool = False) -> bytearray:
     name = ssid.encode("utf-8")
     if not 1 <= len(name) <= 32 or b"\0" in name:
         raise ValueError("Network name must be 1-32 UTF-8 bytes without NUL.")
@@ -19,16 +19,17 @@ def build_frame(ssid: str, password: str) -> bytearray:
             "Use a personal hotspot password of 8-63 printable ASCII characters."
         )
     secret = password.encode("ascii")
-    return bytearray(b"KBW1") + bytearray([len(name), len(secret)]) + name + secret
+    magic = b"KBS1" if save else b"KBW1"
+    return bytearray(magic) + bytearray([len(name), len(secret)]) + name + secret
 
 
-def private_window() -> bytearray | None:
+def private_window(allow_save: bool = False) -> bytearray | None:
     import tkinter as tk
     from tkinter import messagebox
 
     root = tk.Tk()
     root.title("kickBAC - private Wi-Fi provisioning")
-    root.geometry("510x270")
+    root.geometry("510x400" if allow_save else "510x270")
     root.attributes("-topmost", True)
     root.resizable(False, False)
     result: list[bytearray] = []
@@ -54,9 +55,29 @@ def private_window() -> bytearray | None:
     password = tk.Entry(form, width=35, show="*")
     password.grid(row=1, column=1)
 
+    save_choice = None
+    if allow_save:
+        save_choice = tk.BooleanVar(master=root, value=False)
+        tk.Checkbutton(
+            root,
+            text="Save this one Wi-Fi network on the device",
+            variable=save_choice,
+        ).pack()
+        tk.Label(
+            root,
+            text=(
+                "NVS storage not verified encrypted; replaces single saved network;\n"
+                "device bearer stays RAM-only.\n"
+                "USB provisioning is unencrypted. Leave unchecked for RAM-only Wi-Fi."
+            ),
+            wraplength=490,
+        ).pack(pady=5)
+
     def submit(_event=None):
         try:
-            packet = build_frame(name.get(), password.get())
+            packet = build_frame(
+                name.get(), password.get(), save=bool(save_choice and save_choice.get())
+            )
         except ValueError as error:
             messagebox.showerror("Check entry", str(error), parent=root)
             return
@@ -75,9 +96,21 @@ def private_window() -> bytearray | None:
 
 
 def main() -> int:
+    from provision_device import safe_line
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", required=True)
     args = parser.parse_args()
+    from serial.tools import list_ports
+
+    matches = [p for p in list_ports.comports() if p.device == args.port]
+    if len(matches) != 1 or (
+        matches[0].vid,
+        matches[0].pid,
+        matches[0].serial_number,
+    ) != (0x303A, 0x1001, "80:B5:4E:F1:B7:30"):
+        print("DEVICE_NOT_VERIFIED: attached target identity mismatch; nothing sent.")
+        return 1
     print(
         "Opening private local Wi-Fi entry window. Do not put passwords in chat.",
         flush=True,
@@ -103,8 +136,8 @@ def main() -> int:
         deadline = time.monotonic() + 35
         ready = False
         while time.monotonic() < deadline:
-            line = port.readline().decode("utf-8", errors="replace").strip()
-            if re.fullmatch(r"probe_[A-Za-z0-9_= .:/+\-]+", line):
+            line = safe_line(port.readline())
+            if line is not None and line.startswith("probe_"):
                 print(line, flush=True)
                 safe_lines.append(line)
                 if line.startswith("probe_ready "):
@@ -119,8 +152,8 @@ def main() -> int:
             packet[i] = 0
         deadline = time.monotonic() + 180
         while time.monotonic() < deadline:
-            line = port.readline().decode("utf-8", errors="replace").strip()
-            if re.fullmatch(r"(?:probe_|CONNECTIVITY_)[A-Za-z0-9_= .:/+\-]+", line):
+            line = safe_line(port.readline())
+            if line is not None and line.startswith(("probe_", "CONNECTIVITY_")):
                 print(line, flush=True)
                 safe_lines.append(line)
                 if line.startswith("CONNECTIVITY_PASS"):

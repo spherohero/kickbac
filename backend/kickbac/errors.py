@@ -19,6 +19,7 @@ def is_party_private(path):
 
 
 MESSAGES = {
+    "active_party_conflict": "Leave or close your current party before joining another.",
     "rate_limited": "Too many join attempts.",
     "device_assigned": "Device is assigned to another party.",
     "already_completed": "A result is already stored for this game.",
@@ -52,14 +53,26 @@ def install_errors(app):
             exc.status_code == 400
             and request.method in {"POST", "PUT"}
             and (
-                request.url.path.rstrip("/") == "/v1/me/game-results"
+                request.url.path.rstrip("/")
+                in {"/v1/me/game-results", "/v1/me/app-readings"}
                 or is_party_private(request.url.path)
             )
         ):
             exc = StarletteHTTPException(422, "validation_error")
         code = exc.detail if exc.detail in MESSAGES else "not_found"
+        context = (
+            getattr(exc, "authorized_party_context", {})
+            if code == "active_party_conflict"
+            else {}
+        )
+        message = (
+            "Too many saved App readings."
+            if code == "rate_limited"
+            and request.url.path.rstrip("/") == "/v1/me/app-readings"
+            else MESSAGES[code]
+        )
         return JSONResponse(
-            {"error": {"code": code, "message": MESSAGES[code]}},
+            {"error": {"code": code, "message": message, **context}},
             status_code=exc.status_code,
             headers=exc.headers,
         )
@@ -86,6 +99,8 @@ def install_errors(app):
             if is_party_private(request.url.path)
             or request.url.path.rstrip("/")
             in {
+                "/v1/me/app-readings",
+                "/v1/me/app-reading-summary",
                 "/v1/me/profile",
                 "/v1/me/game-results",
                 "/v1/me/stats",

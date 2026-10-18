@@ -319,6 +319,196 @@ updated app; old required-Int clients still need the documented manual decoder f
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+## Read first — final consolidated backend release
+
+**Both backend requests are LIVE.** The concise, forwardable
+**[FINAL_BACKEND_HANDOFF.md](FINAL_BACKEND_HANDOFF.md)** contains exact routes,
+payloads, receipts, retries, client actions, saved-Wi-Fi status and verification.
+
+- Atomic device-party resolve/current-party policy: PR #40, merge `9d52390`.
+- App reading POST/history/summary: PR #43, merge
+  `d92a640b9a6f68b3986d27e889085cc85937f002`; immutable runtime `4a29218`,
+  schema 8 / 38 operations, activated 2026-10-18T10:53:55 UTC.
+- Parent 641 tests, target 70, separate SPEC/QUALITY, exact PR/main CI,
+  retained backups/private 7→8 preservation/final migration and public contract
+  readback passed. Original owner-linked demo remains COMPLETE/exactly once.
+- Saved-Wi-Fi firmware PR #41 is merged; lifetime reconnect and reset restore
+  are documented in [SAVED_WIFI.md](../firmware/SAVED_WIFI.md). Device bearer
+  remains RAM-only: Wi-Fi restore is not standalone authenticated cold boot.
+- **=== LIAM / iOS IMPACT ===** App routes are additive/NON-BREAKING. Adopt the
+  existing frozen App contract now; preserve local UUIDs/payloads, owner-scoped
+  outbox and guest records until explicit assignment, validate receipts before
+  Synced. Party one-OPEN-user/automatic binding policy is intentional. No iOS
+  edits or native sync/NFC/two-phone acceptance were performed by backend.
+
+All older pending/source-only/schema-count statements below are historical
+checkpoints, not current deployment status. Do not resume superseded app work.
+
+### Historical App reading implementation checkpoint — now deployed above
+
+Ownerbackend, `backend/app-reading-integration`, base0d43f61; runtimecandidate
+`4a29218b1516f285d7b419edcfe0f18258064a6d`. Actualappregistered schema8/38operation
+source passes parent641combinedtests, including13realHTTPcases with receipt,
+canonical replay/privacy/page/summary/restart/concurrentUUID/quota. Ruff/83files
+format/compile/simulator pass, populatedbackup8verified. The one parentfullrun
+stalebackup7expectation was corrected and full suite rerun green; no fake pass.
+Independentreview/exactCI/immutable7→8private-copy/backup/activation/publicreadback
+are still gates; current liveparty7/35 is unchanged by sourcepublication.
+
+**Additive/NON-BREAKING; no app edits.** Exact[App contract](APP_READINGS.md):
+POST/GET `/v1/me/app-readings`, GET `/v1/me/app-reading-summary`. Save allfivekeys
+`reading_id`existingUUID,strictfinite`value`0..1,awareISO`recorded_at`,strictint
+`duration_ms`1..60000,literal`source:"app_generated"`. Receipt adds opaquevalidated
+owner`user_id`/server`received_at`;201new/200canonicalexactretry/409changed/404foreign.
+32KiBbody,60newaccepted/minute+RetryAfter429,acceptedretryexempt,privateallno-store.
+Page/summaryseparatefromdeviceledger; generatedvalues are not physicalestimates.
+
+Liam adopts only after verifieddeployment: preservePracticeReadingStore localUUIDs/
+payloads/records,owner-scopedoutbox,matchingreceiptbeforeSynced,retry/relaunch/
+UUIDdedupe. Guestrecordsremainlocal until explicit accountassignment; no automatic
+cross-owner upload or deleting the only copy. No devicebearer/session/ADC/points
+changes or UIredesign. Native offline+secondphone/account acceptance remains Liam's.
+Linkedpartyresolve/current below ISalreadydeployed; no need to wait on Appresource.
+
+### LIVE linked-party resolve — client can adopt now
+
+**Deployed2026-10-18T10:29:53UTC:** schema7/35operations, immutable runtime
+`768e992e15c9c7decfb963264e30159eb818abcd`, release
+`/opt/kickbac/releases/party-resolve-768e992-20261018T102303Z`.
+[PR40](https://github.com/spherohero/kickbac/pull/40) head9b59021 merged
+`9d523902dc97595fe5982fbd1fa3e54abfe59187`; parents/tree/remote ancestry verified.
+Public OpenAPI exactly matches candidate and protected new routes401/no-store
+without auth. Independent SPEC+QUALITY,588combined tests,36target tests,
+retained backup/private-copy6→7 exact old-data preservation, finalbackup/actual
+PID/cwd/92manifest hashes/schema integrity/FK/postbackup/services passed. No
+production fixture/user/arm/grant or party cleanup was performed.
+
+**Liam's exact action:** adopt already-frozen authenticated
+`POST /v1/parties/resolve` `{request_id:<persistedUUID>,device_id:"kb-demo-01",name?}`.
+Defaultname`Party`;201created/200joined or acceptedreplay, response`{action,party}`
+already device-bound. No operator grant or legacycreate/bind fallback. Preserve
+UUID/body across retry; changed409/foreign404. Current restoration may use
+`GET /v1/me/parties/current` →PartyResponse|null; legacyduplicates409
+`active_party_conflict` with own `current_parties`/`has_more`, no silent switching.
+Delete remains existinghostPOST/close{}; confirmCLOSED/device null before clearing
+activeUI, private readings/game histories remain. OneOPENuser policy is deliberate
+behavior change across all create/join paths; no app source altered by backend.
+Exact[contract](DEVICE_PARTY_RESOLVE.md)/[release proof](BACKEND_RELEASE_VERIFICATION.md).
+
+Appreading POST/GET/summary target remains NOTDEPLOYED and in separate worker;
+do not add upload claims/outbox acceptance until its own release. SavedWiFi task
+is firmware-owned. Lower pendingparty/schema6 entries are historical checkpoints.
+Native authenticated successful resolve/two-phone/NFC acceptance remains Liam's.
+
+### Final consolidated scope — parties, App readings, saved Wi-Fi
+
+Nicholas's forwarded `combined.md` is the final reference. Finish atomic linked
+parties first; separately add private App reading persistence without touching
+Liam's existing local records/dirty app work. Frozen App contract:
+[APP_READINGS.md](APP_READINGS.md): authenticated POST/GET `/v1/me/app-readings`,
+GET `/v1/me/app-reading-summary`; existing local UUID/value/aware recorded_at/
+actual hold duration/source `app_generated`,201new/200exactretry/409changed.
+Strict finite value0..1, duration1..60000ms,32KiB body,60new saves/minute with
+accepted replay exempt. Separate owner ledger/summary, no device/session/rawADC/
+physical BAC or point fabrication. These routes are targets, NOT deployed yet;
+Liam adds owner-scoped outbox/receipt validation/dedupe only after release proof.
+Keep guest records local until explicit account assignment, preserve every local
+record on failures. Additive API; no backend takeover of iOS/presentation.
+
+Nicholas also explicitly requests the powered ESP32 continually try one privately
+saved Wi-Fi network at boot and after loss, with capped retry delays/no hot loop.
+Firmware owner handles private network entry/on-device persistence/reconnect;
+never request the password in chat, hardcode it in Git, change eFuses/security
+state or infer encrypted NVS. This does not change device/App reading semantics.
+Client/backend party/App work remains independent. Device bearer cold-boot
+bootstrap policy must be stated separately from saving a Wi-Fi connection.
+
+### Device parties / one current party — implemented source, release pending
+
+Published runtime checkpoint768e992; parent combined588tests/lint/77-fileformat/
+compile/simulator pass, including3actualHTTP resolver lifecycle/restart/race cases.
+This supersedes the earlier missing-endpoint RED checkpoint below. Independent
+review/exact CI and target retained backup/private-copy preservation/activation
+are still required; live33/schema6 is not yet the new35/schema7. No UI edits or
+production party cleanup. App reading implementation follows this release.
+
+Owner backend, `backend/device-party-resolve`, base22c1215; frozen contractcdba99b
+was published before implementation. Exact publishing PR/head/check/deployment
+will be recorded with finished source. Nicholas forwarded Liam's requested
+change; this is NOT permission to touch Liam's Mac dirty/untracked app work,
+switch/reset/rebase his branch or merge PR32.
+
+**Additive API, intentional membership/assignment policy change:** replace
+create→operator grant→bind with authenticated `POST /v1/parties/resolve`:
+`{request_id:<persisted UUID>,device_id,name?}`; default name `Party`. Response
+`{action:"created"|"joined",party:<PartyResponse>}`,201new/200join or accepted replay,
+already bound on creation. Existing-party scans retain host/name/code. Same party
+is idempotent; other OPEN membership409 `active_party_conflict` with only own
+current-party context for explicit member leave/host close. All legacy create/
+code/device joins share one-OPEN-user policy; current restoration uses new
+`GET /v1/me/parties/current` (PartyResponse/null), never silently switches.
+
+Delete UI keeps existing `POST /v1/parties/{id}/close` `{}`: verify CLOSED/unbound,
+then clear active view. Open games end/code invalidates/unit released; metadata,
+private measurements/results/check-ins remain. Source will require schema7;
+007preserves every legacy row/duplicate membership until explicit close/leave.
+Fresh liveRO09:53UTC found one account with6OPEN unbound memberships, not the
+reported20. No production cleanup or reading deletion has occurred.
+
+Exact examples/errors/retries/policy/migration plan:
+[DEVICE_PARTY_RESOLVE.md](DEVICE_PARTY_RESOLVE.md), [API.md](API.md),
+[PARTIES.md](PARTIES.md). Public device GET stays read-only, no test/firmware/
+credential/BAC/point change. Client adoption waits for deployed OpenAPI/readback.
+Parent actualHTTP RED observed405 for missing resolve endpoint; worker TDD and
+concurrent HTTP acceptance running. No native NFC/multi-phone claim.
+
+### Firmware communication runtime — no client action
+
+Firmware-only saved Wi-Fi change: `firmware/saved-wifi-recovery`, base `22c1215`;
+physical runtime `9b0ca25`, [PR41](https://github.com/spherohero/kickbac/pull/41).
+Actual opt-in NVS save/software-reset restore (bearer-only re-entry) and powered
+hotspot-loss/backoff/return with authenticated heartbeat passed. Subsequent server
+readback advances inside30s, accepted demo preserved exactly once. Physical cable
+power-cycle/bearer persistence not claimed; no new arm/upload/app changes.
+publishing PR/head gives exact state. [SAVED_WIFI.md](../firmware/SAVED_WIFI.md)
+defines explicit unchecked private opt-in for one NVS network, lifetime capped-
+jitter reconnect, session/pending-payload fencing and RAM-only bearer bootstrap.
+**NON-BREAKING/no app action**: API endpoints/fields/examples/session expiry/raw
+units/measurement meaning unchanged; no server/iOS edits. Host/Ruff/all3builds
+pass; hardware save/reboot/outage results are separate. Previously accepted
+simulator measurement is preserved; no new live user/arm/upload is required.
+
+New firmware-owned explicit mock uploader: `firmware/explicit-mock-uploader`,
+base `8f60967`; exact publishing head/PR records state. [MOCK_DEMO.md](../firmware/MOCK_DEMO.md)
+documents one USB session-bound command AFTER actual signed-in app arm. Uses
+existing device POST `/v1/device/measurements` with synthetic1200adc_counts/2500ms,
+`source:simulator`, `measured_at:null`; full matching200/201 ACK and immutable
+bounded original-payload retries. **NON-BREAKING/no app edits**: existing paths/
+schemas/states/identity/units and simulator interpretation unchanged. Full host,
+15operator tests/Ruff/all3builds/independent review and isolated real-HTTP ACK/
+replay/history/restart pass; actual user→ESP32 upload remains physical gate.
+No owner selection, fake user, live operator arm, ADC or BAC. Liam owns all iOS.
+
+Flashed/runtime source `49e8d5a4dfc41b193fffdc2cfa9f857d98e900aa`; actualCOM3
+capture heartbeat12..28/idle poll31..73. Startup/PASS marker missed, observer
+returned1 for missing marker, not a captured network failure. Independent
+post-helper persisted heartbeat advanced08:50:19.816042→08:50:35.474722UTC with
+age0.749303/5.572119s, schema6. This supersedes old offline checkpoint for that
+bounded observation, not a soak guarantee. Serial released. No app work requested.
+
+Firmware owner `firmware/operational-connectivity`, base `a0bd77b`; publishing PR/
+commit records head/state. Normal `xiao_device` boot keeps its initial trusted
+connection instead of requiring intentional disconnect/rejoin. `xiao_wifi` retains
+that separate diagnostic; its failure is NOT claimed fixed. Device transport/
+500/502/503/504 faults immediately invalidate acquisition tickets, then retry only
+that endpoint up to3times with2/4/8s waits. Auth/schema/identity faults and exhaustion
+remain fail-closed. Original session expiry/pending bytes are not reassigned.
+**NON-BREAKING/no app action**: endpoints, payload examples in API.md, states,
+auth, units and successful nominal10s/2s cadence unchanged; no iOS edits. Host
+suite/Ruff/all3cross-builds pass; independent focused review approved no-ADC flash.
+Source/physical result above; no fabricated startup/network/fault-recovery claim.
+ADC/sampling/uploads remain off; communication is the only task here.
+
 ### Latest ownership — Liam controls all remaining iOS work
 
 Nicholas's newer direction: Liam is back and controls the rest of the app.

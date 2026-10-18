@@ -60,7 +60,7 @@ def test_upgrade_every_supported_old_schema_preserves_all_bytes(tmp_path, versio
     initialize(path)
     check_schema(path)
     with connect(path) as db:
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 6
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 8
         assert db.execute("SELECT COUNT(*) FROM game_results").fetchone()[0] == 0
         for table, rows in snapshot.items():
             assert [tuple(row) for row in db.execute("SELECT * FROM " + table)] == rows

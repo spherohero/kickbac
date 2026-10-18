@@ -7,14 +7,18 @@ from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
-from pydantic import BaseModel, StrictStr, field_validator, model_validator
+from pydantic import BaseModel, Field, StrictStr, field_validator, model_validator
 
 from .db import connect, transaction
 from .errors import fail
-from .models import Empty
+from .models import Empty, ErrorEnvelope
 from .sessions import User, instant
 
-router = APIRouter()
+router = APIRouter(
+    responses={
+        413: {"model": ErrorEnvelope, "description": "Request exceeds 32768 bytes."}
+    }
+)
 CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 
 
@@ -116,7 +120,15 @@ def create_party(
             response.status_code = 200
             return party_response(party_row(db, body.party_id), subject)
         now = instant(request).isoformat()
-        code = "".join(secrets.choice(CODE_ALPHABET) for _ in range(8))
+        while True:
+            code = "".join(secrets.choice(CODE_ALPHABET) for _ in range(8))
+            if (
+                db.execute(
+                    "SELECT 1 FROM parties WHERE join_code=?", (code,)
+                ).fetchone()
+                is None
+            ):
+                break
         db.execute(
             "INSERT INTO parties VALUES (?,?,?,?,?,'OPEN',NULL)",
             (str(body.party_id), subject, body.name, code, now),
@@ -151,7 +163,21 @@ class PartyJoin(Empty):
         return self
 
 
-@router.post("/v1/parties/join", response_model=PartyResponse)
+@router.post(
+    "/v1/parties/join",
+    response_model=PartyResponse,
+    responses={
+        429: {
+            "model": ErrorEnvelope,
+            "headers": {
+                "Retry-After": {
+                    "schema": {"type": "integer", "minimum": 1},
+                    "description": "Seconds until this subject's fixed join window resets.",
+                }
+            },
+        }
+    },
+)
 def join_party(body: PartyJoin, request: Request, subject: User):
     # Deliberately committed before lookup so rejected invitations consume attempts.
     with transaction(request.app.state.settings.db_path) as db:
@@ -223,6 +249,61 @@ def leave_party(party_id: UUID, body: Empty, request: Request, subject: User):
         return party_response(party_row(db, party_id), subject)
 
 
+def require_idle(db, device_ids, now):
+    for device_id in set(device_ids) - {None}:
+        sessions = db.execute(
+            "SELECT expires_at FROM sessions WHERE device_id=? AND status IN ('ARMED','SAMPLING')",
+            (device_id,),
+        ).fetchall()
+        if any(
+            datetime.fromisoformat(session["expires_at"]) > now for session in sessions
+        ):
+            fail(409, "device_busy")
+
+
+class PartyDevice(Empty):
+    device_id: Annotated[StrictStr, Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$")]
+
+
+@router.put("/v1/parties/{party_id}/device", response_model=PartyResponse)
+def assign_device(party_id: UUID, body: PartyDevice, request: Request, subject: User):
+    with transaction(request.app.state.settings.db_path) as db:
+        row = party_row(db, party_id)
+        require_host(row, subject)
+        if row["state"] != "OPEN":
+            fail(409, "invalid_state")
+        if (
+            db.execute(
+                "SELECT 1 FROM device_party_hosts h JOIN devices d ON d.id=h.device_id WHERE h.device_id=? AND h.user_id=?",
+                (body.device_id, subject),
+            ).fetchone()
+            is None
+        ):
+            fail(404, "not_found")
+        other = db.execute(
+            "SELECT party_id FROM party_devices WHERE device_id=?", (body.device_id,)
+        ).fetchone()
+        if other is not None and other["party_id"] != str(party_id):
+            fail(409, "device_assigned")
+        if row["device_id"] != body.device_id:
+            require_idle(db, [row["device_id"], body.device_id], instant(request))
+        db.execute(
+            "INSERT INTO party_devices VALUES (?,?) ON CONFLICT(party_id) DO UPDATE SET device_id=excluded.device_id",
+            (str(party_id), body.device_id),
+        )
+        return party_response(party_row(db, party_id), subject)
+
+
+@router.delete("/v1/parties/{party_id}/device", response_model=PartyResponse)
+def remove_device(party_id: UUID, request: Request, subject: User):
+    with transaction(request.app.state.settings.db_path) as db:
+        row = party_row(db, party_id)
+        require_host(row, subject)
+        require_idle(db, [row["device_id"]], instant(request))
+        db.execute("DELETE FROM party_devices WHERE party_id=?", (str(party_id),))
+        return party_response(party_row(db, party_id), subject)
+
+
 def require_host(row, subject):
     if row["host_user_id"] != subject:
         fail(404, "not_found")
@@ -234,6 +315,7 @@ def close_party(party_id: UUID, body: Empty, request: Request, subject: User):
         row = party_row(db, party_id)
         require_host(row, subject)
         if row["state"] == "OPEN":
+            require_idle(db, [row["device_id"]], instant(request))
             now = instant(request).isoformat()
             db.execute(
                 "UPDATE parties SET state='CLOSED',closed_at=? WHERE party_id=?",

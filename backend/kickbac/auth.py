@@ -61,7 +61,7 @@ def auth0_verifier(settings):
         raise RuntimeError("Auth0 domain and API audience must be configured")
     issuer = "https://" + settings.auth0_domain + "/"
     client = jwt.PyJWKClient(
-        issuer + ".well-known/jwks.json", cache_keys=True, lifespan=300, timeout=5
+        issuer + ".well-known/jwks.json", cache_keys=False, lifespan=300, timeout=5
     )
     return JWTVerifier(
         issuer,

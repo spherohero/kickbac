@@ -4,33 +4,37 @@ struct ProfileHistoryView: View {
     let session: AuthSession
     let onSignIn: () -> Void
     @Environment(\.dismiss) private var dismiss
+    @Environment(PracticeReadingStore.self) private var practice
 
     var body: some View {
         NavigationStack {
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 16) {
+                LazyVStack(alignment: .leading, spacing: 0) {
                     if session.isRestoring {
                         ProgressView("Loading your readings")
                             .frame(maxWidth: .infinity).padding(.top, 48)
-                    } else if !session.isSignedIn {
+                    } else if !session.isSignedIn && practice.readings.isEmpty {
                         placeholder("Your readings live here", detail: "Sign in to see your saved readings.")
                         action("Sign in", perform: onSignIn)
-                    } else if let history = session.history {
+                    } else if session.history != nil || !practice.readings.isEmpty {
+                        let readings = savedReadings
                         if let message = session.apiMessage { retryNotice(message) }
-                        if history.items.isEmpty {
-                            placeholder("No readings yet", detail: "Your breathalyzer check-ins will show up here.")
+                        if readings.isEmpty {
+                            placeholder(session.history?.hasMore == true ? "No BAC readings loaded" : "No readings yet",
+                                        detail: session.history?.hasMore == true ? "Load more to check earlier readings." : "Readings with a BAC estimate will appear here.")
                         } else {
-                            Text("Your saved breathalyzer check-ins.")
-                                .font(.system(.subheadline, design: .rounded)).foregroundStyle(.secondary)
-                                .padding(.bottom, 8)
-                            ForEach(history.items) { reading in
+                            ForEach(readings) { reading in
                                 ProfileReadingRow(reading: reading)
-                            }
-                            if history.hasMore {
-                                action(session.isCheckingAPI ? "Loading…" : "Load more") {
-                                    Task { await session.checkAPI(loadMore: true) }
+                                if reading.id != readings.last?.id {
+                                    Divider().overlay(.white.opacity(0.06))
                                 }
                             }
+                        }
+                        if session.history?.hasMore == true {
+                            action(session.isCheckingAPI ? "Loading…" : "Load more") {
+                                Task { await session.checkAPI(loadMore: true) }
+                            }
+                            .padding(.top, 24)
                         }
                     } else if let message = session.apiMessage {
                         placeholder("Couldn't load your readings", detail: message)
@@ -51,6 +55,19 @@ struct ProfileHistoryView: View {
         .font(.system(.body, design: .rounded)).tint(.primary).preferredColorScheme(.dark)
         .task {
             if session.history == nil && session.apiMessage == nil { await session.checkAPI() }
+        }
+    }
+
+    private var savedReadings: [HistoryReading] {
+        let deviceReadings = (session.history?.items ?? []).compactMap { reading -> HistoryReading? in
+            guard let value = reading.bacReading?.value, let date = reading.recordedDate else { return nil }
+            return HistoryReading(id: "device-" + reading.id, value: value, date: date, isSimulated: false)
+        }
+        let localReadings = practice.readings.map {
+            HistoryReading(id: "practice-" + $0.id.uuidString, value: $0.value, date: $0.date, isSimulated: true)
+        }
+        return (deviceReadings + localReadings).sorted {
+            $0.date == $1.date ? $0.id < $1.id : $0.date > $1.date
         }
     }
 
@@ -83,55 +100,36 @@ struct ProfileHistoryView: View {
     }
 }
 
+private struct HistoryReading: Identifiable {
+    let id: String
+    let value: Double
+    let date: Date
+    let isSimulated: Bool
+}
+
 private struct ProfileReadingRow: View {
-    let reading: APIMeasurement
+    let reading: HistoryReading
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            ViewThatFits(in: .horizontal) {
-                HStack(spacing: 12) { dateLabel; Spacer(minLength: 0); sourceLabel }
-                VStack(alignment: .leading, spacing: 8) { dateLabel; sourceLabel }
-            }
-            VStack(alignment: .leading, spacing: 6) {
-                if let notice = reading.acquisitionNotice {
-                    Text(notice).font(.system(.footnote, design: .rounded))
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Text(reading.durationText).font(.system(.footnote, design: .rounded))
-                    .foregroundStyle(.secondary)
-                if let value = reading.bacReading?.value {
-                    Text(value, format: .number.precision(.fractionLength(3)))
-                        .font(.system(.title, design: .rounded, weight: .medium)).monospacedDigit()
-                    Text("% BAC · estimated").font(.system(.footnote, design: .rounded))
-                        .foregroundStyle(.secondary)
-                } else {
-                    Text("No BAC estimate")
-                        .font(.system(.headline, design: .rounded))
-                    Text("Sensor reading: \(reading.raw.value.formatted()) \(reading.raw.unit.replacingOccurrences(of: "_", with: " "))")
-                        .font(.system(.footnote, design: .rounded)).foregroundStyle(.secondary)
-                }
-            }
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(alignment: .center, spacing: 20))
+        layout {
+            VStack(alignment: .leading, spacing: 5) {
+                Text(reading.date, format: .dateTime.month(.abbreviated).day().year())
+                    .font(.system(.body, design: .rounded, weight: .medium))
+                Text(reading.date, format: .dateTime.hour().minute())
+                    .font(.system(.subheadline, design: .rounded)).foregroundStyle(.secondary)
+            }.frame(maxWidth: .infinity, alignment: .leading)
+            VStack(alignment: typeSize.isAccessibilitySize ? .leading : .trailing, spacing: 4) {
+                Text(reading.value, format: .number.precision(.fractionLength(3)))
+                    .font(.system(.title2, design: .rounded, weight: .medium)).monospacedDigit()
+                Text("% BAC")
+                    .font(.system(.caption, design: .rounded, weight: .medium)).foregroundStyle(.secondary)
+            }.fixedSize(horizontal: !typeSize.isAccessibilitySize, vertical: true)
         }
-        .frame(maxWidth: .infinity, alignment: .leading).padding(20)
-        .background(.white.opacity(0.045), in: .rect(cornerRadius: 24))
+        .frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 20)
         .accessibilityElement(children: .combine)
-    }
-
-    private var dateLabel: some View {
-        Group {
-            if let date = reading.recordedDate {
-                Text(date.formatted(date: .abbreviated, time: .shortened))
-            } else {
-                Text("Date unavailable")
-            }
-        }
-        .font(.system(.subheadline, design: .rounded, weight: .medium))
-        .fixedSize(horizontal: false, vertical: true)
-    }
-
-    @ViewBuilder private var sourceLabel: some View {
-        Text(reading.sourceTitle).font(.system(.caption, design: .rounded, weight: .medium))
-            .foregroundStyle(.secondary).padding(.horizontal, 10).padding(.vertical, 6)
-            .background(.white.opacity(0.06), in: .capsule)
     }
 }

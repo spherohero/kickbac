@@ -18,8 +18,8 @@ struct AcquisitionChecks {
         precondition(manual.durationText == "Sample window: 5.00 s")
         precondition(manual.acquisitionNotice == "Timed sensor sample — breath not validated")
         precondition(manual.durationAccessibilityValue.contains("breath not validated"))
-        precondition(legacy.sourceTitle.contains("Simulated"))
-        precondition(legacy.durationAccessibilityValue.contains("Simulated"))
+        precondition(legacy.sourceTitle == "Test reading")
+        precondition(legacy.durationAccessibilityValue.contains("Test reading"))
         var wire = fixtures["manual"]!
         for value in [0, 60001] {
             wire["sample_duration_ms"] = value

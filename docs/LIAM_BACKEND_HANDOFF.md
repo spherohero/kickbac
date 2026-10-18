@@ -1,5 +1,238 @@
 # kickBAC backend handoff — Liam / iOS agents
 
+### Latest Liam adoption and nearby Trivia — October 18, 2026
+
+=== LIAM / iOS IMPACT ===
+
+Remote main aa90d4c and live OpenAPI confirm PR40 party resolve/current and PR43
+App readings deployed. These supersede the historical unavailable-endpoint notes
+below. Liam adopted atomic same-tag resolve for both phones, server current-party
+restoration and explicit previous-membership conflict recovery. Shared Trivia uses
+an encrypted nearby iPhone connection with host-owned rounds, real peer readiness,
+turns, answers and standings. Backend game-instance routes alone do not synchronize
+rounds. Client changes are local/uncommitted; no backend mutation/deployment or
+external notification performed. Detailed source/validation/physical limits:
+[ios/NEARBY_TRIVIA_HANDOFF.md](../ios/NEARBY_TRIVIA_HANDOFF.md).
+
+
+### Latest Liam NFC demo and game-entry change, October 18, 2026
+
+Owner Liam/iOS; local uncommitted `liam/party-setup`, base `03a8817`, no PR/merge.
+Liam explicitly says the hardware does not work and requests fake NFC-triggered
+0.00 readings, with random values only for the touch/hold demo. Configured NFC
+links now run a six-second local App reading instead of invoking sensor arming or
+party/game check-in POST. Simulated records retain local/source/owner separation;
+no device measurement or actual breath/BAC acceptance is fabricated. Existing
+API validation and firmware are unchanged. NON-BREAKING; endpoint/schema/payload
+examples unchanged and no server action required for this local demo.
+
+Game-entry UI now invites active party clients once per OPEN Trivia game using
+the deployed game list, and Join opens the reading page directly. Shared rounds,
+participant readiness, turn/question/deadline/answer/reveal/scoring state still
+need a backend contract; see `ios/NICHOLAS_TRIVIA_HANDOFF.md`. Do not infer working
+multiplayer from separate local state machines or client polling. No external
+notification or two-phone acceptance is claimed. Party/Practice/Trivia fixtures,
+Party source guards and signed Debug passed; native app-link handling on Liam's
+iPhone saved a new local value 0 with duration 6 seconds. Build/install evidence
+and the exact UI changes are in `ios/PARTY_HANDOFF.md`.
+
+### Latest Liam signed-out onboarding gate, October 18, 2026
+
+Owner Liam/iOS; local uncommitted `liam/party-setup`, base `03a8817`, no PR/merge.
+Onboarding is now the root screen after credential restoration whenever signed
+out, including normal launch, logout and expiry. It remains through OTP/profile
+completion and returns to tabs only after signed-in completion. This replaces the
+old optional modal triggered only by Sign in or NFC. Pending NFC targets remain
+deferred until completion; a device sheet cannot bypass unsigned onboarding.
+NON-BREAKING; auth provider, endpoints, schemas, payloads and backend unchanged;
+Nicholas has no required client/server action. No external notification claimed.
+Signed Debug, AuthContractChecks and focused NFC/Party source guards passed.
+Installation remains pending: devicectl reports Liam's iPhone unavailable (4016);
+the other connected phone was not used. Native logout,
+expiry and OTP/profile interaction acceptance remains separate from compilation;
+no live SMS or account logout was performed by the agent. Build log:
+`/tmp/kickbac-onboarding-session-gate-debug.log`.
+
+### Latest Liam atomic linked-party client gate, October 18, 2026
+
+=== LIAM / iOS IMPACT ===
+
+Owner Liam/iOS; local uncommitted `liam/party-setup`, base `03a8817`. Fresh
+creation now uses the frozen POST `/v1/parties/resolve` contract from remote
+`backend/device-party-resolve` documentation head `cdba99b`, with a persisted
+request UUID/body and no legacy create-then-bind fallback. Confirmed matching
+device binding is required before showing a new party. Legacy uncertain creates
+recover read-only by UUID; existing unlinked parties retain explicit repair.
+
+**Deployment blocked:** public OpenAPI lacks resolve/current; a fresh unauthenticated
+resolve POST returned HTTP405/not_found. This client preparation is an intentional
+behavior change, not evidence of deployed backend support. Nicholas must implement,
+test and deploy the frozen transaction/idempotency/migration contract. The temporary
+operator grant only repairs an already saved party. Detailed forwardable handoff,
+exact command, verification and remaining gates:
+[ios/NICHOLAS_PARTY_LINK_HANDOFF.md](../ios/NICHOLAS_PARTY_LINK_HANDOFF.md).
+No backend change/deployment, permission bypass, bulk cleanup, commit/push or
+external notification occurred. Party integration checks, focused wiring guard
+and signed Debug build passed; devicectl confirmed iPhone installation. Successful
+authenticated atomic setup remains blocked on backend deployment.
+
+### Latest Liam reading presentation and database-sync request, October 18, 2026
+
+Owner Liam/iOS; local `liam/party-setup`, base `03a8817`. The idle circle no
+longer shows Connect a breathalyzer; that text appears only in the bottom capsule,
+without clock/duration. The touch countdown alone shows remaining seconds. Removed
+repeated simulation/storage banners and profile footnote; generated values retain
+a concise App reading label, and device diagnostic copy says Test reading while
+underlying source/acquisition/numeric BAC validation stays unchanged. Local saved
+records are preserved and already appear in history.
+
+**BACKEND WORK REQUIRED, NOT IMPLEMENTED:** Liam requests database persistence for
+app-generated readings. Fresh live OpenAPI still exposes only device-authenticated
+measurement POST plus user GET history/summary; there is no user app-reading POST.
+No client-generated value has been uploaded or represented as a physical reading.
+Forward `/tmp/kickbac-nicholas-reading-sync-handoff.md` from Liam's Mac to Nicholas.
+It proposes a separate authenticated owner-scoped resource, explicit app_generated
+source, stable local UUID/exact-payload retry, server receipt, cloud history and
+deduplication. Final contract/deployment must precede iOS upload adoption. No device
+credential, fake raw sensor data, production arm or database write was used.
+
+Actual native acquisition and local-reading persistence fixtures passed; five
+acquisition source guards and whitespace passed. Signed Debug passed; log `/tmp/kickbac-reading-copy-debug.log`. devicectl
+confirmed installation and Home launch on Liam’s connected iPhone. No visual,
+physical-sensor or database-sync acceptance was performed. No commit/push/deployment
+or external notification was performed.
+
+
+### Latest Liam request: device-based single active party and Delete party
+
+October 18, 2026. Owner Liam/iOS; local `liam/party-setup`, base `03a8817`.
+**=== LIAM / iOS IMPACT === immediate UI uses existing close operation;
+requested backend behavior/policy change is NOT implemented or deployed.**
+
+Liam rejects a code-only workaround after failed linking. He wants the registered
+device ID to resolve its current OPEN party and join it, or atomically create a
+named, coded, device-bound party with the requester as host when none exists.
+One OPEN membership per user (including hosting) must be enforced across all
+create/join routes and concurrent requests. A separate per-user assignment grant
+is not the requested product flow. Keep real authentication/device/test privacy
+and ownership rules; publish the final contract before iOS adopts it.
+
+Liam then reported about twenty accidental parties and narrowed immediate work
+to a Settings icon beside the party name containing Delete party. Local UI now
+has that host-only action with a confirmation explaining history retention. It
+uses POST `/v1/parties/{party_id}/close`, verifies CLOSED/unbound before clearing
+local selection, and hides closed parties from the active list. Busy/error/OPEN
+responses cannot report successful removal. Public OpenAPI was refreshed and
+confirms no party-record DELETE exists. No mass cleanup or permanent database
+purge was performed. No grant, new route, deployment, commit or push was made.
+The code-only setup escape and pre-binding invitation-code display are removed.
+
+Forwardable handoff prepared for Liam:
+`/tmp/kickbac-nicholas-party-handoff.md` (on Liam's Mac; forward the file, not just
+this local path). It covers the proposed atomic endpoint, membership constraints,
+retry/concurrency, existing duplicates, delete semantics, acceptance and source map.
+This supersedes the earlier one-account-grant workaround as the requested final
+product design; that old route remains the current deployed implementation.
+
+Actual Swift party/removal fixtures and the backend close/game/device-release
+fixture passed. An initial full build hit a concurrent Home/Trivia argument-order
+change; that ordering was corrected in the shared source and signed Debug rebuilt
+successfully (`/tmp/kickbac-party-delete-debug.log`).
+The old Demo-specific PartyTransparency source guard currently fails against
+concurrent Home practice changes; its four other guards passed. Acquisition guards
+and whitespace passed. devicectl confirmed installation and launch with `--show-party` on Liam’s
+connected iPhone. No live deletion or visual/native acceptance was performed.
+
+
+### Latest Liam Party restoration fix and host-grant blocker, October 18, 2026
+
+Owner Liam/iOS; local `liam/party-setup`, base `03a8817`.
+**=== LIAM / iOS IMPACT === NON-BREAKING; existing contract unchanged.**
+Fixed tab/owner presentation cleanup deleting the persisted selected party.
+Returning to Party preserves the current room; relaunch restores selection.
+Your parties uses GET `/v1/me/parties` to recover server memberships, including
+parties whose local selection was cleared by older builds. Host/game controls
+show the linking requirement and preserve the saved party for retry.
+
+**BACKEND OPERATOR ACTION NEEDED:** Liam reports the Retry linking message about
+host assignment permission. Source and isolated backend tests confirm that
+PUT `/v1/parties/{party_id}/device` rejects a host lacking the per-device grant.
+Verify the exact registered unit (current sticker is `kb-demo-01`) and Liam's
+current verified Auth0 subject, then use the existing operator command against
+the deployed configured database:
+
+```sh
+python -m kickbac.cli grant-party-device kb-demo-01 '<verified-current-Auth0-subject>'
+```
+
+The quoted subject is a placeholder, not a phone number, credential or fabricated
+identity. No policy bypass/client grant endpoint/new deployment is required.
+No production grant or operator notification was performed by this chat. After
+approval, retry linking the existing saved party; do not create a replacement.
+Success should return its device_id, enable the client's game action, and let
+other signed-in users join that open party through the same scanned device ID.
+
+Swift restoration regression changed red to green; party/pagination/account/
+retry tests and two targeted backend grant/binding/game-snapshot tests passed.
+Signed Debug, acquisition/source/branding/whitespace checks passed. Build log:
+`/tmp/kickbac-party-resume-debug.log`; details in `ios/PARTY_HANDOFF.md`.
+devicectl confirmed installation and Party launch on Liam’s iPhone. No
+commit/push/merge, backend deployment or physical/live acceptance claimed.
+
+
+### Latest Liam automatic NFC party joining, October 18, 2026
+
+Owner Liam/iOS; local `liam/party-setup`, base `03a8817`.
+**=== LIAM / iOS IMPACT === NON-BREAKING; API contract unchanged.**
+A Party-tab device scan directly sends the existing authenticated
+POST `/v1/parties/join` with `{"device_id":"<scanned unit>"}` and opens the returned
+party on success. The extra device-status read, found status and Join party
+confirmation are removed from joining. Join with code remains available; actual
+join errors retain concise recovery. Joining never arms a test, and server
+membership/authorization rules remain intact. No endpoint/schema/server action.
+Signed Debug, party integration and acquisition/source checks passed. Log:
+`/tmp/kickbac-auto-join-debug.log`; details in `ios/PARTY_HANDOFF.md`.
+devicectl confirmed iPhone installation and Party launch; physical NFC/live
+joining remain unverified. No publication or teammate message.
+
+
+### Latest Liam Home repeat-test control, October 18, 2026
+
+Owner Liam/iOS; local work on `liam/party-setup`, base `03a8817`.
+**=== LIAM / iOS IMPACT === NON-BREAKING; API contract unchanged.**
+After a completed Home reading, Test again appears beside the duration (stacked
+at accessibility text sizes). It clears the completed display and selected unit,
+returns the circle to the existing NFC tap prompt, and sends no request. The next
+fresh tag starts a new session through the existing authenticated scan flow.
+Active/busy tests cannot be reset. Saved history, private results, game check-ins
+and concurrent Party/NFC work remain intact; no endpoint, schema, payload,
+firmware or server action changed.
+
+DeviceSessionChecks passed, including active-reset refusal, clearing a completed
+null-BAC result without rearming, terminal persistence cleanup and a fresh
+scan producing a different session. PartyIntegrationChecks, acquisition/source
+and branding checks, whitespace checks and signed Debug passed. Log:
+`/tmp/kickbac-home-repeat-debug.log`. devicectl confirmed installation and launch
+on Liam's connected iPhone. Rendering, physical NFC and live sensor acceptance
+remain unverified. No commit, push, merge or teammate message was made.
+
+
+### Latest Liam Party NFC interface restoration, October 18, 2026
+
+Owner Liam/iOS; local work on `liam/party-setup`, base `03a8817`.
+**=== LIAM / iOS IMPACT === NON-BREAKING; API contract unchanged.**
+Party restores the approved NFC tap animation for create/join/link/invite and
+removes QR scanning, raw device input and My check-ins from that page. Existing
+Shortcuts device links received on Party remain in the Party confirmation flow,
+separate from concurrent Home scan-to-test work. Create then host-link and device
+joining use existing authenticated operations and operator authorization; no new
+endpoint, schema, payload or server action. Party taps never arm a test.
+Signed Debug, party integration and acquisition/source/branding checks passed.
+devicectl confirmed iPhone installation and launch with `--show-party`; physical
+scan, visual interaction and live writes remain unverified. Details and
+log: `ios/PARTY_HANDOFF.md`. No publication, merge or teammate notification claimed.
+
+
 ### Latest Liam UI refinement — Party layout restored
 
 Owner Liam/iOS; `liam/party-setup`, implementation `b55180fcd21a798c1b6017f92e4b7b86145d24a6`, source base

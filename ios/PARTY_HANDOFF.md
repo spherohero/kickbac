@@ -1,3 +1,272 @@
+# Nearby Trivia answer-lock follow-up, October 18, 2026
+
+Reviewed the existing uncommitted nearby Trivia implementation while continuing
+Liam's party/game flow checks. A deterministic host/guest replay reproduced a
+delayed host heartbeat erasing the guest's submitted answer and reopening choices.
+The guest now retains its submitted choice for that round until the host confirms
+or reveals it. Guest submission also requires membership in the host's round,
+completed readiness and an unexpired deadline. The next round clears the choice;
+the host remains responsible for accepting answers and awarding points.
+
+Owner Liam/iOS; local `liam/party-setup`, base `03a8817`; unchanged REST endpoints,
+schemas, server/firmware and reading storage. No commit or external message.
+The new replay failed before the fix and passes afterward, including both
+players' scores and next-round reset. Party integration, seven Party source
+guards, Practice fixtures and five acquisition guards pass. Signed Debug build
+passed (`/tmp/kickbac-continue-debug.log`); strict app signature verification also
+passed. This follow-up was not installed because Liam's iPhone is unavailable.
+Physical two-phone nearby
+discovery/gameplay is not verified; Liam's iPhone is currently unavailable.
+
+# Remove saved-party list and main-page request banners, October 18, 2026
+
+Liam explicitly removed the entire Your parties section and the generic refresh/
+pending-request text above the Party page. Deleted the list renderer, pagination,
+list-error/retry controls and unused list fetches. Deleted the party room's shared
+`error ?? store.message` banner entirely. Current-party restoration and game
+refresh remain; refresh is quiet and does not overwrite an open form/game's
+errors. Removed the unused room device-status fetch left after Online was removed.
+Forms retain their own error UI. A pending game write retains its retry within
+the host game controls, rather than above the party title. Saved parties and
+durable requests are not deleted by this presentation change.
+
+Owner Liam/iOS; local `liam/party-setup`, base `03a8817`; NON-BREAKING, unchanged
+endpoints/schema, no backend change or external message. The updated boundary
+regression failed before the fix and all seven source guards pass afterward.
+Signed Debug build passed (`/tmp/kickbac-party-page-cleanup-debug.log`). Repaired
+and verified the app package signature after an Info.plist signing mismatch;
+installation and Party-page launch on Liam's iPhone succeeded
+(`/tmp/kickbac-party-page-cleanup-install.log`).
+
+# Ignored NFC navigation banner, October 18, 2026
+
+Liam reported the same error-lifetime bug again: scanning outside Trivia's reading
+phase wrote Close the current party action before opening this device link into
+shared `error`, which the party room displayed after Trivia closed. Removed that
+navigation warning from the rejected-link path; it consumes the irrelevant link
+silently. Trivia dismissal also clears its local error before offering another
+game. Room-operation failures keep their existing reporting. Local client-only
+fix on `liam/party-setup`, base `03a8817`; unchanged API and saved party data.
+The focused check failed before removal and passes afterward; all seven Party
+source guards and signed Debug pass. devicectl confirmed iPhone installation and
+Party launch. Logs: `/tmp/kickbac-party-navigation-banner-debug.log` and
+`/tmp/kickbac-party-navigation-banner-install.log`.
+
+# Automatic game invitation and NFC demo, October 18, 2026
+
+Owner Liam/iOS; local uncommitted `liam/party-setup`, base `03a8817`.
+NON-BREAKING API; no endpoint/schema/backend change, commit or external message.
+Party no longer offers a pre-game Start my test/Online block. After the host's
+server-confirmed Trivia creation, active party clients poll the shared game list
+every two seconds and each offer one invitation. Busy sheets defer the popup;
+polling stops off-tab/in the background. Actual party role replaces hardcoded host.
+Join game uses the existing full-width capsule button style and opens the
+breathalyzer page directly. Removed the intermediary check-in choices, duplicate
+bottom Test cancelled and BAC will stay unavailable copy.
+
+Liam explicitly clarified that the device does not work: NFC must generate a fake
+0.00 result, not a short tap on the on-screen circle. Home and Trivia NFC now run a
+six-second local App reading of exactly 0.00 without resolving/arming hardware or
+posting a check-in/measurement. Holding the circle keeps the random-value demo.
+Local provenance, owner-scoped storage and the simulated game BAC flag remain.
+Game cancellation stops the local timer without saving, retaining Test cancelled
+only in the center. Existing validated device-result decoding is unchanged.
+
+Verification: Party/Practice/Trivia fixtures and all seven Party source guards
+pass. Invitation fixtures exercise independent host/guest clients, deferred
+presentation, repeat polls and foreign/closed games. Signed Debug passes. On
+Liam's iPhone, launching the real configured NFC app link added one new local
+reading with value 0 and duration 6 seconds; this verifies app-link handling,
+not a physical NFC scan. Final signed build, installation and Party launch are
+confirmed on Liam's iPhone. Logs: `/tmp/kickbac-game-flow-debug.log` and
+`/tmp/kickbac-game-flow-install.log`.
+
+**Multiplayer is not complete:** invitations share a server game ID, but readiness,
+turns, questions, answers and scores still run in separate `TriviaPreview` objects
+on each phone. No live shared rounds or background APNs delivery is implemented.
+Exact backend requirements are in [NICHOLAS_TRIVIA_HANDOFF.md](NICHOLAS_TRIVIA_HANDOFF.md).
+No two-phone gameplay acceptance is claimed.
+
+# Close cancels unfinished setup, October 18, 2026
+
+Liam explicitly requested that Close cancel/reset creation and make both join
+options available again. Close and swipe dismissal now clear the unfinished
+setup's persisted request, name, scanned device, errors and busy state. The client
+creation task is cancelled; generation/revision checks ignore late setup and scan
+callbacks. Confirmed parties and unrelated check-in/game requests are preserved.
+This supersedes earlier guidance to retain setup requests after explicit Close;
+exact retry remains available while setup stays open or after an interrupted run.
+No server close/leave/delete operation is sent when dismissing a draft. A request
+already accepted by the server remains server-owned and can appear in saved parties.
+
+Owner Liam/iOS; local uncommitted `liam/party-setup`, base `03a8817`, no PR/merge.
+NON-BREAKING, unchanged endpoints and payloads. Refreshed remote main handoff and
+live OpenAPI confirm atomic resolve/current-party routes are now deployed; older
+missing-route notes below are historical. No backend change or external message.
+
+Verification: PartyIntegrationChecks now cover cancellation, join afterward,
+relaunch, late success, confirmed-party preservation, unrelated check-ins and disk
+failure. Four focused Party source guards pass. The broader source suite has a
+pre-existing Home copy mismatch (`Simulated practice reading` vs `App reading`),
+outside this change. Signed Debug passed; devicectl confirmed installation and
+launch on Liam's iPhone with `--show-party`. Logs:
+`/tmp/kickbac-party-close-debug.log`, `/tmp/kickbac-party-close-install.log`.
+Run `/tmp/kickbac-party-close-checks` for the compiled fixture checks. No live
+authenticated create/join or native dismissal acceptance is claimed from these
+fixtures/build/installation.
+
+# Party entry error scope fix, October 18, 2026
+
+Liam's screenshot showed a setup error above the Party entry card. The page-wide
+banner rendered `error ?? store.message` whenever `destination == nil`, so closing
+setup exposed its retained error. The earlier copy/button edit left this renderer
+in place. Removed it from the entry page; room-operation messages now render only
+in a room with no pending setup. Setup retains its message and exact retry inside
+the setup sheet; no pending write or party data is discarded.
+
+The new source-wiring regression failed before the fix and passed afterward.
+PartyIntegrationChecks and signed Debug passed, including durable request/relaunch
+coverage. Build log: `/tmp/kickbac-party-error-scope-debug.log`. These checks do not
+establish native screen interaction or resolve the separate backend setup failure.
+
+# Latest atomic linked-party setup gate
+
+October 18, 2026. Fresh Create now uses the frozen atomic resolve contract, with
+durable exact retries and no fallback to unbound party creation. Public support
+is still missing (HTTP405). Existing parties can still be repaired through their
+explicit binding action after Nicholas verifies/grants permission. Legacy pending
+creates recover read-only. No production cleanup/grant/deployment was performed.
+Forward [NICHOLAS_PARTY_LINK_HANDOFF.md](NICHOLAS_PARTY_LINK_HANDOFF.md) for the
+precise blocker, operator command, backend contract and verification. Party checks,
+focused wiring guard and signed Debug build passed; iPhone installation confirmed.
+
+# Latest Party Delete action and pending backend product request
+
+Signed Debug passed after the concurrent practice-call argument ordering was
+corrected. PartyIntegrationChecks passed including server-confirmed removal,
+failed/OPEN-response retention, host-only access and durable selected-ID cleanup.
+The backend close/game/device-release fixture passed. Acquisition guards passed;
+the old Demo-specific Home source guard remains stale against concurrent practice
+work (four other PartyTransparency guards passed). Log:
+`/tmp/kickbac-party-delete-debug.log`. devicectl confirmed installation and Party
+launch on Liam’s iPhone. No live party deletion or native/visual acceptance was
+exercised here.
+
+
+October 18, 2026. Local `liam/party-setup`, base `03a8817`. Liam's immediate scope
+is Settings to the right of the party name with host-only Delete party. This
+confirms and invokes the existing authenticated close endpoint, requiring a
+CLOSED/unbound response before removing the selected party and cached active row.
+Errors, busy-device rejection, unexpected OPEN replies and member attempts retain
+the party. The selected ID is cleared durably on confirmed removal, so relaunch
+does not reopen it. Closed rows are hidden; pagination remains available through
+pages containing only closed rows. The confirmation states that saved readings
+and game history are retained: no hard-delete endpoint is deployed.
+
+The code-only setup escape and invitation code before successful binding were
+removed. Existing NFC joining, illustration, account/session fencing and pending
+writes remain intact. No bulk deletion or production permission update occurred.
+
+The requested final design is one active party per user, device-ID join-or-create
+with creation/binding atomic, and no recurring per-user operator-grant workaround.
+This requires backend work. Forwardable Nicholas handoff:
+`/tmp/kickbac-nicholas-party-handoff.md`; see current shared backend handoff for
+scope, existing twenty-party cleanup status, compatibility and verification.
+Do not assume that future contract or a hard-delete route is implemented.
+
+# Party restoration and linking diagnosis, October 18, 2026
+
+Liam reported Retry linking with the saved-party/operator-permission message and
+that leaving/reopening Party removed his parties. The latter was reproduced in
+actual Swift: the tab-selection and owner-load handlers called showEntry, which
+cleared selectedID and persisted that deletion. A regression failed with
+Returning to Party lost the saved party, host role or breathalyzer binding.
+
+Local fix on `liam/party-setup`, base `03a8817`: tab return now refreshes the
+existing selection without resetting room/game state; owner startup restores the
+saved party. Presentation cleanup no longer clears party data. PartyStore's
+explicit entry navigation also retains the selected ID and uncertain writes.
+Your parties reads the authenticated, paginated server list, with retry,
+deduplication and owner fencing, so parties lost from older local navigation can
+be reopened. The room shows the party name and actual operation errors. An
+unlinked host party offers Link breathalyzer and a visible disabled Start a game
+with concise linking guidance. Existing NFC auto-join and approved art remain.
+
+**Actual remaining blocker:** the reported linking message corresponds to the
+backend's host-assignment permission rule, not a missing NFC/device ID. The
+server's PUT /v1/parties/{party_id}/device requires an existing device_party_hosts
+grant for the exact verified Auth0 subject and registered device. Recreating the
+party does not provide that grant. A backend operator must verify Liam's current
+signed-in subject, then run the existing `grant-party-device` command against the
+correct deployed DB for `kb-demo-01` (verify the scanned ID first). After approval,
+Liam can reopen his existing party, Link breathalyzer, scan, and retry linking.
+No grant, production DB change or owner notification was performed here.
+
+Verification: the failing restoration harness now passes, plus updated actual
+Swift PartyIntegrationChecks for restoration/host/binding, pending-write retention,
+list paging/recovery/deduplication/account isolation. Two targeted backend tests
+for grant/bind/device join and game device snapshots passed in isolated fixtures.
+Five PartyTransparency guards, five acquisition guards, branding, whitespace and
+signed Debug passed. Log `/tmp/kickbac-party-resume-debug.log`. Public live OpenAPI
+was refreshed to `/tmp/kickbac-party-recovery-openapi.json`; existing party/list/
+bind/game routes remain available. Current remote main handoff was fetched/read;
+no merge was performed. No API/schema/firmware/scoring change, commit or push.
+devicectl confirmed installation and launch with `--show-party` on Liam’s
+connected iPhone. Live linking, physical scans and native interaction remain
+separate acceptance.
+
+# Automatic NFC party joining, October 18, 2026
+
+Liam's latest request removes the found-device status, generic Party or device
+unavailable copy, and Join party confirmation from NFC joining. A valid app device
+link received on Party now sends the existing authenticated device-ID join
+immediately, then dismisses the tap sheet after server-confirmed success. It does
+not first resolve/fetch the private device-status endpoint or gate joining on an
+online status. The approved animation and Join with code fallback remain.
+
+Real join failures still show concise recovery; a missing open party offers the
+party-code fallback. The server remains authoritative for membership. Background
+refresh waits while the NFC join sheet is open, and links arriving during a busy
+store operation are consumed once it finishes. Owner/revision checks fence stale
+UI responses. Creation, host binding, Home scanning and private check-ins retain
+their existing flows. Joining never arms a test.
+
+Owner Liam/iOS; local changes on `liam/party-setup`, base `03a8817`.
+NON-BREAKING, no endpoint/schema/payload/server change or teammate message.
+Signed Debug and PartyIntegrationChecks passed; acquisition/source checks and
+whitespace checks passed. Build log: `/tmp/kickbac-auto-join-debug.log`.
+devicectl confirmed iPhone installation and launch with `--show-party`. Physical
+NFC and authenticated live joining remain unverified. No commit, push,
+merge or backend deployment was made. This supersedes the explicit NFC join
+confirmation and device-status gate described in older checkpoints below.
+
+# Party NFC interface restoration, October 18, 2026
+
+Liam requested the original NFC tap animation and no QR or My check-ins on Party.
+Local changes on `liam/party-setup`, base `03a8817`, restore the existing
+PartyTapIllustration in create, join, host link and invite sheets. The mint entry
+card, server-code fallback, approved game picker and real authenticated consumers
+remain. QR scanning, raw device-entry fields and the history screen were removed
+from Party; the underlying private check-in API/store were retained.
+
+Device links received while Party is selected stay in Party instead of entering
+Home's concurrent scan-to-test flow. A tag fills the current join/link form, or
+retains the chosen unit alongside the entered name during creation. Successful
+creation opens host linking, with a separate explicit Link breathalyzer action.
+Joining/linking still require confirmation and server authorization. No scan or
+animation arms a party test. The existing per-phone Shortcuts automation is still
+required; no native NFC entitlement or Universal Links were added. Other tabs'
+scan handling and all concurrent dirty work were preserved.
+
+Signed Debug build passed with Xcode-beta and `/tmp/kickbac-profile-build`;
+PartyIntegrationChecks, five PartyTransparency checks (including the Party route's
+early return before Home auto-arm), five acquisition source guards, branding and
+`git diff --check` passed. Build log: `/tmp/kickbac-party-nfc-debug.log`.
+devicectl confirmed installation and launch with `--show-party` on Liam’s
+connected iPhone. Physical NFC, authenticated party writes and visual/native
+interaction remain unverified. No commit, push, merge, server deployment or teammate message was made.
+This checkpoint supersedes QR/history presentation statements below.
+
 # Party integration — current checkpoint, October 18, 2026
 
 Owner Liam/iOS. Branch `liam/party-setup`; UI implementation `b55180fcd21a798c1b6017f92e4b7b86145d24a6` follows authenticated integration `c06192f73e5c2755f4961aa6c65e0c47811ad81f`.
@@ -140,3 +409,97 @@ Latest row-icon and stack-shadow correction: ongoing-game rows and profile Recen
 Trivia follow-up: Start game now opens the join/skip → tap/check-in → ready → host category wheel → question/reveal → podium preview. The shared room retains and reopens its trivia state; owner/room teardown clears it. Game points are local, nullable BAC stays unavailable, and explicit Debug controls cannot be confused with live sensor/native acceptance. See [TRIVIA_HANDOFF.md](TRIVIA_HANDOFF.md) for the full sequence, privacy boundary, backend requirements, and standalone checks. This supersedes earlier statements that no local game logic exists; no shared game engine or live party contract is implemented.
 
 Latest trivia revision: compact logo/Join game/Skip game sheet; HomeView-based breath page; avatar/name/readiness roster without BAC; flat primary controls; gesture-driven wheel with rotating center star; fixed wheel/answer pages; line countdown; delayed all-answered/deadline reveal; separate per-player round awards; rotating spinner. Hardware simulation is now in the Debug options menu, never a main-page preview action. Personal breathalyzers are a requested live capability, not implemented by removing the party-device copy. This supersedes the host-only wheel and inline reveal described above. See the updated trivia handoff.
+
+## Party tag status and server binding follow-up
+
+At Liam's request, Join party remains visible before scanning and disabled until
+an authenticated resolver/device lookup succeeds. The shared tap illustration
+uses the existing OnboardingBreath SVG beside the actual resolved ID. Confirmed
+online lookup shows `<device-id> connected`; offline lookup shows
+`<device-id> found · offline` and remains usable for server party joining/binding.
+The animation holds its contact pose after identification. Neither a raw tag ID
+nor the Debug tap shortcut is evidence of chip connectivity or a sober result.
+
+Creating a party still persists an exact UUID/body before the server POST. When a
+unit was scanned, successful creation now immediately attempts the existing host
+binding PUT, retaining the created party/code if linking fails. An unsuccessful
+binding does not issue another create or erase the party. A join-by-device 404 now
+explains the missing open binding and offers code fallback. A bind 404 explains
+that the party is saved and the operator must verify host assignment permission.
+The caller reported that permission was probably granted; that is not verified
+production authorization. No device credential or production grant is read,
+created, weakened or disclosed by this client change.
+
+Explicit Continue without a test allows local Trivia readiness with null BAC,
+including after cancelling/expiring a device session. It does not manufacture a
+measurement, complete a server check-in, upload a score or label an offline unit
+connected. An active reservation is not silently cancelled by local progression.
+
+Backend existing real-loopback HTTP/core/concurrency checks passed: 24 tests,
+covering saved create/retry, operator-authorized binding, code/device joins into
+the same party, correct-user session results and restart preservation. These use
+isolated databases/explicit synthetic identities, not the user's live account.
+The native client fixtures additionally cover exact bind/join wire bodies,
+retention of a saved party/code after rejected binding, and offline-versus-online
+caption meaning. Actual two-account production create/bind/join and physical NFC
+rendering remain separate phone/operator acceptance.
+
+=== LIAM / iOS IMPACT ===
+Additive app UI/adoption change; existing API/schema/auth semantics unchanged.
+Server create, host bind and guest join remain distinct authenticated operations.
+All devices/parties stay subject to existing assignment permissions and one-open-
+party-per-device rules. No fake sober BAC or phantom server party is introduced.
+
+## Standard Party entry, no heading or cog
+
+Liam requested removal of the Party heading and the entire cog menu, including
+Refresh, All parties and the layout-preview entry. The Party tab now starts at
+join/create on first load and every tab re-entry instead of fetching a cached old
+room. The obsolete own-party list fetch/pagination is also removed. Explicit
+create/join still opens its server room normally. This changes local navigation,
+not server membership, device bindings or saved measurements. Clearing entry
+invalidates late room responses and persists a null selection while retaining any
+uncertain write's exact pending UUID/body; an unreadable request cache stays
+protected. Pull-to-refresh can update only a currently selected explicit room.
+Native fixtures cover cache/relaunch, pending-write retention and a late response
+not reopening a room. No backend endpoint/schema change.
+
+## Inline join errors and creation-time binding
+
+The main Party page no longer renders the generic global error banner. A failed
+scan-to-join message appears centered directly below Join with code in its sheet;
+opening another action clears unrelated transient errors. Creation now requires
+its scanned unit and performs the existing server create then host binding while
+remaining on the same Create a party screen. It never navigates to the separate
+binding destination during creation. If binding fails, the saved name is fixed
+and Retry linking reuses that party instead of creating another. Recovery of an
+uncertain create also returns to this same flow and preserves the exact request.
+Binding is server metadata; its existing handler does not gate on heartbeat
+online status. Missing operator authority, competing assignment, device-busy and
+stale party state remain actual server errors; no false success is shown.
+
+## Finger-generated, locally saved practice BAC
+
+Liam requested replacing Home's Onboarding/Demo buttons with a center-icon hold.
+An explicit touch runs a simulated sample; release or the six-second maximum
+finishes it. A successful atomic save reveals one random value with its actual
+local gesture duration. Results are always visibly simulated, including in
+history, the profile count explanation and local-game standings. Navigation,
+backgrounding or a real active-device session interrupts unfinished practice.
+Test again clears the displayed result without deleting saved records.
+
+The root-owned PracticeReadingStore scopes persisted local values by signed-in
+subject, with a distinct guest scope. Guest practice can be viewed signed out;
+it is not migrated into signed-in accounts. History merges these labeled local
+entries with valid server BAC readings. Existing unavailable backend BAC remains
+excluded; no server measurement or session ID is fabricated. The local Trivia
+model has a separate practice completion and simulation flag; real check-in
+acceptance still requires the exact completed owner/device/session. Practice
+never uploads a measurement, awards server points or affects another phone.
+NFC continues to use actual server/chip results, without a forced zero BAC.
+
+Native practice fixtures cover relaunch/account/guest isolation, actual duration,
+invalid inputs, disk errors and preservation of unreadable data. Trivia fixtures
+cover simulation provenance and duplicate completion. This is source/native
+fixture and compilation evidence, not physical gesture/NFC or cloud-sync
+acceptance. Relevant implementation/testing commands are in ios/README.md.

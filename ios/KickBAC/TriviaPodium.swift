@@ -65,8 +65,8 @@ struct TriviaPodium: View {
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(row.map {
-            "\($0.name), rank \(rank($0)), \($0.points) points, \($0.bac.map { "BAC \($0.formatted(.number.precision(.fractionLength(3))))" } ?? "BAC unavailable")"
+        .accessibilityLabel(row.map { standing in
+            "\(standing.name), rank \(rank(standing)), \(standing.points) points, \(standing.bac.map { "\(standing.bacIsSimulated ? "App reading" : "BAC") \($0.formatted(.number.precision(.fractionLength(3))))" } ?? "BAC unavailable")"
         } ?? "Place \(place), no player")
     }
 
@@ -76,13 +76,13 @@ struct TriviaPodium: View {
                 playerLabel(row)
                 Spacer(minLength: 8)
                 statistic("Points", value: row.points.formatted())
-                statistic("BAC", value: row.bac.map { $0.formatted(.number.precision(.fractionLength(3))) } ?? "—")
+                statistic(row.bacIsSimulated ? "App reading" : "BAC", value: row.bac.map { $0.formatted(.number.precision(.fractionLength(3))) } ?? "—")
             }
             VStack(alignment: .leading, spacing: 16) {
                 playerLabel(row)
                 HStack(spacing: 24) {
                     statistic("Points", value: row.points.formatted())
-                    statistic("BAC", value: row.bac.map { $0.formatted(.number.precision(.fractionLength(3))) } ?? "—")
+                    statistic(row.bacIsSimulated ? "App reading" : "BAC", value: row.bac.map { $0.formatted(.number.precision(.fractionLength(3))) } ?? "—")
                 }
             }
         }

@@ -43,10 +43,14 @@ jobs:
       - name: Execute party retry and local-boundary checks
         # Session transport fixtures use synthetic credentials and never arm the live API.
         run: |
+          xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/PracticeReadingStore.swift ios/checks/PracticeReadingChecks.swift -o "$RUNNER_TEMP/kickbac-practice-checks"
+          "$RUNNER_TEMP/kickbac-practice-checks"
           xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/KickBACAPI.swift ios/KickBAC/PartyAPI.swift ios/KickBAC/DeviceSessionStore.swift ios/KickBAC/PartyStore.swift ios/checks/PartyIntegrationChecks.swift -o "$RUNNER_TEMP/kickbac-party-integration-checks"
           "$RUNNER_TEMP/kickbac-party-integration-checks"
           xcrun swiftc ios/KickBAC/TriviaPreview.swift ios/checks/TriviaChecks.swift -o "$RUNNER_TEMP/kickbac-trivia-checks"
           "$RUNNER_TEMP/kickbac-trivia-checks"
+          xcrun swiftc ios/KickBAC/TriviaPreview.swift ios/checks/NearbyTriviaChecks.swift -o "$RUNNER_TEMP/kickbac-nearby-trivia-checks"
+          "$RUNNER_TEMP/kickbac-nearby-trivia-checks"
           python3 ios/checks/PartyTransparencyChecks.py
       - name: Compile unsigned Debug and Release simulator app
         run: |

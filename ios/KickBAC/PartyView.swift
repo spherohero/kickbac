@@ -218,7 +218,7 @@ struct PartyPreviewView: View {
                         Spacer(minLength: 8)
                         VStack(alignment: .trailing, spacing: 4) {
                             Text("\(row.points.formatted()) pts").font(.headline).monospacedDigit()
-                            Text(row.bac.map { "BAC \($0.formatted(.number.precision(.fractionLength(3))))" } ?? "BAC —")
+                            Text(row.bac.map { "\(row.bacIsSimulated ? "App reading" : "BAC") \($0.formatted(.number.precision(.fractionLength(3))))" } ?? "BAC —")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
                     }

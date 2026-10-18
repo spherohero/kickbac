@@ -1,6 +1,6 @@
 import Foundation
 
-nonisolated struct APIParty: Decodable, Identifiable, Sendable {
+nonisolated struct APIParty: Decodable, Identifiable, Sendable, Equatable {
     let partyID: String
     let name: String
     let state: String
@@ -60,9 +60,10 @@ nonisolated struct PartyPage<Item: Decodable & Sendable>: Decodable, Sendable {
     enum CodingKeys: String, CodingKey { case items, limit, offset; case hasMore = "has_more" }
 }
 
-// Persist bytes before sending. Replays use this same route, UUID and JSON, even after relaunch.
+// Persist bytes before sending. New writes replay their exact route, UUID and JSON after relaunch.
+// Legacy unbound creates are retained only for read-only recovery of their original UUID.
 nonisolated struct PartyWrite: Codable, Equatable, Sendable {
-    enum Kind: String, Codable { case create, game, checkIn }
+    enum Kind: String, Codable { case create, resolve, game, checkIn }
     let kind: Kind
     let id: String
     let partyID: String?
@@ -77,6 +78,10 @@ nonisolated struct PartyWrite: Codable, Equatable, Sendable {
               !name.unicodeScalars.contains(where: { CharacterSet.controlCharacters.contains($0) }) else { throw KickBACAPI.APIError.invalidRequest }
         return try make(.create, id: id, name: name)
     }
+    static func resolve(name: String, deviceID: String, id: String = UUID().uuidString) throws -> Self {
+        let validated = try create(name: name, id: id)
+        return try make(.resolve, id: validated.id, name: validated.name, deviceID: deviceID)
+    }
     static func game(partyID: String, id: String = UUID().uuidString) throws -> Self {
         try make(.game, id: id, partyID: partyID)
     }
@@ -86,8 +91,8 @@ nonisolated struct PartyWrite: Codable, Equatable, Sendable {
     private static func make(_ kind: Kind, id: String, partyID: String? = nil, name: String? = nil,
                              deviceID: String? = nil, gameInstanceID: String? = nil) throws -> Self {
         guard UUID(uuidString: id) != nil,
-              partyID.map({ UUID(uuidString: $0) != nil }) ?? (kind == .create),
-              deviceID.map(DeviceTarget.isValidID) ?? (kind != .checkIn),
+              partyID.map({ UUID(uuidString: $0) != nil }) ?? (kind == .create || kind == .resolve),
+              deviceID.map(DeviceTarget.isValidID) ?? (kind != .checkIn && kind != .resolve),
               gameInstanceID.map({ UUID(uuidString: $0) != nil }) ?? true else { throw KickBACAPI.APIError.invalidRequest }
         let id = id.lowercased()
         let partyID = partyID?.lowercased()
@@ -95,6 +100,7 @@ nonisolated struct PartyWrite: Codable, Equatable, Sendable {
         let object: [String: Any]
         switch kind {
         case .create: object = ["party_id": id, "name": name ?? ""]
+        case .resolve: object = ["request_id": id, "name": name ?? "", "device_id": deviceID ?? ""]
         case .game: object = ["game_instance_id": id, "game_id": "trivia"]
         case .checkIn: object = ["check_in_id": id, "device_id": deviceID ?? "", "game_instance_id": gameInstanceID as Any? ?? NSNull()]
         }
@@ -104,6 +110,7 @@ nonisolated struct PartyWrite: Codable, Equatable, Sendable {
     var path: String {
         switch kind {
         case .create: "v1/parties"
+        case .resolve: "v1/parties/resolve"
         case .game: "v1/parties/\(partyID ?? "")/games"
         case .checkIn: "v1/parties/\(partyID ?? "")/check-ins"
         }
@@ -112,19 +119,33 @@ nonisolated struct PartyWrite: Codable, Equatable, Sendable {
         let expected = try Self.make(kind, id: id, partyID: partyID, name: name, deviceID: deviceID, gameInstanceID: gameInstanceID)
         guard self == expected else { throw KickBACAPI.APIError.invalidRequest }
         if kind == .create { _ = try Self.create(name: name ?? "", id: id) }
+        if kind == .resolve {
+            guard self == (try Self.resolve(name: name ?? "", deviceID: deviceID ?? "", id: id)) else { throw KickBACAPI.APIError.invalidRequest }
+        }
     }
 }
 
-enum PartyReply { case party(APIParty), game(APIPartyGame), checkIn(APICheckIn) }
+nonisolated struct APIPartyResolution: Decodable, Sendable {
+    enum Action: String, Decodable, Sendable { case created, joined }
+    let action: Action
+    let party: APIParty
+}
+
+enum PartyReply { case party(APIParty), resolved(APIPartyResolution), game(APIPartyGame), checkIn(APICheckIn) }
 
 extension KickBACAPI {
     func partyWrite(_ write: PartyWrite, accessToken: String) async throws -> PartyReply {
         try write.validate()
         switch write.kind {
-        case .create: return .party(try await get(write.path, accessToken: accessToken, method: "POST", body: write.body))
+        // Legacy uncertain creates are recovered read-only. Never create another unbound party.
+        case .create: return .party(try await party(write.id, accessToken: accessToken))
+        case .resolve: return .resolved(try await get(write.path, accessToken: accessToken, method: "POST", body: write.body))
         case .game: return .game(try await get(write.path, accessToken: accessToken, method: "POST", body: write.body))
         case .checkIn: return .checkIn(try await get(write.path, accessToken: accessToken, method: "POST", body: write.body))
         }
+    }
+    func currentParty(accessToken: String) async throws -> APIParty? {
+        try await get("v1/me/parties/current", accessToken: accessToken)
     }
     func parties(accessToken: String, offset: Int = 0) async throws -> PartyPage<APIParty> {
         try await partyPage("v1/me/parties", accessToken: accessToken, offset: offset)

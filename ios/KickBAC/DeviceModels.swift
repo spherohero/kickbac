@@ -19,10 +19,36 @@ nonisolated enum DeviceTarget {
         return String(parts[2])
     }
 
+    // The configured Shortcuts NFC automation is the user's start-test action.
+    // The public HTTPS sticker remains a read-only locator, never an arm command.
+    static func parseAppLink(_ url: URL, baseURL: URL) throws -> String {
+        if url.scheme?.lowercased() == "https" {
+            return try parse(url.absoluteString, baseURL: baseURL)
+        }
+        guard let parts = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              parts.scheme?.lowercased() == "com.liam.kickbac", parts.host == "device",
+              parts.port == nil, parts.user == nil, parts.password == nil,
+              parts.query == nil, parts.fragment == nil,
+              parts.percentEncodedPath == parts.path else { throw TargetError.invalid }
+        let path = parts.path.split(separator: "/", omittingEmptySubsequences: false)
+        guard path.count == 2, path[0].isEmpty, isValidID(String(path[1])) else { throw TargetError.invalid }
+        return String(path[1])
+    }
+
+    static func shortcutURL(for id: String) -> URL? {
+        guard isValidID(id) else { return nil }
+        return URL(string: "com.liam.KickBAC://device/\(id)")
+    }
+
     enum TargetError: LocalizedError {
         case invalid
         var errorDescription: String? { "Enter a KickBAC device ID or its official device link." }
     }
+}
+
+nonisolated struct PartyDeviceLink: Equatable {
+    let deviceID: String
+    let linkAsHost: Bool
 }
 
 nonisolated struct DeviceResolution: Decodable, Sendable {
@@ -35,6 +61,7 @@ nonisolated struct APIDevice: Decodable, Sendable {
     let state: String
     let online: Bool
     let lastSeenAt: String?
+    var connectionLabel: String { online ? "\(id) connected" : "\(id) found · offline" }
     enum CodingKeys: String, CodingKey { case id, state, online; case lastSeenAt = "last_seen_at" }
 }
 

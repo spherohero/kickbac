@@ -1,15 +1,88 @@
 import Foundation
 import Observation
 
-/// Local state only. Device events and peer answers remain explicit fixtures.
+/// Trivia rules shared by the host and nearby party members.
 @MainActor @Observable
 final class TriviaPreview: Identifiable {
-    enum Phase: Equatable { case invitation, tap, breath, lobby, wheel, question, waiting, reveal, results }
-    enum Participation { case undecided, checkingIn, joined, skipped }
+    enum Phase: String, Codable { case invitation, tap, breath, lobby, wheel, question, waiting, reveal, results }
+    enum Participation: String, Codable { case undecided, checkingIn, joined, skipped }
 
     let id = UUID()
+    var localPlayerID = "you"
+    var usesNearby = false
+    var isNearbyHost = false
+    var connectionMessage: String?
+    var sharedPartyCode: String?
+    var nearbyPlayers: [NearbyPlayer] = []
+    @ObservationIgnored var sendNearbyAction: ((String, Int?) -> Void)?
+    @ObservationIgnored var nearbyDidChange: (() -> Void)?
+
+    struct NearbyPlayer: Codable, Sendable {
+        let id: String
+        var name: String
+        var participation: Participation
+    }
+    struct Snapshot: Codable, Sendable {
+        let phase: Phase
+        let roundNumber: Int
+        let category: TriviaCategory?
+        let deadline: Date?
+        let joinedIDs: [String]
+        let answers: [String: Int]
+        let scores: [String: Int]
+        let awards: [String: Int]
+        let usedCategories: [TriviaCategory]
+        let players: [NearbyPlayer]
+    }
+    var canStart: Bool { usesNearby ? readyIDs.count >= 2 : playerCount > 0 }
+
+    func snapshot() -> Snapshot {
+        Snapshot(phase: phase, roundNumber: roundNumber, category: category, deadline: deadline,
+                 joinedIDs: joinedIDs, answers: answers, scores: scores, awards: awards,
+                 usedCategories: Array(usedCategories), players: nearbyPlayers)
+    }
+    func apply(_ state: Snapshot) {
+        guard usesNearby, !isNearbyHost, (1...roundCount).contains(state.roundNumber),
+              state.players.count <= 8, state.joinedIDs.count <= 8,
+              Set(state.players.map(\.id)).count == state.players.count,
+              state.answers.values.allSatisfy({ (0...3).contains($0) }) else { return }
+        // Keep the submitted choice locked while an older host heartbeat catches up.
+        let submittedAnswer = state.roundNumber == roundNumber && state.joinedIDs.contains(localPlayerID)
+            && [.question, .waiting].contains(state.phase) ? answers[localPlayerID] : nil
+        nearbyPlayers = state.players
+        joinedIDs = state.joinedIDs; answers = state.answers; scores = state.scores; awards = state.awards
+        if let submittedAnswer, answers[localPlayerID] == nil { answers[localPlayerID] = submittedAnswer }
+        roundNumber = state.roundNumber; category = state.category; deadline = state.deadline
+        usedCategories = Set(state.usedCategories)
+        if [.wheel, .question, .waiting, .reveal, .results].contains(state.phase) {
+            question = [.question, .waiting, .reveal, .results].contains(state.phase)
+                ? TriviaQuestion.bank.first(where: { $0.category == state.category }) : nil
+            phase = state.phase == .question || state.phase == .waiting
+                ? (answers[localPlayerID] == nil ? .question : .waiting) : state.phase
+            correctCount = totalPoints / 1000
+        }
+    }
+    func updateNearbyPlayer(id: String, name: String, participation: Participation) {
+        guard usesNearby, isNearbyHost, !id.isEmpty else { return }
+        if let index = nearbyPlayers.firstIndex(where: { $0.id == id }) {
+            nearbyPlayers[index].name = String(name.prefix(60))
+            nearbyPlayers[index].participation = participation
+        } else if nearbyPlayers.count < 8 {
+            nearbyPlayers.append(NearbyPlayer(id: id, name: String(name.prefix(60)), participation: participation))
+        }
+        nearbyDidChange?()
+    }
+    private func shareParticipation() {
+        if let i = nearbyPlayers.firstIndex(where: { $0.id == localPlayerID }) {
+            nearbyPlayers[i].participation = participation
+        }
+        sendNearbyAction?("ready", nil)
+        nearbyDidChange?()
+    }
+
     // Local check-in fixture only; never a server measurement or a ranking input.
     private(set) var bac: Double?
+    private(set) var bacIsSimulated = false
     let roundCount = TriviaCategory.allCases.count
     let answerDuration: TimeInterval = 20
     private(set) var phase: Phase = .invitation
@@ -27,19 +100,20 @@ final class TriviaPreview: Identifiable {
     private var awards: [String: Int] = [:]
 
     private var readyIDs: [String] {
-        (participation == .joined ? ["you"] : []) + (includesExamplePlayers ? ["example-0", "example-1", "example-2"] : [])
+        if usesNearby { return nearbyPlayers.filter { $0.participation == .joined }.map(\.id) }
+        return (participation == .joined ? [localPlayerID] : []) + (includesExamplePlayers ? ["example-0", "example-1", "example-2"] : [])
     }
     var availableCategories: [TriviaCategory] { TriviaCategory.allCases.filter { !usedCategories.contains($0) } }
     var playerCount: Int { joinedIDs.isEmpty ? readyIDs.count : joinedIDs.count }
-    var selectedAnswer: Int? { answers["you"] }
-    var totalPoints: Int { scores["you", default: 0] }
-    var earnedPoints: Int { awards["you", default: 0] }
+    var selectedAnswer: Int? { answers[localPlayerID] }
+    var totalPoints: Int { scores[localPlayerID, default: 0] }
+    var earnedPoints: Int { awards[localPlayerID, default: 0] }
     var answeredCount: Int { answers.count }
     var spinnerID: String? { joinedIDs.isEmpty ? nil : joinedIDs[(roundNumber - 1) % joinedIDs.count] }
     var everyoneAnswered: Bool { !joinedIDs.isEmpty && joinedIDs.allSatisfy { answers[$0] != nil } }
 
     func setExamplePlayers(_ enabled: Bool) {
-        guard phase == .invitation || phase == .lobby else { return }
+        guard !usesNearby, phase == .invitation || phase == .lobby else { return }
         includesExamplePlayers = enabled
     }
 
@@ -48,7 +122,9 @@ final class TriviaPreview: Identifiable {
         guard phase == .invitation || (phase == .lobby && participation == .skipped) else { return false }
         participation = .checkingIn
         bac = nil
+        bacIsSimulated = false
         phase = .tap
+        shareParticipation()
         return true
     }
 
@@ -56,7 +132,9 @@ final class TriviaPreview: Identifiable {
         guard [.invitation, .tap, .breath, .lobby].contains(phase) else { return }
         participation = .skipped
         bac = nil
+        bacIsSimulated = false
         phase = .lobby
+        shareParticipation()
     }
 
     @discardableResult
@@ -71,43 +149,70 @@ final class TriviaPreview: Identifiable {
         guard phase == .breath else { return false }
         if let bac, !bac.isFinite || bac < 0 { return false }
         self.bac = bac
+        bacIsSimulated = false
         participation = .joined
         phase = .lobby
+        shareParticipation()
+        return true
+    }
+
+    @discardableResult
+    func completePracticeReading(value: Double) -> Bool {
+        guard completePreviewBreath(bac: value) else { return false }
+        bacIsSimulated = true
         return true
     }
 
     @discardableResult
     func begin(isHost: Bool) -> Bool {
-        guard isHost, phase == .lobby, participation != .undecided,
+        guard (!usesNearby || isNearbyHost), canStart, isHost, phase == .lobby, participation != .undecided,
               participation != .checkingIn, !readyIDs.isEmpty else { return false }
         joinedIDs = readyIDs
         phase = .wheel
+        nearbyDidChange?()
         return true
     }
 
     @discardableResult
     func spin(playerID: String, category requested: TriviaCategory? = nil) -> Bool {
+        if usesNearby, !isNearbyHost {
+            guard playerID == localPlayerID, playerID == spinnerID, category == nil else { return false }
+            sendNearbyAction?("spin", nil)
+            return true
+        }
         guard playerID == spinnerID, phase == .wheel, category == nil,
               let next = requested ?? availableCategories.randomElement(),
               availableCategories.contains(next) else { return false }
         category = next
         usedCategories.insert(next)
+        nearbyDidChange?()
         return true
     }
 
     @discardableResult
     func showQuestion(now: Date = .now) -> Bool {
+        guard !usesNearby || isNearbyHost else { return false }
         guard phase == .wheel, let category,
               let next = TriviaQuestion.bank.first(where: { $0.category == category }) else { return false }
         question = next
         deadline = now.addingTimeInterval(answerDuration)
         phase = .question
+        nearbyDidChange?()
         return true
     }
 
     @discardableResult
     func answer(_ index: Int, now: Date = .now) -> Bool {
-        recordAnswer(playerID: "you", index: index, now: now)
+        if usesNearby, !isNearbyHost {
+            guard phase == .question, participation == .joined, joinedIDs.contains(localPlayerID),
+                  answers[localPlayerID] == nil, question?.choices.contains(where: { $0.id == index }) == true,
+                  let deadline, now < deadline else { return false }
+            answers[localPlayerID] = index
+            phase = .waiting
+            sendNearbyAction?("answer", index)
+            return true
+        }
+        return recordAnswer(playerID: localPlayerID, index: index, now: now)
     }
 
     @discardableResult
@@ -117,14 +222,15 @@ final class TriviaPreview: Identifiable {
               let question, question.choices.contains(where: { $0.id == index }),
               let deadline, now < deadline else { return false }
         answers[playerID] = index
-        if playerID == "you" { phase = .waiting }
+        if playerID == localPlayerID { phase = .waiting }
+        nearbyDidChange?()
         return true
     }
 
     /// Called only by the explicit example-roster driver, never as network data.
     func submitExampleAnswers(now: Date = .now) {
         guard includesExamplePlayers, let question else { return }
-        for (index, playerID) in joinedIDs.filter({ $0 != "you" }).enumerated() {
+        for (index, playerID) in joinedIDs.filter({ $0 != localPlayerID }).enumerated() {
             let answer = index == 1 ? (question.correctIndex + 1) % 4 : question.correctIndex
             recordAnswer(playerID: playerID, index: answer, now: now)
         }
@@ -132,6 +238,7 @@ final class TriviaPreview: Identifiable {
 
     @discardableResult
     func revealIfReady(now: Date = .now) -> Bool {
+        guard !usesNearby || isNearbyHost else { return false }
         guard phase == .question || phase == .waiting, let question, let deadline,
               everyoneAnswered || now >= deadline else { return false }
         for playerID in joinedIDs {
@@ -141,6 +248,7 @@ final class TriviaPreview: Identifiable {
         }
         if earnedPoints > 0 { correctCount += 1 }
         phase = .reveal
+        nearbyDidChange?()
         return true
     }
 
@@ -152,7 +260,7 @@ final class TriviaPreview: Identifiable {
 
     @discardableResult
     func next(isHost: Bool) -> Bool {
-        guard isHost, phase == .reveal else { return false }
+        guard (!usesNearby || isNearbyHost), isHost, phase == .reveal else { return false }
         if roundNumber == roundCount {
             phase = .results
         } else {
@@ -164,6 +272,7 @@ final class TriviaPreview: Identifiable {
             awards = [:]
             phase = .wheel
         }
+        nearbyDidChange?()
         return true
     }
 
@@ -178,7 +287,8 @@ final class TriviaPreview: Identifiable {
     }
 
     func playerName(for id: String, currentName: String) -> String {
-        if id == "you" { return currentName.isEmpty ? "You" : currentName }
+        if id == localPlayerID { return currentName.isEmpty ? "You" : currentName }
+        if let player = nearbyPlayers.first(where: { $0.id == id }) { return player.name }
         let names = ["Alex", "Sam", "Jordan"]
         if let index = Int(id.replacingOccurrences(of: "example-", with: "")), names.indices.contains(index) {
             return names[index]
@@ -187,13 +297,26 @@ final class TriviaPreview: Identifiable {
     }
 
     func participantRows(playerName: String) -> [TriviaReadyPlayer] {
+        if usesNearby {
+            return nearbyPlayers.map { player in
+                let state = player.id == localPlayerID ? participation : player.participation
+                let status: TriviaReadiness = switch state {
+                case .joined: .ready
+                case .checkingIn: .checkingIn
+                case .skipped: .sittingOut
+                case .undecided: .notReady
+                }
+                return TriviaReadyPlayer(id: player.id, name: self.playerName(for: player.id, currentName: playerName),
+                                         status: status, isYou: player.id == localPlayerID)
+            }
+        }
         let status: TriviaReadiness = switch participation {
         case .undecided: .notReady
         case .checkingIn: .checkingIn
         case .joined: .ready
         case .skipped: .sittingOut
         }
-        var rows = [TriviaReadyPlayer(id: "you", name: self.playerName(for: "you", currentName: playerName), status: status, isYou: true)]
+        var rows = [TriviaReadyPlayer(id: localPlayerID, name: self.playerName(for: localPlayerID, currentName: playerName), status: status, isYou: true)]
         if includesExamplePlayers {
             rows += ["example-0", "example-1", "example-2"].map {
                 TriviaReadyPlayer(id: $0, name: self.playerName(for: $0, currentName: playerName), status: .ready, isYou: false)
@@ -206,9 +329,9 @@ final class TriviaPreview: Identifiable {
         let ids = joinedIDs.isEmpty ? readyIDs : joinedIDs
         return ids.map {
             TriviaStanding(id: $0, name: self.playerName(for: $0, currentName: playerName),
-                           points: scores[$0, default: 0], bac: $0 == "you" ? bac : nil,
-                           isYou: $0 == "you", isExample: $0 != "you",
-                           lastPoints: awards[$0, default: 0])
+                           points: scores[$0, default: 0], bac: $0 == localPlayerID ? bac : nil,
+                           isYou: $0 == localPlayerID, isExample: !usesNearby && $0 != localPlayerID,
+                           lastPoints: awards[$0, default: 0], bacIsSimulated: $0 == localPlayerID && bacIsSimulated)
         }.sorted { $0.points == $1.points ? $0.id < $1.id : $0.points > $1.points }
     }
 }
@@ -232,7 +355,7 @@ nonisolated struct TriviaReadyPlayer: Identifiable {
     let isYou: Bool
 }
 
-nonisolated enum TriviaCategory: String, CaseIterable, Identifiable, Sendable {
+nonisolated enum TriviaCategory: String, CaseIterable, Identifiable, Sendable, Codable {
     case world, science, history, sports, arts, entertainment
     var id: Self { self }
     var title: String {
@@ -269,6 +392,7 @@ nonisolated struct TriviaStanding: Identifiable {
     let isYou: Bool
     let isExample: Bool
     let lastPoints: Int
+    var bacIsSimulated = false
 }
 
 nonisolated struct TriviaQuestion: Identifiable, Sendable {

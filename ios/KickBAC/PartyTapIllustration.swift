@@ -2,6 +2,8 @@ import SwiftUI
 
 struct PartyTapIllustration: View {
     static let instruction = "Tap your phone to the breathalyzer"
+    var device: APIDevice? = nil
+    var isChecking = false
     var onDebugTap: ((String) -> Void)? = nil
     #if DEBUG
     @State private var debugTapCount = 0
@@ -15,8 +17,8 @@ struct PartyTapIllustration: View {
         GeometryReader { geometry in
             let width = geometry.size.width
             let height = geometry.size.height
-            let showsStaticPose = reduceMotion
-            let repeats = !reduceMotion && scenePhase == .active
+            let showsStaticPose = reduceMotion || device != nil
+            let repeats = !showsStaticPose && scenePhase == .active
 
             ZStack(alignment: .topLeading) {
                 Image("PartyBreathalyzer").resizable().scaledToFit()
@@ -50,7 +52,19 @@ struct PartyTapIllustration: View {
         .allowsHitTesting(false)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Hold the top of your phone near the breathalyzer's NFC tag.")
-            Text(Self.instruction)
+            Group {
+                if let device {
+                    HStack(spacing: 8) {
+                        Image("OnboardingBreath").resizable().scaledToFit()
+                            .frame(width: 22, height: 22).accessibilityHidden(true)
+                        Text(device.connectionLabel)
+                    }.accessibilityElement(children: .combine)
+                } else if isChecking {
+                    HStack(spacing: 8) { ProgressView(); Text("Checking breathalyzer…") }
+                } else {
+                    Text(Self.instruction)
+                }
+            }
                 .font(.system(.subheadline, design: .rounded)).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)

@@ -5,6 +5,7 @@ struct AccountView: View {
     let profile: ProfileStore
     let onSignIn: () -> Void
     @Environment(\.dynamicTypeSize) private var typeSize
+    @Environment(PracticeReadingStore.self) private var practice
     @State private var sheet: Destination?
     @State private var signInAfterDismiss = false
 
@@ -47,10 +48,10 @@ struct AccountView: View {
                     }
                 }
 
-                if session.isSignedIn || session.isRestoring {
-                    VStack(spacing: 16) {
+                if session.isSignedIn || session.isRestoring || !practice.readings.isEmpty {
+                    VStack(spacing: 24) {
                         let columns = typeSize.isAccessibilitySize ? 1 : 2
-                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: columns), spacing: 12) {
+                        LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 24), count: columns), spacing: 24) {
                             Button { sheet = .history } label: {
                                 statistic("Saved readings", value: readingCount)
                                     .contentShape(.rect)
@@ -59,7 +60,7 @@ struct AccountView: View {
                             .accessibilityHint("Opens reading history.")
                             .accessibilityIdentifier("savedReadingsHistory")
                             Button { sheet = .history } label: {
-                                statistic("Last check", value: lastCheck)
+                                statistic("Last check", value: lastCheck, isDate: true)
                                     .contentShape(.rect)
                             }
                             .buttonStyle(ProfilePressStyle())
@@ -84,6 +85,7 @@ struct AccountView: View {
                         }
                         .buttonStyle(ProfilePressStyle()).accessibilityHint("Opens recent games.")
                         .accessibilityIdentifier("pointsHistory")
+
                         if session.isLoadingStats && session.stats == nil { ProgressView("Loading game stats") }
                         if let message = session.statsMessage {
                             Text(message).font(.footnote).foregroundStyle(.secondary)
@@ -178,22 +180,28 @@ struct AccountView: View {
     }
 
     private var readingCount: String {
-        guard let history = session.history else { return "—" }
-        return "\(history.items.count)\(history.hasMore ? "+" : "")"
+        guard session.history != nil || !practice.readings.isEmpty else { return "—" }
+        let count = (session.history?.items.filter { $0.bacReading != nil }.count ?? 0) + practice.readings.count
+        return "\(count)\(session.history?.hasMore == true ? "+" : "")"
     }
 
     private var lastCheck: String {
-        guard let date = session.history?.items.compactMap(\.recordedDate).max() else { return "—" }
+        let dates = (session.history?.items.compactMap(\.bacReading).map(\.date) ?? []) + practice.readings.map(\.date)
+        guard let date = dates.max() else { return "—" }
         return Calendar.current.isDateInToday(date) ? "Today" : date.formatted(.dateTime.month(.abbreviated).day())
     }
 
-    private func statistic(_ title: String, value: String) -> some View {
+    private func statistic(_ title: String, value: String, isDate: Bool = false) -> some View {
         VStack(spacing: 8) {
-            Text(title).font(.system(.footnote, design: .rounded, weight: .medium)).foregroundStyle(.secondary)
-            Text(value).font(.system(.largeTitle, design: .rounded, weight: .medium)).monospacedDigit()
+            Text(value).font(.system(isDate ? .title2 : .largeTitle, design: .rounded, weight: .medium)).monospacedDigit()
+                .frame(minHeight: 44)
+                .lineLimit(typeSize.isAccessibilitySize ? nil : 1)
+                .minimumScaleFactor(0.8)
                 .multilineTextAlignment(.center)
+            Text(title).font(.system(.subheadline, design: .rounded)).foregroundStyle(.secondary)
+                .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
         }
-        .frame(maxWidth: .infinity, minHeight: 80).padding(.vertical, 8)
+        .frame(maxWidth: .infinity, minHeight: 88).padding(.vertical, 4)
         .accessibilityElement(children: .combine)
     }
 

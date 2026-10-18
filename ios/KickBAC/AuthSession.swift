@@ -173,6 +173,9 @@ final class AuthSession {
             return nil
         })
     }
+    func currentParty() async throws -> APIParty? {
+        try await userRequest { try await $0.currentParty(accessToken: $1) }
+    }
     func parties(offset: Int = 0) async throws -> PartyPage<APIParty> {
         try await userRequest { try await $0.parties(accessToken: $1, offset: offset) }
     }

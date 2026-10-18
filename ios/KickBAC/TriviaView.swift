@@ -10,10 +10,8 @@ struct TriviaInvitationSheet: View {
             PartyGameIcon(game: .trivia)
             Text("Trivia").font(.system(.title, design: .rounded, weight: .bold))
             Button("Join game", action: onJoin)
-                .font(.system(.headline, design: .rounded))
-                .frame(maxWidth: .infinity, minHeight: 52)
-                .background(.white, in: .capsule).foregroundStyle(.black)
-                .buttonStyle(ProfilePressStyle())
+                .partyPrimaryAction()
+                .accessibilityIdentifier("triviaJoinGame")
             Button("Skip game", action: onSkip).frame(minHeight: 44)
         }
         .padding(24).padding(.top, 8)
@@ -35,12 +33,12 @@ struct TriviaView: View {
     var checkInSessionID: String? = nil
     var checkInDeviceID: String? = nil
     var checkInMessage: String? = nil
-    var onStartCheckIn: (() async -> Bool)? = nil
+    var nfcReadingID: UUID? = nil
+    var onNFCReadingConsumed: () -> Void = { }
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var typeSize
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityVoiceOverEnabled) private var voiceOver
-    @State private var isStartingCheckIn = false
     @State private var wheelRotation = 0.0
     @State private var clockwise = true
     @State private var spinTurns = 3
@@ -62,7 +60,10 @@ struct TriviaView: View {
         .task(id: game.phase) { await driveLocalRound() }
         .onChange(of: deviceFlow?.test?.status, initial: true) { acceptCheckIn() }
         .onChange(of: checkInSessionID) { acceptCheckIn() }
-        .onChange(of: game.phase) { acceptCheckIn() }
+        .onChange(of: game.phase, initial: true) {
+            if game.phase == .tap { game.previewTap() }
+            acceptCheckIn()
+        }
     }
 
     private var presentation: some View {
@@ -94,12 +95,14 @@ struct TriviaView: View {
         case .invitation:
             // The normal entry uses the compact sheet in PartyView.
             TriviaInvitationSheet(onJoin: { game.join() }, onSkip: { game.skip(); dismiss() })
-        case .tap: checkInPage
-        case .breath: breathPage
+        case .tap, .breath: breathPage
         case .lobby:
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     heading("Who’s ready?")
+                    if let message = game.connectionMessage {
+                        Text(message).font(.subheadline).foregroundStyle(.secondary)
+                    }
                     ForEach(game.participantRows(playerName: playerName)) { row in readyRow(row) }
                 }.padding(24).frame(maxWidth: 480)
             }.scrollIndicators(.hidden)
@@ -117,51 +120,37 @@ struct TriviaView: View {
         }
     }
 
-    private var checkInPage: some View {
-            VStack(alignment: .leading, spacing: 24) {
-                heading(onStartCheckIn == nil ? "Ready to play?" : "Your check-in")
-                Spacer(minLength: 0)
-                if let onStartCheckIn {
-                    Text("Start a reading on the party breathalyzer.")
-                        .foregroundStyle(.secondary)
-                    if let checkInMessage { Text(checkInMessage).font(.footnote) }
-                    primary(isStartingCheckIn ? "Connecting…" : "Start my test") {
-                        isStartingCheckIn = true
-                        Task {
-                            if await onStartCheckIn() { game.previewTap() }
-                            isStartingCheckIn = false
-                        }
-                    }.disabled(isStartingCheckIn || checkInDeviceID == nil)
-                } else {
-                    Text("Continue when you’re ready.")
-                        .foregroundStyle(.secondary)
-                    primary("Continue without a test") {
-                        game.previewTap()
-                        game.completePreviewBreath()
-                    }
-                }
-                Spacer(minLength: 0)
-            }.padding(24)
-    }
-
     private var breathPage: some View {
             VStack {
+                if let checkInMessage { Text(checkInMessage).font(.footnote).padding(.horizontal, 24) }
                 if let deviceFlow {
-                    HomeView(session: session, deviceFlow: deviceFlow, isGameCheckIn: true)
+                    HomeView(session: session, deviceFlow: deviceFlow, isGameCheckIn: true,
+                             checkInSessionID: checkInSessionID,
+                             nfcReadingID: nfcReadingID, onNFCReadingConsumed: onNFCReadingConsumed,
+                             onPracticeComplete: {
+                                 if game.phase == .tap { game.previewTap() }
+                                 game.completePracticeReading(value: $0.value)
+                             })
                 } else {
                     Text("No test connected.").foregroundStyle(.secondary)
                     Button("Continue without a test") { game.completePreviewBreath() }.frame(minHeight: 44)
                 }
-                if let test = deviceFlow?.test, test.status == .expired || test.status == .cancelled {
-                    Text(test.status == .expired ? "Test expired. Return to the party to start a new attempt." : "Test cancelled.")
+                if let test = deviceFlow?.test, test.id == checkInSessionID, test.status == .expired {
+                    Text("Test expired. Tap the breathalyzer to try again.")
                         .font(.footnote).padding()
                 }
-                if deviceFlow?.test?.status == .armed {
+                if deviceFlow?.test?.id == checkInSessionID, deviceFlow?.test?.status == .armed {
                     Button("Cancel test") { Task { await deviceFlow?.cancel { try await session.cancelSession($0) } } }
                         .frame(minHeight: 44)
                 }
                 if deviceFlow?.message != nil {
                     Button("Retry test status") { deviceFlow?.retryPolling() }.frame(minHeight: 44)
+                }
+                if deviceFlow?.hasActiveSession != true {
+                    Button("Continue without a test") {
+                        if game.phase == .tap { game.previewTap() }
+                        game.completePreviewBreath()
+                    }.frame(minHeight: 44)
                 }
             }
     }
@@ -199,12 +188,12 @@ struct TriviaView: View {
             layout {
                 VStack(alignment: .leading, spacing: 16) {
                     roundLabel
-                    heading(game.spinnerID == "you" ? "You’re up" : "\(spinnerName)’s turn")
+                    heading(game.spinnerID == game.localPlayerID ? "You’re up" : "\(spinnerName)’s turn")
                         .lineLimit(2).minimumScaleFactor(0.6)
                     if wide { wheelInstruction }
                 }
                 if !wide { Spacer(minLength: 0) }
-                TriviaWheel(rotation: $wheelRotation, isEnabled: game.spinnerID == "you" && game.category == nil,
+                TriviaWheel(rotation: $wheelRotation, isEnabled: game.spinnerID == game.localPlayerID && game.category == nil,
                             onSpin: spin)
                     .frame(width: side, height: side).frame(maxWidth: .infinity)
                 if !wide {
@@ -216,14 +205,14 @@ struct TriviaView: View {
     }
 
     private var wheelInstruction: some View {
-        Text(game.category.map { wheelLanded ? $0.title : "Spinning…" } ?? (game.spinnerID == "you" ? "Tap or swipe to spin" : "Waiting for \(spinnerName)"))
+        Text(game.category.map { wheelLanded ? $0.title : "Spinning…" } ?? (game.spinnerID == game.localPlayerID ? "Tap or swipe to spin" : "Waiting for \(spinnerName)"))
             .font(.system(.headline, design: .rounded)).foregroundStyle(.secondary)
             .lineLimit(2).minimumScaleFactor(0.6)
             .frame(maxWidth: .infinity).multilineTextAlignment(.center)
     }
 
     private var spinnerName: String {
-        game.playerName(for: game.spinnerID ?? "you", currentName: playerName)
+        game.playerName(for: game.spinnerID ?? game.localPlayerID, currentName: playerName)
     }
 
     private var roundLabel: some View {
@@ -371,7 +360,7 @@ struct TriviaView: View {
                     dismiss()
                 }.frame(minHeight: 44)
                 if isHost {
-                    primary("Start trivia") { game.begin(isHost: true) }.disabled(game.playerCount == 0)
+                    primary("Start trivia") { game.begin(isHost: true) }.disabled(!game.canStart)
                 } else {
                     Text("Waiting for the host").foregroundStyle(.secondary).frame(minHeight: 44)
                 }
@@ -380,8 +369,12 @@ struct TriviaView: View {
                 }
             }.padding(24)
         case .reveal:
-            primary(game.roundNumber == game.roundCount ? "See podium" : "Next round") { game.next(isHost: true) }
-                .padding(24)
+            if !game.usesNearby || isHost {
+                primary(game.roundNumber == game.roundCount ? "See podium" : "Next round") { game.next(isHost: true) }
+                    .padding(24)
+            } else {
+                Text("Waiting for the next round").foregroundStyle(.secondary).padding(24)
+            }
         case .results:
             primary("Back to party") { onFinish(); dismiss() }.padding(24)
         default: EmptyView()
@@ -403,11 +396,8 @@ struct TriviaView: View {
     private var developmentMenu: some View {
         Menu {
             Section("Game options") {
-                if game.phase == .tap && onStartCheckIn == nil { Button("Continue without a test") { game.previewTap(); game.completePreviewBreath() } }
-                if game.phase == .breath && onStartCheckIn == nil { Button("Continue without a test") { game.completePreviewBreath() } }
-                if game.phase == .lobby && !isHost {
-                    Button("Start trivia") { game.begin(isHost: true) }.disabled(game.playerCount == 0)
-                }
+                if game.phase == .tap { Button("Continue without a test") { game.previewTap(); game.completePreviewBreath() } }
+                if game.phase == .breath { Button("Continue without a test") { game.completePreviewBreath() } }
                 Toggle("Players", isOn: Binding(get: { game.includesExamplePlayers }, set: { game.setExamplePlayers($0) }))
                     .disabled(game.phase != .invitation && game.phase != .lobby)
             }
@@ -421,7 +411,7 @@ struct TriviaView: View {
         self.clockwise = clockwise
         spinTurns = turns
         spinVelocity = velocity
-        game.spin(playerID: "you")
+        game.spin(playerID: game.localPlayerID)
     }
 
     private func animateSpin() async {
@@ -469,7 +459,7 @@ struct TriviaView: View {
                 return
             }
             #if DEBUG
-            if game.phase == .wheel && game.includesExamplePlayers, let spinner = game.spinnerID, spinner != "you" {
+            if game.phase == .wheel && game.includesExamplePlayers, let spinner = game.spinnerID, spinner != game.localPlayerID {
                 try await Task.sleep(for: .seconds(1))
                 try Task.checkCancellation()
                 clockwise = true

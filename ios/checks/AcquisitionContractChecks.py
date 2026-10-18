@@ -37,20 +37,19 @@ class AcquisitionContractChecks(unittest.TestCase):
             self.assertIn(token, swift)
 
 
-    def test_home_history_and_accessibility_use_honest_mode_labels(self):
+    def test_home_labels_and_compact_history_keep_the_bac_gate(self):
         home = (IOS / 'KickBAC/HomeView.swift').read_text(encoding='utf-8')
         history = (IOS / 'KickBAC/ProfileHistoryView.swift').read_text(encoding='utf-8')
         self.assertIn('Text(notice)', home)
         self.assertIn('measurement.acquisitionNotice', home)
-        self.assertIn('measurement.durationText', home)
         self.assertIn('measurement.durationAccessibilityValue', home)
         self.assertIn('measurement.sourceTitle', home)
         self.assertNotIn('Double(measurement.breathDurationMS)', home)
         self.assertNotIn('Recorded breath duration:', home)
-        self.assertIn('reading.acquisitionNotice', history)
-        self.assertIn('reading.durationText', history)
-        self.assertIn('reading.sourceTitle', history)
         self.assertIn('reading.bacReading', history)
+        self.assertIn('reading.recordedDate', history)
+        self.assertNotIn('reading.raw', history)
+        self.assertNotIn('No BAC estimate', history)
         self.assertNotIn('if let value = reading.estimatedBACPercent', history)
 
 

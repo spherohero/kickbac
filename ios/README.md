@@ -4,7 +4,19 @@ Open `KickBAC.xcodeproj` in Xcode. Resolve Swift packages when prompted.
 
 [Design direction](DESIGN.md) records the approved Home style and conventions for the rest of the app.
 
+[NFC tag setup](NFC_TAG_SETUP.md) gives the exact Shortcuts automation for the
+existing `kb-demo-01` sticker and this Personal Team build. At Liam's request, the
+configured app-only automation link now runs a six-second local demo on Home and
+returns 0.00, because the hardware is not working. The same tag works on Trivia's
+breathalyzer page. Holding the center circle produces the random-value demo.
+These remain App readings, not device measurements; the public HTTPS resolver
+remains read-only.
+
 Home uses a plain dark background. The Welcome star uses a bundled Metal shader, and the white onboarding pages stay plain. If Xcode reports a missing Metal Toolchain, install Apple's compiler once with `xcodebuild -downloadComponent MetalToolchain`.
+
+After a completed Home reading, Test again appears beside the timer. It resets the
+circle to the NFC tap prompt and leaves saved history intact. A fresh tap starts
+the next test through the existing scan flow; the button itself sends no request.
 
 All user-facing app names use `KickBAC`. The iOS launch configuration, Welcome, and splash view share `KickBACWordmark`. Its 1x/2x/3x PNGs come from the Mogi vector source in `Branding/KickBACWordmark.pdf`; regenerate with `DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer xcrun swift ios/Branding/generate-wordmark.swift` from the repository root. Run `python3 ios/checks/BrandingChecks.py` to check naming and launch asset wiring. These checks do not verify iOS's cached launch rendering.
 
@@ -84,7 +96,7 @@ PUT always includes `display_name` and `profile_picture`, including an explicit 
 
 The per-subject local cache is retained for offline display and old local-only profiles become drafts when the server confirms a first-time account. They are never uploaded automatically. Account switches/logout clear the displayed profile; stale network responses cannot update another account. A cache-write failure after a successful server save is reported separately from a failed server save.
 
-History includes loading, empty, retry, and pagination states. Test readings are labeled, missing BAC estimates stay distinct from raw sensor counts, and Home's demo readings never enter this history. Me loads Games played, Wins and Points from `/v1/me/stats`; failures remain unavailable rather than becoming zero. Party gameplay is still separate work; this client does not fabricate game completions or rewards.
+History includes loading, empty, retry, and pagination states. It lists only entries with a valid BAC estimate, showing BAC and date/time; entries without BAC are hidden entirely. Saved readings and Last check use the same qualified entries, while pagination can still reach valid readings beyond a filtered page. Sensor metadata stays out of this list. Existing model validation excludes simulated/manual/invalid estimates from numeric BAC display. Explicit finger-generated practice readings are saved locally and appear with a Simulated % BAC label; the profile count identifies their inclusion. These are separate from server measurements and never uploaded as physical readings. Me loads Games played, Wins and Points from `/v1/me/stats`; failures remain unavailable rather than becoming zero. Party gameplay is still separate work; this client does not fabricate game completions or rewards.
 
 Games played, Wins, and Points all open Recent games. It reads `GET /v1/me/game-results` with the API access token and shows actual game, outcome, score, awarded points, and completion date. Refresh/pagination preserve loaded results on transient errors and isolate them by authenticated subject. Party names/groups and linked breathalyzer check-ins are not in the current contract; those associations show unavailable. [RECENT_GAMES_HANDOFF.md](RECENT_GAMES_HANDOFF.md) records the requirements for Nicholas. The page does not submit game results.
 
@@ -136,3 +148,34 @@ swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/D
 Trivia starts with a compact logo/Join game/Skip game sheet. Check-in uses the shared tap illustration and Home gauge, followed by the readiness roster. The host starts; ready players rotate through tap-or-swipe wheel turns. The wheel and answer pages stay fixed. A line shows the 20-second deadline; submitting locks the answer until everyone answers or time expires. A separate results page shows the correct answer and each player's round points before the next turn. Six bundled categories/questions and 1000 points per correct answer remain local defaults; no API result or lifetime reward is sent.
 
 In Debug, use Trivia options → Simulate device tap / Simulate completed test to navigate the unfinished hardware boundary. Example players are optional, explicitly named fixtures whose answers/turns are simulated. Release omits these controls. See [TRIVIA_HANDOFF.md](TRIVIA_HANDOFF.md) for reproduction, verification, personal-device requirements and live integration boundaries.
+
+
+## Saved finger practice readings
+
+Home's old Onboarding/Demo buttons are removed. Touch/hold the center icon to run
+a simulated practice sample; releasing stops it and reveals one random result.
+A six-second hold finishes automatically. Test again retains saved results.
+Practice is labeled on the result, merged date/time history and local party BAC;
+Saved readings/Last check include the phone's practice entries. Live device
+history keeps its existing valid-BAC filter. No synthetic value is uploaded,
+assigned to a real device session, used for server game points or substituted for
+an NFC result. The chip/server must return its own result; null BAC stays null.
+
+`PracticeReadingStore` persists atomically with file protection under application
+support/PracticeReadings, scoped by a hashed signed-in subject or a separate guest
+scope. Logout/account switching changes the displayed scope; guest values are not
+silently migrated into an account. This is on-device persistence, not cloud sync.
+Invalid/unreadable files are preserved rather than overwritten. A failed save
+never produces a successful saved-result state. UI interruption cancels an
+unfinished sample; completed records remain. The local Trivia model preserves an
+explicit simulation flag through its standings instead of forging a server check-in.
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/PracticeReadingStore.swift ios/checks/PracticeReadingChecks.swift -o /tmp/kickbac-practice-checks
+/tmp/kickbac-practice-checks
+```
+
+Native fixtures verify persistence/relaunch, account/guest isolation, invalid
+values/durations, write failure and unreadable-cache preservation. Trivia fixtures
+verify practice provenance and one-time local completion. Build/fixture results
+are separate from physical gesture/rendering or real NFC acceptance.

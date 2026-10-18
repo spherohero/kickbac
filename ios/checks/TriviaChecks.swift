@@ -5,6 +5,15 @@ struct TriviaChecks {
     @MainActor
     static func main() {
         let now = Date(timeIntervalSince1970: 1000)
+        checkNearbyAnswerLock(now: now)
+        let practice = TriviaPreview()
+        assert(practice.join() && practice.previewTap())
+        assert(practice.completePracticeReading(value: 0.06))
+        assert(practice.bacIsSimulated && practice.bac == 0.06)
+        assert(practice.standings(playerName: "Liam").first?.bacIsSimulated == true)
+        assert(!practice.completePracticeReading(value: 0.09), "Practice result completed twice")
+        practice.skip()
+        assert(!practice.bacIsSimulated && practice.bac == nil)
         let game = joinedGame(bac: 0.08)
         assert(game.begin(isHost: true))
         assert(game.spinnerID == "you")
@@ -111,6 +120,52 @@ struct TriviaChecks {
             }
         }
         print("Trivia checks passed: check-in, readiness, rotating spinner, locked answers, all-voted/deadline reveal, per-player awards, replay and privacy")
+    }
+
+    @MainActor
+    static func checkNearbyAnswerLock(now: Date) {
+        let host = joinedGame()
+        host.localPlayerID = "host"
+        host.usesNearby = true
+        host.isNearbyHost = true
+        host.updateNearbyPlayer(id: "host", name: "Host", participation: .joined)
+        host.updateNearbyPlayer(id: "guest", name: "Guest", participation: .joined)
+        assert(host.begin(isHost: true))
+        assert(host.spin(playerID: "host", category: .science))
+        assert(host.showQuestion(now: now))
+        let beforeAnswer = host.snapshot()
+
+        let guest = joinedGame()
+        guest.localPlayerID = "guest"
+        guest.usesNearby = true
+        guest.apply(beforeAnswer)
+        var submitted: [Int] = []
+        guest.sendNearbyAction = { kind, index in
+            if kind == "answer", let index { submitted.append(index) }
+        }
+        assert(guest.answer(2, now: now.addingTimeInterval(1)))
+        guest.apply(beforeAnswer) // A heartbeat sent before the answer arrives can arrive afterward.
+        assert(guest.phase == .waiting && guest.selectedAnswer == 2,
+               "A delayed host snapshot must not unlock or erase the guest's submitted answer")
+        assert(!guest.answer(1, now: now.addingTimeInterval(2)) && submitted == [2])
+        assert(host.recordAnswer(playerID: "guest", index: submitted[0], now: now.addingTimeInterval(2)))
+        assert(host.answer(2, now: now.addingTimeInterval(3)))
+        assert(host.revealIfReady(now: now.addingTimeInterval(3)))
+        guest.apply(host.snapshot())
+        assert(guest.phase == .reveal && guest.totalPoints == 1000 && host.totalPoints == 1000)
+        assert(host.next(isHost: true))
+        guest.apply(host.snapshot())
+        assert(guest.selectedAnswer == nil && guest.spinnerID == "guest")
+        assert(host.spin(playerID: "guest", category: .world) && host.showQuestion(now: now))
+        guest.apply(host.snapshot())
+        assert(!guest.answer(1, now: now.addingTimeInterval(21)), "Guests cannot answer after the round deadline")
+
+        let spectator = joinedGame()
+        spectator.localPlayerID = "not-in-round"
+        spectator.usesNearby = true
+        spectator.apply(host.snapshot())
+        assert(!spectator.answer(1, now: now.addingTimeInterval(1)),
+               "A client outside the host's round roster cannot submit an answer")
     }
 
     @MainActor

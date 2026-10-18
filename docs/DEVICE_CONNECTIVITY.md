@@ -162,9 +162,14 @@ The combined tree passed338backend/deployment tests,78mockedAction fixtures,
 backend/firmware lint/format, actual loopback-HTTP simulator with restart and all
 three firmware cross-builds. Host core/parser/adapter tests also pass. No new
 physical reflash was needed for documentation/base-only integration; the board's
-already-tested firmware source is unchanged. GitHub-hosted CI is not claimed:
-the saved OAuth credential still lacks workflow-publication scope, as documented
-in the backend handoff. Independent full-diff review passed with no concrete
+already-tested firmware source is unchanged. The earlier OAuth workflow-scope
+blocker was subsequently resolved: `e7af213` published backend CI and its main
+run passed. That workflow-only base change was integrated unchanged. New
+`.github/workflows/firmware.yml` gates host fixtures, helper lint/format and
+all three cross-builds on PRs/firmware/main changes, without credentials, serial,
+flashing or network provisioning. Remote CI results must be read back against
+the exact PR head before merge; CI is not physical hardware acceptance.
+Independent full-diff review passed with no concrete
 blocking security/logic findings. Its old unmerged-index observation was from
 the review's concurrent snapshot; final local checks confirm no unmerged paths
 and the published synchronized head. Nonblocking follow-up: expand the HTTP/

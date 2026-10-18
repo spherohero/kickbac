@@ -1,0 +1,50 @@
+name: Firmware checks
+
+on:
+  pull_request:
+    paths:
+      - 'firmware/**'
+      - '.github/workflows/firmware.yml'
+  push:
+    branches: [main, 'firmware/**']
+    paths:
+      - 'firmware/**'
+      - '.github/workflows/firmware.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: firmware-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  firmware:
+    name: Host fixtures and XIAO cross-builds
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.11'
+      - name: Set up uv
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          enable-cache: false
+      - name: Install pinned PlatformIO packages and JSON headers
+        run: uv tool run --python 3.11 --with pip --from platformio==6.1.19 platformio pkg install -d firmware -e xiao_device
+      - name: Run synthetic host tests without hardware or credentials
+        run: bash firmware/test_host.sh
+      - name: Check firmware Python helpers
+        run: |
+          uv tool run --from ruff==0.17.1 ruff check --config backend/pyproject.toml firmware/tools firmware/tests
+          uv tool run --from ruff==0.17.1 ruff format --check --config backend/pyproject.toml firmware/tools firmware/tests
+      - name: Cross-build all diagnostic targets without flashing
+        run: uv tool run --python 3.11 --with pip --from platformio==6.1.19 platformio run -d firmware -e xiao_usb -e xiao_wifi -e xiao_device
+      - name: Check tracked diff cleanliness
+        run: git diff --exit-code

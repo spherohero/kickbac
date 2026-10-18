@@ -123,12 +123,15 @@ private struct RecentGameRow: View {
         .accessibilityElement(children: .combine)
     }
 
-    private var gameImage: some View {
-        Image(systemName: game.gameID == "trivia" ? "questionmark" : game.gameID == "pictionary" ? "pencil" : "gamecontroller")
-            .font(.system(size: 26, weight: .medium, design: .rounded))
-            .frame(width: 64, height: 64)
-            .background((game.gameID == "pictionary" ? Color.orange : Color.indigo).opacity(0.24), in: .rect(cornerRadius: 12))
-            .accessibilityHidden(true)
+    @ViewBuilder private var gameImage: some View {
+        if let knownGame = PartyGame(rawValue: game.gameID) {
+            PartyGameIcon(game: knownGame)
+        } else {
+            Image("NavParty").resizable().scaledToFit().padding(18)
+                .frame(width: 64, height: 64)
+                .background(.white.opacity(0.06), in: .rect(cornerRadius: 14))
+                .accessibilityHidden(true)
+        }
     }
 
     private var gameLabel: some View {

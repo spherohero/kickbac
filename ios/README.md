@@ -108,6 +108,8 @@ These checks cover server-confirmed onboarding, cache restoration, Unicode limit
 
 ## Integration status
 
+The Party tab contains a local UI preview: create/link a preview breathalyzer, tap/code join, host game picker, and guest room with ongoing games, an empty leaderboard, and your profile. Use the Settings-style options icon to switch Host/Guest or ongoing/idle states. Entry/create/game pages use the requested product labels without preview banners or development explanations; behavior remains local. Code `KICK26` works only inside this local preview; it cannot invite another phone. No game engine, device association, server membership, or score submission is implemented. See [PARTY_HANDOFF.md](PARTY_HANDOFF.md) for preview checks and the separate live-contract requirements. Debug `--show-party` opens this tab without changing authentication.
+
 The simulator build and local stub/image checks are separate from real acceptance. No unattended SMS is sent and no test bypass is added to production authentication. Complete onboarding on an iPhone, save a real photo, force-quit/relaunch, logout/relogin, test offline retry, and repeat with a second account before calling the live profile flow accepted.
 
 Home starts without sample BAC. Its average/high values use loaded, nonsimulated, finite server BAC estimates. Uncalibrated/null readings show raw sensor values with no invented BAC. Debug Demo mode is explicitly labeled and never contributes to saved history.

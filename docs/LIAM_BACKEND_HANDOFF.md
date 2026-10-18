@@ -23,6 +23,14 @@ Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his bran
 - PR [#22](https://github.com/spherohero/kickbac/pull/22) remains open on `liam/ios-profile-handoff`; main was not merged. This documentation commit records the cleanup on the PR branch.
 - **NON-BREAKING:** no client action; endpoints, schemas, payload examples and app behavior unchanged. Verification: Git ancestry checks, successful remote deletion and local safe branch deletion; no runtime tests needed. PR review/merge remains pending. Nicholas's branches were untouched.
 
+### Liam party UI preview — local follow-up
+
+- Owner: Liam on `liam/ios-profile-handoff`, starting at `3a7fa1c351b05d6e38c01be33cd63e2364160328`; integrated main `22f06354e85ad04afe522e6d870b5bf3bb206af8`. PR [#22](https://github.com/spherohero/kickbac/pull/22) remains the existing integration PR. These are local follow-up changes, not a new publication, merge, or deployment. Nicholas has not been personally messaged.
+- Liam chose **UI preview first; live parties later**. Party now previews create/breathalyzer selection, tap/code join, host game selection, and guest ongoing-game/leaderboard/people views. The ongoing example and fixture code are labeled; no scores/other players are fabricated. Nothing arms a device or writes game results.
+- **NON-BREAKING / current API unchanged.** Existing paths, payloads, access-token ownership, private history/stats, and device/session semantics remain unchanged. No backend implementation/client integration action is required for this preview.
+- Proposed live party identity, device binding, membership/code lifecycle, host role, shared ongoing games and party rankings need a coordinated contract before implementation. Current private game results do not establish those capabilities. Joining must not reserve a breath test or expose private readings. Exact proposed routes/schemas remain undecided; [API.md](API.md) remains authoritative for existing endpoints.
+- [Party handoff](../ios/PARTY_HANDOFF.md) records source files, focused state-check command, manual preview routes, NFC provisioning limits, and acceptance gates. Source checks and signed builds do not prove visual rendering or live cross-phone/NFC/gameplay acceptance.
+
 ### Liam iOS integration — current app and latest backend/docs
 
 - Owner/branch: Liam, `liam/ios-profile-handoff`. App polish/game-history commit

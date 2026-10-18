@@ -1,8 +1,50 @@
-# Firmware duration / manual acquisition — proposal only
+# Firmware duration / manual acquisition — implementation contract
 
-**UNAPPROVED; NOT IMPLEMENTED.** `docs/API.md` and backend schemas/behavior remain
-unchanged. This document reports the contract/teammate gate, not a new API version
-or authorization to upload incompatible data. No iOS source was edited.
+**Approved direction for implementation; NOT IMPLEMENTED/DEPLOYED yet.** Nicholas
+authorizes truthful unvalidated acquisition with a notice and, until 04:00 Eastern
+on October18, necessary iOS implementation in parallel. Backend owner is working
+on `backend/manual-timed-acquisition`, base3fd50c7. Firmware owns physical work.
+Existing live API remains unchanged; do not send this format until deployed
+OpenAPI and exact acceptance are verified. Older proposal wording below is
+historical where superseded by this freeze.
+
+## Frozen bounded implementation
+
+- Keep all paths/auth/session states/60-second expiry/ownership unchanged.
+- `breath_duration_ms` stays required. Legacy mode accepts the existing strict
+  integer1..60000 with omitted/null acquisition metadata. Manual mode requires
+  explicit null duration, `acquisition_method:"manual_timed"` and strict measured
+  `sample_duration_ms`1..60000. Reject mixed/missing/unknown mode metadata.
+- Return manual metadata with manual measurements everywhere they are nested:
+  upload, session, reading history/summary, check-ins and rich game history.
+  Existing legacy response JSON stays exact: omit the two new metadata keys for
+  legacy records, without omitting existing null acquisition time/BAC fields.
+- Preserve legacy stored JSON/canonical retries byte-for-byte; omitted and paired
+  null new metadata normalize to legacy omission. Manual retries retain original
+  UUID/session/payload/time through completion/expiry/restart, with changed payload
+  conflict and foreign-owner/device denial. No SQL schema change is needed for
+  JSON payload metadata; retain reviewed explicit schema6 upgrade requirements.
+- SAMPLING means sensor acquisition, not validated breath. Explicit app ARMED
+  session precedes a separate deliberate USB start in the initial physical mode;
+  no sample solely because a lease exists. Firmware chooses/documents an actual
+  measured acquisition window/raw-summary from safe traces, not a BAC conversion.
+- Always show "Timed sensor sample — breath not validated" for manual mode,
+  including accessibility. BAC stays null; no trigger, timeout, rails or invalid
+  trace never becomes a completed zero-alcohol result.
+- **BREAKING:** nullable duration requires coordinated iOS model and view changes.
+  Refreshed `liam/party-setup@0e5a6e4` still requires Int and renders breath
+  duration. Isolated client work may now change those owned paths before04:00;
+  never force-push or overwrite concurrent edits. Runtime release waits for
+  compatible client source/fixtures and actual device-upload readiness.
+
+### Current execution boundaries
+
+Nicholas confirms COM3 exclusive and permits firmware open/reset/flash; he
+declines additional electrical measurements/photos. This is not independent
+electrical sign-off. Request the reviewed no-ADC USB/network/session diagnostic
+flash first; do not mark skipped protection checks passed. Firmware owner must
+report actual image/connection evidence separately from source CI. No live
+synthetic user/measurement or arbitrary profile assignment is authorized.
 
 ## === BACKEND CONTRACT CHANGE ===
 

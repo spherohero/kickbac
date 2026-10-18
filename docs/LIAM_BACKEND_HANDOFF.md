@@ -2,7 +2,32 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
-### App reading persistence — implemented source, release pending
+## Read first — final consolidated backend release
+
+**Both backend requests are LIVE.** The concise, forwardable
+**[FINAL_BACKEND_HANDOFF.md](FINAL_BACKEND_HANDOFF.md)** contains exact routes,
+payloads, receipts, retries, client actions, saved-Wi-Fi status and verification.
+
+- Atomic device-party resolve/current-party policy: PR #40, merge `9d52390`.
+- App reading POST/history/summary: PR #43, merge
+  `d92a640b9a6f68b3986d27e889085cc85937f002`; immutable runtime `4a29218`,
+  schema 8 / 38 operations, activated 2026-10-18T10:53:55 UTC.
+- Parent 641 tests, target 70, separate SPEC/QUALITY, exact PR/main CI,
+  retained backups/private 7→8 preservation/final migration and public contract
+  readback passed. Original owner-linked demo remains COMPLETE/exactly once.
+- Saved-Wi-Fi firmware PR #41 is merged; lifetime reconnect and reset restore
+  are documented in [SAVED_WIFI.md](../firmware/SAVED_WIFI.md). Device bearer
+  remains RAM-only: Wi-Fi restore is not standalone authenticated cold boot.
+- **=== LIAM / iOS IMPACT ===** App routes are additive/NON-BREAKING. Adopt the
+  existing frozen App contract now; preserve local UUIDs/payloads, owner-scoped
+  outbox and guest records until explicit assignment, validate receipts before
+  Synced. Party one-OPEN-user/automatic binding policy is intentional. No iOS
+  edits or native sync/NFC/two-phone acceptance were performed by backend.
+
+All older pending/source-only/schema-count statements below are historical
+checkpoints, not current deployment status. Do not resume superseded app work.
+
+### Historical App reading implementation checkpoint — now deployed above
 
 Ownerbackend, `backend/app-reading-integration`, base0d43f61; runtimecandidate
 `4a29218b1516f285d7b419edcfe0f18258064a6d`. Actualappregistered schema8/38operation

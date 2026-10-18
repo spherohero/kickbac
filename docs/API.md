@@ -1,8 +1,13 @@
 # kickBAC API contract — v0
 
-Status: **LIVE at https://api.kickbac.vodka**,35 operations, explicitly migrated schema7. Profiles, generic private game results/stats and per-person reading history are published and deployed. See [release verification](BACKEND_RELEASE_VERIFICATION.md), [client handoff](LIAM_BACKEND_HANDOFF.md), [games/points](GAMES.md) and [reading history](READING_HISTORY.md). Profile source is published in merged [PR #3](https://github.com/spherohero/kickbac/pull/3); see `PROFILE_VERIFICATION.md` for the earlier deployment evidence. Display name **kickBAC**. REST JSON uses snake_case, opaque UUID session/measurement/result IDs, a provisioned device slug, and ISO 8601 UTC timestamps (`Z` or `+00:00`). Users are opaque verified Auth0 `sub` strings, not client-chosen IDs. No certified BAC or safe-to-drive interpretation is provided.
+Status: **LIVE at https://api.kickbac.vodka**,38 operations, explicitly migrated schema8. Profiles, generic private game results/stats and per-person reading history are published and deployed. See [release verification](BACKEND_RELEASE_VERIFICATION.md), [client handoff](LIAM_BACKEND_HANDOFF.md), [games/points](GAMES.md) and [reading history](READING_HISTORY.md). Profile source is published in merged [PR #3](https://github.com/spherohero/kickbac/pull/3); see `PROFILE_VERIFICATION.md` for the earlier deployment evidence. Display name **kickBAC**. REST JSON uses snake_case, opaque UUID session/measurement/result IDs, a provisioned device slug, and ISO 8601 UTC timestamps (`Z` or `+00:00`). Users are opaque verified Auth0 `sub` strings, not client-chosen IDs. No certified BAC or safe-to-drive interpretation is provided.
 
-## App reading resource — implemented source, not yet deployed
+## App reading resource — deployed
+
+Activated **2026-10-18T10:53:55 UTC**, immutable source `4a29218`, PR #43 merge
+`d92a640b9a6f68b3986d27e889085cc85937f002`. Exact public 38-operation OpenAPI,
+backup/migration/data preservation, target checks and PR/main CI verified.
+[Final handoff](FINAL_BACKEND_HANDOFF.md) / [release evidence](BACKEND_RELEASE_VERIFICATION.md).
 
 Canonical [APP_READINGS.md](APP_READINGS.md). New authenticated user-only source
 routes: POST/GET `/v1/me/app-readings`, GET `/v1/me/app-reading-summary`. Required
@@ -21,8 +26,7 @@ App successes/errors, malformed input422, bodyoverflow413. Client keeps original
 UUID/payload/localcopy until matching receipt, scopes outbox by account and imports
 guest data only after explicit assignment. No device/session/ADC/BAC/points write.
 
-This is additive; candidate schema8/38operations, liveheader35/schema7 unchanged
-pending reviewed/backed-up release. Liam owns native sync; generated provenance
+This is additive and live on schema 8 / 38 operations. Liam owns native sync; generated provenance
 is stored/returned, not silently mixed into physical measurement history/counts.
 
 ## Device-party resolve and one-current-party policy — deployed
@@ -52,9 +56,8 @@ ended, old invitation invalid, all private readings/game history retained.
 
 **Additive endpoints; deliberate behavior/policy change.** Existing session/
 measurement/firmware wire is unchanged. Old PUT/device operator grants remain
-only on that legacy binding route. New source will require schema7/35operations;
-current live33/schema6 above is unchanged until backed-up target activation and
-public readback. Liam owns client adoption.
+only on that legacy binding route. Party policy was deployed with schema 7 and
+is preserved in the current schema-8 release. Liam owns client adoption.
 
 ## Manual acquisition — deployed, physical acceptance separate
 
@@ -137,6 +140,9 @@ mean unavailable, not a zero-reading account. No other operation shape changes.
 | GET | `/v1/me/parties` | user | own paginated party history |
 | POST | `/v1/parties/resolve` | user | atomic registered-device join-or-create; persisted request UUID |
 | GET | `/v1/me/parties/current` | user | sole OPEN party or null; authorized legacy conflict |
+| POST | `/v1/me/app-readings` | user | save one App reading; immutable UUID retry receipt |
+| GET | `/v1/me/app-readings` | user | private paginated App reading receipts |
+| GET | `/v1/me/app-reading-summary` | user | snapshot count and latest App reading receipt |
 | GET | `/v1/me/game-history` | user | own game ledger with exact nullable party/game/measurement context |
 | POST | `/v1/party-games/{game_instance_id}/results` | party member | one retry-safe own client-reported completion |
 | GET | `/v1/parties/{party_id}/games` | party member | party game-instance history |

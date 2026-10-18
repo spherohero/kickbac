@@ -1,11 +1,12 @@
 # Parties and richer private profile history — reviewed backend source
 
-**Current release:** LIVE schema7/35operations, atomic resolve/current-party policy
-activated2026-10-18T10:29:53UTC, runtime768e992, PR40merge9d52390. Verified
-backup/old-object-row-BLOB-hash preservation/private-copy/target/public readback:
-[release proof](BACKEND_RELEASE_VERIFICATION.md). Lower schema6/33/source-target
-checkpoints are historical; device resolve/current is deployed, App reading8isnot.
-No production party cleanup/history deletion or iOS edits were performed.
+**Current release: LIVE schema 8 / 38 operations**, runtime `4a29218`, PR #43
+merge `d92a640`, activated 2026-10-18T10:53:55 UTC. Atomic resolve/current-party
+policy (PR #40) is preserved; separate App reading persistence is also deployed.
+Verified backups, exact old-object/typed-row/BLOB/hash preservation, target and
+public readback: [release proof](BACKEND_RELEASE_VERIFICATION.md) and
+[final handoff](FINAL_BACKEND_HANDOFF.md). Lower schema/source-target checkpoints
+are historical. No bulk party cleanup/history deletion or iOS edits were performed.
 
 **Status: DEPLOYED after reviewed source/CI, backup/copy trial and target/public verification.** Owner:
 backend Bot, integration branch `backend/party-profile-completion`, publishing

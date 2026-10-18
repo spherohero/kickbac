@@ -7,24 +7,30 @@ Native-client and sensor acceptance are separate; this is not a certified BAC
 instrument. Private display-name/picture profiles are deployed; see
 [verification](docs/PROFILE_VERIFICATION.md) and [client contract](docs/PROFILES.md).
 
-**Current live checkpoint:** schema6/33 API operations, immutable source172e54c
-from merged PR30, activated October18 after retained backups, exact old-data
-preservation, target tests and trusted public readback. Party/NFC reservation and
-truthful manual acquisition metadata are deployed; see
-[release verification](docs/BACKEND_RELEASE_VERIFICATION.md). Matching nullable
-iOS source passed real Swift fixtures/unsigned Xcode CI, not signed-phone/NFC
-acceptance. The firmware's earlier heartbeat/poll run passed, but its latest
-reconnect failed; read [current physical evidence](docs/DEVICE_SESSION_VERIFICATION.md)
-instead of assuming uninterrupted device connectivity. ADC/uploads remain unverified.
+**Current live checkpoint:** **schema 8 / 38 API operations**, immutable source
+`4a29218`, PR #43 merge `d92a640`, activated October 18 at 10:53:55 UTC.
+Atomic device-linked parties/current-party policy and authenticated App reading
+save/history/summary are deployed. Start with the concise
+**[final backend handoff for Liam](docs/FINAL_BACKEND_HANDOFF.md)** and
+[release evidence](docs/BACKEND_RELEASE_VERIFICATION.md). Reviewed source, 641
+parent tests, 70 target tests, PR/main CI, retained backups, exact old-data
+preservation and trusted public readback passed. The accepted device demo remains
+COMPLETE/exactly once; heartbeat was fresh at 10:56:36 UTC. Saved-Wi-Fi lifetime
+reconnect is merged in firmware, but the bearer is RAM-only; no standalone
+authenticated cold-boot or remote-start claim. Actual calibrated acquisition and
+native offline/two-phone/NFC acceptance remain separate. Older counts and offline
+notes are historical checkpoints, not reasons to restart provider setup.
 
 ## Layout and contract
 
-- **Liam / iOS agents: read [the latest shared change/branch handoff](docs/LIAM_BACKEND_HANDOFF.md#read-first--agent-sync-and-latest-branchchange-checkpoint) before integration work.** Root `AGENTS.md` requires portable Liam-facing documentation for each shared change/merge/cleanup. Fetch and read `origin/main` even when your active client branch has older docs; no automatic agent synchronization is claimed.
+- **Liam / iOS agents: read [the final backend handoff](docs/FINAL_BACKEND_HANDOFF.md) and [shared change history](docs/LIAM_BACKEND_HANDOFF.md) before integration work.** Root `AGENTS.md` requires portable Liam-facing documentation for each shared change/merge/cleanup. Fetch and read `origin/main` even when your active client branch has older docs; no automatic agent synchronization is claimed.
 - `backend/`: Python/FastAPI, versioned SQLite migrations, tests and simulator.
 - [`docs/API.md`](docs/API.md): paths, bodies, errors and lifecycle.
 - [`docs/PROFILES.md`](docs/PROFILES.md): private display-name/picture onboarding; phone identity remains with Auth0.
 - [`docs/GAMES.md`](docs/GAMES.md): live generic private game results, party/game context, server-assigned participation points and profile-wide stats; schema6, not a gameplay engine.
 - [`docs/READING_HISTORY.md`](docs/READING_HISTORY.md): every accepted test persists privately by the same account as its profile; unavailable BAC is null, not zero.
+- [`docs/APP_READINGS.md`](docs/APP_READINGS.md): live separate App-generated reading ledger, UUID receipts, private history/summary and retry/rate limits.
+- [`firmware/SAVED_WIFI.md`](firmware/SAVED_WIFI.md): private one-network save, boot restore, ongoing reconnect and RAM-only bearer limitation.
 - [`docs/LIAM_BACKEND_HANDOFF.md`](docs/LIAM_BACKEND_HANDOFF.md): published client catch-up; real native acceptance remains Liam-owned.
 - [`docs/BACKEND_RELEASE_VERIFICATION.md`](docs/BACKEND_RELEASE_VERIFICATION.md): actual tests/deployment/source provenance and remaining limits.
 - [`docs/SETUP.md`](docs/SETUP.md): Auth0 account/Native app and hosting checklist.

@@ -33,15 +33,18 @@ and firmware-owner coordination continue within their existing ownership.
 
 ## Current release checkpoint superseding older delivery counts
 
-Existing authorized production is now schema6/33 operations from immutable
-172e54c (PR30 mergec78a042), with backups, exact old-data preservation, target
-tests, PR/main backend+native CI and external OpenAPI readback verified. Read
-`docs/BACKEND_RELEASE_VERIFICATION.md` and current `docs/LIAM_BACKEND_HANDOFF.md`;
-older17-operation/schema4 text below is a dated checkpoint. No new provider setup.
-Native Swift/unsigned simulator compilation passed, not signed iPhone/NFC or real
-sensor acceptance. Latest firmware reconnect failed; do not promote its earlier
-bounded heartbeat pass into current-online proof. Nicholas lifted the04:00 cutoff
-for necessary isolated iOS work; preserve Liam's branch/worktree and designs.
+Existing authorized production is **schema 8 / 38 operations**, immutable
+`4a29218`, PR #43 merge `d92a640`, activated 2026-10-18T10:53:55 UTC. Atomic
+device-party resolve/current-party policy (PR #40) and private App reading
+save/history/summary are live. Read `docs/FINAL_BACKEND_HANDOFF.md`,
+`docs/BACKEND_RELEASE_VERIFICATION.md` and `docs/LIAM_BACKEND_HANDOFF.md` first.
+Parent 641 tests, target 70, independent SPEC/QUALITY, exact PR/main CI,
+retained backups/private 7→8 preservation/final migration/public readback passed.
+Original device demo persists exactly once; fresh heartbeat read back 10:56:36 UTC.
+Saved-Wi-Fi firmware PR #41 is merged; Wi-Fi reset restore is separate from
+RAM-only device-bearer bootstrap. No remote start or calibrated BAC implemented.
+Older schema/count/offline/temporary-iOS-permission statements are historical;
+Liam owns all app work and native acceptance. No provider setup is reopened.
 
 ## Current delivery scope
 

@@ -2,6 +2,12 @@
 
 ## Current deployment superseding implementation checkpoints below
 
+The party contract below remains live in the current **schema 8 / 38-operation**
+release, source `4a29218`, PR #43 merge `d92a640`, activated 10:53:55 UTC.
+App reading persistence is also deployed; it does not change this party policy.
+See the [final handoff](FINAL_BACKEND_HANDOFF.md). The schema-7 evidence that
+follows records the original party activation, not the current runtime version.
+
 **LIVE schema7/35operations at2026-10-18T10:29:53UTC.**
 [PR40](https://github.com/spherohero/kickbac/pull/40), exact head9b59021, merged
 `9d523902dc97595fe5982fbd1fa3e54abfe59187`; complete reviewed-tree equality,

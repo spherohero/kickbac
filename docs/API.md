@@ -2,6 +2,29 @@
 
 Status: **LIVE at https://api.kickbac.vodka**,35 operations, explicitly migrated schema7. Profiles, generic private game results/stats and per-person reading history are published and deployed. See [release verification](BACKEND_RELEASE_VERIFICATION.md), [client handoff](LIAM_BACKEND_HANDOFF.md), [games/points](GAMES.md) and [reading history](READING_HISTORY.md). Profile source is published in merged [PR #3](https://github.com/spherohero/kickbac/pull/3); see `PROFILE_VERIFICATION.md` for the earlier deployment evidence. Display name **kickBAC**. REST JSON uses snake_case, opaque UUID session/measurement/result IDs, a provisioned device slug, and ISO 8601 UTC timestamps (`Z` or `+00:00`). Users are opaque verified Auth0 `sub` strings, not client-chosen IDs. No certified BAC or safe-to-drive interpretation is provided.
 
+## App reading resource — implemented source, not yet deployed
+
+Canonical [APP_READINGS.md](APP_READINGS.md). New authenticated user-only source
+routes: POST/GET `/v1/me/app-readings`, GET `/v1/me/app-reading-summary`. Required
+save fields are `reading_id` UUID, finite strict number `value`0..1,
+timezone-aware ISO string `recorded_at`, strict integer `duration_ms`1..60000,
+literal `source:"app_generated"`; no owner/extra fields. Receipt adds validated
+`user_id` and immutable server `received_at`, canonical UTC timestamps.201new,
+200exact canonical replay,409changed accepted fields,404foreign reading UUID.
+
+Private page `{items,limit,offset,has_more}`, limit1..100/default50, offset>=0;
+client `recorded_at DESC,reading_id DESC` order. Summary has `user_id`, fixedsource,
+exact `saved_readings` and `latest_reading` fullreceipt/null in one read snapshot.
+Maximum32KiB streamed JSON;60newaccepted saves/subject/fixed60s window, persisted
+across restart; accepted retries bypass quota.429/Retry-After; no-store on ALL
+App successes/errors, malformed input422, bodyoverflow413. Client keeps original
+UUID/payload/localcopy until matching receipt, scopes outbox by account and imports
+guest data only after explicit assignment. No device/session/ADC/BAC/points write.
+
+This is additive; candidate schema8/38operations, liveheader35/schema7 unchanged
+pending reviewed/backed-up release. Liam owns native sync; generated provenance
+is stored/returned, not silently mixed into physical measurement history/counts.
+
 ## Device-party resolve and one-current-party policy — deployed
 
 Activated2026-10-18T10:29:53UTC from immutable768e992, PR40merge9d52390.

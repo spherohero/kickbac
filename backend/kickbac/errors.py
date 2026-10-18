@@ -53,7 +53,8 @@ def install_errors(app):
             exc.status_code == 400
             and request.method in {"POST", "PUT"}
             and (
-                request.url.path.rstrip("/") == "/v1/me/game-results"
+                request.url.path.rstrip("/")
+                in {"/v1/me/game-results", "/v1/me/app-readings"}
                 or is_party_private(request.url.path)
             )
         ):
@@ -64,8 +65,14 @@ def install_errors(app):
             if code == "active_party_conflict"
             else {}
         )
+        message = (
+            "Too many saved App readings."
+            if code == "rate_limited"
+            and request.url.path.rstrip("/") == "/v1/me/app-readings"
+            else MESSAGES[code]
+        )
         return JSONResponse(
-            {"error": {"code": code, "message": MESSAGES[code], **context}},
+            {"error": {"code": code, "message": message, **context}},
             status_code=exc.status_code,
             headers=exc.headers,
         )
@@ -92,6 +99,8 @@ def install_errors(app):
             if is_party_private(request.url.path)
             or request.url.path.rstrip("/")
             in {
+                "/v1/me/app-readings",
+                "/v1/me/app-reading-summary",
                 "/v1/me/profile",
                 "/v1/me/game-results",
                 "/v1/me/stats",

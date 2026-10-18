@@ -188,7 +188,7 @@ def test_populated_six_upgrade_preserves_duplicates_and_guards_future_writes(tmp
         objects, rows = snapshot(db)
         assert all(obj in objects for obj in old_objects)
         assert all(rows[k] == v for k, v in old_rows.items())
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 7
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 8
         with pytest.raises(sqlite3.IntegrityError, match="active_party_conflict"):
             db.execute(
                 "INSERT INTO parties VALUES (?, 'owner','New','new','time','OPEN',NULL)",

@@ -52,7 +52,7 @@ def test_upgrade_schema_one_preserves_devices_and_constraints(tmp_path):
     initialize(path)
     check_schema(path)
     with connect(path) as db:
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 7
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 8
         assert db.execute("SELECT id FROM devices").fetchone()[0] == "existing"
         for sid in ["first", "second"]:
             if sid == "first":

@@ -67,6 +67,10 @@ def test_repository_schema_survives_backup_restore(tmp_path):
         db.execute(
             "INSERT INTO party_resolve_requests VALUES ('2889d6a0-4719-4f23-a397-37c51d24129e','owner','fixture','Fixture','party','created')"
         )
+        db.execute(
+            "INSERT INTO app_readings VALUES ('026af7c9-d605-4291-a1db-5b230e10ef43','owner',0.08,'2026-10-18T09:31:50+00:00',2500,'app_generated','2026-10-18T10:00:00+00:00')"
+        )
+        db.execute("INSERT INTO app_reading_save_windows VALUES ('owner',1000.0,1)")
         expected = list(db.iterdump())
         db.commit()
     output = tmp_path / "backups"
@@ -89,9 +93,15 @@ def test_repository_schema_survives_backup_restore(tmp_path):
     assert check.returncode == 0, check.stderr
     with sqlite3.connect(restored) as db:
         assert db.execute("PRAGMA integrity_check").fetchall() == [("ok",)]
-        assert db.execute("PRAGMA user_version").fetchone() == (7,)
+        assert db.execute("PRAGMA user_version").fetchone() == (8,)
         assert list(db.iterdump()) == expected
         assert db.execute("SELECT id FROM devices").fetchall() == [("fixture",)]
+        assert db.execute("SELECT value,source FROM app_readings").fetchall() == [
+            (0.08, "app_generated")
+        ]
+        assert db.execute(
+            "SELECT accepted FROM app_reading_save_windows"
+        ).fetchall() == [(1,)]
 
 
 def test_retention_only_removes_exact_owned_names(tmp_path):

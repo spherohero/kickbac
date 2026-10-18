@@ -1,5 +1,23 @@
 # Private per-person reading history
 
+## App readings — separate ledger/source, implementation candidate
+
+The generated touch records use a NEW independent user resource:
+POST/GET `/v1/me/app-readings` and GET `/v1/me/app-reading-summary`, documented in
+[APP_READINGS.md](APP_READINGS.md). Source8candidate implemented/tested, not yet
+deployed. Save original localUUID/value/client aware recorded_at/actual hold
+duration/source `app_generated`, get a matching immutable receipt before Synced.
+Privatepage orders clientrecorded_at/readinguuid descending; exactsummarycount/
+latest share one read snapshot.60new saves/minute, accepted retries exempt;
+private UUID conflict/owner/rate/restart behavior and32KiB cap are in the contract.
+
+This ledger does NOT insert device/session/measurement rows, change physical
+history/summary, award points or turn a generated number into a physical BAC
+estimate/readiness flag. Liam owns account-scoped local/server merge+UUIDdedupe,
+offlineoutbox/relaunch/receipt checks and explicit guest assignment; preserve all
+existing local records on failures. Party7/device legacy behavior below remains
+deployed; Appresource8needs its own reviewed/backed-up release/public verification.
+
 Every **accepted completed test** is persisted in SQLite `measurements`, linked to its unique session/device and the session's verified Auth0 subject. The private profile uses the same subject. History is not stored in the mutable name/photo fields, and does not depend on creating the profile first. No extra user table or duplicate history store is needed.
 
 ## Manual acquisition compatibility — deployed, physical acceptance separate

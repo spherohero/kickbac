@@ -127,6 +127,12 @@ provide a long-running login service for the phone.
 
 ## Tests and checks
 
+For hardware-independent cross-component verification, see
+[backend HTTP → actual C++ firmware decoder checks](docs/FIRMWARE_WIRE_VERIFICATION.md).
+These run before any perfboard wiring or sensor execution; no production API or
+physical device is used.
+
+
 ```bash
 cd backend  # omit if already there
 uv run pytest -q

@@ -72,6 +72,12 @@ Current source/evidence documents a diagnostic poll interval of 2 seconds and he
 
 ## Physical truthfulness gate
 
+**Decision checkpoint:** the manual-timed/null-breath-duration contract remains
+unapproved. Preserve existing measurement semantics and unavailable BAC. Continue
+NFC/session/context software work; physical upload completion remains gated by
+truthful acquisition metadata and electrical commissioning. A numeric visual
+demonstration must remain explicitly simulated.
+
 Raw MQ-3 ADC is not calibrated BAC. Save raw value/unit/source and preserve `estimated_bac_percent:null` as unavailable. Do not attach a fabricated numerical BAC or safe-driving verdict to a party player.
 
 Pressure sensing is unavailable and the current duration proposal is still unapproved. Existing upload requires integer `breath_duration_ms`; a manual sensor window is not measured breath duration. Firmware must not enable production uploads by filling that field with a constant. A coordinated acquisition/duration revision would require both `=== BACKEND CONTRACT CHANGE ===` and `=== LIAM / iOS IMPACT ===`, legacy retry/decoder tests, simulator parity and separate deployment. This direction changes no firmware wire field.

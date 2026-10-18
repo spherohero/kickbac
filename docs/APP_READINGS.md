@@ -1,5 +1,17 @@
 # Authenticated App readings — frozen backend contract
 
+## Implemented source; production release pending
+
+Backend branch `backend/app-reading-integration`, current reviewed candidate
+`4a29218b1516f285d7b419edcfe0f18258064a6d`, base0d43f61. Actual-app router is
+registered; migration008/source schema8 and38operations are implemented.
+Parent641combinedtests pass (including13realHTTPcases), Ruff/83fileformat/compile/
+simulator pass. New HTTP tests cover receipt/canonical retry/privacy/pagination/
+summary/restart, concurrent UUID idempotency and durable quota. Populated schema8
+backup restoration also passes. Independent review/CI/private7→8trial/backed-up
+target activation/public readback gate deployment; existing liveparty7/35 stays
+unchanged until then. No iOS/local-record/firmware edits or cloud-sync claim.
+
 Final scope from Nicholas's forwarded `combined.md`, after linked-party work.
 Backend owns API/storage/release; Liam owns the local reading store, outbox and
 native acceptance. **Implementation target, not deployed yet.** Existing local

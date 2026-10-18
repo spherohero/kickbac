@@ -2,6 +2,32 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+### App reading persistence — implemented source, release pending
+
+Ownerbackend, `backend/app-reading-integration`, base0d43f61; runtimecandidate
+`4a29218b1516f285d7b419edcfe0f18258064a6d`. Actualappregistered schema8/38operation
+source passes parent641combinedtests, including13realHTTPcases with receipt,
+canonical replay/privacy/page/summary/restart/concurrentUUID/quota. Ruff/83files
+format/compile/simulator pass, populatedbackup8verified. The one parentfullrun
+stalebackup7expectation was corrected and full suite rerun green; no fake pass.
+Independentreview/exactCI/immutable7→8private-copy/backup/activation/publicreadback
+are still gates; current liveparty7/35 is unchanged by sourcepublication.
+
+**Additive/NON-BREAKING; no app edits.** Exact[App contract](APP_READINGS.md):
+POST/GET `/v1/me/app-readings`, GET `/v1/me/app-reading-summary`. Save allfivekeys
+`reading_id`existingUUID,strictfinite`value`0..1,awareISO`recorded_at`,strictint
+`duration_ms`1..60000,literal`source:"app_generated"`. Receipt adds opaquevalidated
+owner`user_id`/server`received_at`;201new/200canonicalexactretry/409changed/404foreign.
+32KiBbody,60newaccepted/minute+RetryAfter429,acceptedretryexempt,privateallno-store.
+Page/summaryseparatefromdeviceledger; generatedvalues are not physicalestimates.
+
+Liam adopts only after verifieddeployment: preservePracticeReadingStore localUUIDs/
+payloads/records,owner-scopedoutbox,matchingreceiptbeforeSynced,retry/relaunch/
+UUIDdedupe. Guestrecordsremainlocal until explicit accountassignment; no automatic
+cross-owner upload or deleting the only copy. No devicebearer/session/ADC/points
+changes or UIredesign. Native offline+secondphone/account acceptance remains Liam's.
+Linkedpartyresolve/current below ISalreadydeployed; no need to wait on Appresource.
+
 ### LIVE linked-party resolve — client can adopt now
 
 **Deployed2026-10-18T10:29:53UTC:** schema7/35operations, immutable runtime

@@ -2,7 +2,39 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
-### Additive reading summary — local implementation for parent review
+### Direct-chat implementation continuation — PR #26 still draft
+
+- Nicholas moved party/profile implementation into the backend Bot's direct chat;
+  the earlier group run is being stopped. Integration worktree is
+  `kickbac-party-completion`, local branch `backend/party-profile-completion`,
+  retaining all published ancestry through `ad495315840b21b66407da146547311078f57594`.
+  The existing publication target remains [PR #26](https://github.com/spherohero/kickbac/pull/26)
+  on `backend/party-profile-contract`, based on main `dd19b404210517b1b0c8b8f8a1809ba988bb250d`.
+  Earlier dirty/untracked work, including the initial party-create RED test, is preserved.
+- **NON-BREAKING; not deployed.** Same proposed methods, schemas and examples in
+  [PARTIES.md](PARTIES.md); no change to auth, existing operation shapes, session
+  behavior, firmware metadata, null BAC or fixed 10-point participation awards.
+  Liam retains his current integration until actual release availability. No iOS
+  or firmware source edits, production grants, SMS, user writes or device arming.
+- Parent execution on foundation `73d66be`: Python 3.12 **372 backend/deployment
+  tests passed**, Ruff lint and 56-file formatting passed; existing real-loopback
+  simulator returned COMPLETE, one measurement, zero duplicates, foreign 404 and
+  restart OK. Exact-head [PR CI](https://github.com/spherohero/kickbac/actions/runs/39101672443)
+  was read back successful for Python 3.11/3.12, Auth0 fixtures and firmware decoder.
+  These are foundation checks, not completed party API/native/physical acceptance.
+- Party core and game/context/history implementations run in separate backend-owned
+  worker worktrees. Independent migration/reading-summary review is also running.
+  The real HTTP party lifecycle acceptance and additional chunked-body tests are
+  currently RED at the missing party routes, as expected before implementation.
+  Do not mark PR ready or merge until integrated source review, full tests, exact-head
+  CI, immutable compatibility checks and updated canonical docs pass. Deployment
+  and schema5 production migration remain separate backup/target-host gates.
+
+### Additive reading summary — implemented foundation, not deployed
+
+This slice is published in PR #26 as `73d66be` (cherry-picked from worker commit
+`5008c7f`). The original worker-local checkpoint below is historical; the parent
+has executed the combined 372-test foundation run recorded above.
 
 - Owner: backend reading-summary worker, `backend/reading-summary`, base
   `d9aeb744663cc77a25a1012cf62c9d876b35c451`. Local commit only; no PR, push,

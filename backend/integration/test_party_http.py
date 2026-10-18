@@ -8,6 +8,7 @@ from datetime import UTC, datetime, timedelta
 from uuid import uuid4
 
 import jwt
+import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from kickbac.app import create_app
@@ -214,3 +215,31 @@ def test_real_http_party_join_check_in_completion_retry_and_restart(tmp_path):
         assert (
             db.execute("SELECT COUNT(*) FROM party_result_context").fetchone()[0] == 1
         )
+
+
+@pytest.mark.parametrize(
+    "method,path",
+    [
+        ("POST", "/v1/parties"),
+        ("POST", "/v1/parties/join"),
+        ("PUT", "/v1/parties/11111111-1111-4111-8111-111111111111/device"),
+        ("POST", "/v1/parties/11111111-1111-4111-8111-111111111111/games"),
+        ("POST", "/v1/party-games/11111111-1111-4111-8111-111111111111/results"),
+    ],
+)
+def test_new_private_routes_bound_real_chunked_bodies_before_parsing(
+    tmp_path, method, path
+):
+    settings = Settings(tmp_path / "chunked-fixture.sqlite3")
+    initialize(settings.db_path)
+    # No credentials needed: body bytes must be bounded before auth/JSON parsing.
+    with serve(create_app(settings, verifier=lambda _: None)) as client:
+        response = client.request(
+            method,
+            path,
+            headers={"Content-Type": "application/json"},
+            content=iter([b" " * 16384] * 3),
+        )
+        assert response.status_code == 413
+        assert response.json()["error"]["code"] == "payload_too_large"
+        assert response.headers["cache-control"] == "no-store"

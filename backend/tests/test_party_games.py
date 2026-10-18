@@ -7,13 +7,7 @@ from kickbac.db import connect
 
 @pytest.fixture
 def party_world(world):
-    import importlib.util
-
     client, users, devices, now, path = world
-    if importlib.util.find_spec("kickbac.party_games"):
-        from kickbac.party_games import router
-
-        client.app.include_router(router)
     party = str(uuid4())
     with connect(path) as db:
         db.execute(

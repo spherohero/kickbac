@@ -291,7 +291,6 @@ def test_replay_survives_app_restart(party_world):
     from fastapi.testclient import TestClient
 
     from kickbac.app import create_app
-    from kickbac.party_games import router
     from kickbac.settings import Settings
 
     c, u, _, now, path, _ = party_world
@@ -306,7 +305,6 @@ def test_replay_survives_app_restart(party_world):
             (now[0].isoformat(),),
         )
     app = create_app(Settings(path), c.app.state.verifier, clock=lambda: now[0])
-    app.include_router(router)
     with TestClient(app) as restarted:
         replay = restarted.post(url, headers=u["bob"], json=body)
         assert replay.status_code == 200, replay.text

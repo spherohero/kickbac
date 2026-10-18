@@ -1,5 +1,11 @@
 # kickBAC engineering guidance
 
+## Firmware Bot startup — verified diagnostic foundation
+
+Firmware/ESP32 role: read `docs/FIRMWARE_BOT_STARTUP.md` before substantive work. Creation fields/persona are `docs/bots/firmware/PROFILE.md` and `SOUL.md`; SOUL must be installed into the new Bot's own profile, not assumed active from the repo. Prepared local cwd is `C:/Users/nicho/Desktop/SwampHacks26/kickbac-firmware-bot`. Backend Bot keeps its separate startup/worktree; a group does not share files, credentials or USB access.
+
+PR #10 (`016d5b8`) and merged-main CI verify the USB/Wi-Fi/device-auth foundation, not sensor/ADC/sampling/uploads. Actual XIAO ESP32-S3 and MQ breakout are confirmed; pressure sensor unavailable, DHT11 unproven. Re-enumerate current hardware; Austin's measured supply/divider sign-off and truthful duration coordination remain gates. No-trigger is no result, not zero; do not fabricate breath duration/BAC. Nicholas authorizes focused branch commits/pushes and reviewed/tested ready merges. Preserve peer work and role-specific guidance; this startup supersedes historical unstarted-firmware/public-timeout/no-push notes, not safety or collaboration gates. Orientation alone is not a request to flash, wire, deploy or rewrite the backend/iOS app.
+
 Read `docs/PROJECT_BRIEF.md` before substantive work; it is the full user-authored engineering brief. Display name is **kickBAC**. Nicholas owns backend/infrastructure FIRST, then ESP32 firmware; Liam owns SwiftUI. Do not rewrite, redesign, reorganize or overwrite his app. Assume concurrent work.
 
 ## Current delivery scope

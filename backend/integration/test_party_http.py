@@ -19,7 +19,8 @@ from kickbac.settings import Settings
 from kickbac.simulator import serve
 
 
-def test_real_http_party_join_check_in_completion_retry_and_restart(tmp_path):
+@pytest.mark.parametrize("manual", [False, True], ids=["legacy", "manual_timed"])
+def test_real_http_party_join_check_in_completion_retry_and_restart(tmp_path, manual):
     private = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     issuer, audience = "https://party-fixture.invalid/", "party-fixture"
     verifier = JWTVerifier(issuer, audience, lambda _: private.public_key())
@@ -93,10 +94,12 @@ def test_real_http_party_join_check_in_completion_retry_and_restart(tmp_path):
             "measurement_id": str(uuid4()),
             "session_id": armed["id"],
             "raw": {"sensor": "mq3", "value": 1200, "unit": "adc_counts"},
-            "breath_duration_ms": 2500,
+            "breath_duration_ms": None if manual else 2500,
             "source": "simulator",
             "measured_at": None,
         }
+        if manual:
+            body.update(acquisition_method="manual_timed", sample_duration_ms=2500)
         reading = checked(
             client, "POST", "/v1/device/measurements", device, 201, json=body
         )
@@ -106,6 +109,13 @@ def test_real_http_party_join_check_in_completion_retry_and_restart(tmp_path):
         )
         assert reading["source"] == "simulator"
         assert reading["estimated_bac_percent"] is None
+        if manual:
+            assert reading["breath_duration_ms"] is None
+            assert reading["acquisition_method"] == "manual_timed"
+            assert reading["sample_duration_ms"] == 2500
+        else:
+            assert "acquisition_method" not in reading
+            assert "sample_duration_ms" not in reading
         return reading
 
     with serve(app()) as client:

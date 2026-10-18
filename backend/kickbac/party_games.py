@@ -166,6 +166,15 @@ def store_party_result(
             ).fetchone()
             if measurement is None:
                 fail(404, "not_found")
+            check_in = db.execute(
+                "SELECT party_id,game_instance_id FROM party_check_ins WHERE session_id=?",
+                (measurement["session_id"],),
+            ).fetchone()
+            if check_in is not None and (
+                check_in["party_id"],
+                check_in["game_instance_id"],
+            ) != (game["party_id"], str(game_instance_id)):
+                fail(422, "validation_error")
             if db.execute(
                 "SELECT 1 FROM party_result_context WHERE measurement_id=?",
                 (str(body.measurement_id),),

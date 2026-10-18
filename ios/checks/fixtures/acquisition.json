@@ -1,0 +1,26 @@
+{
+  "manual": {
+    "id": "026af7c9-d605-4291-a1db-5b230e10ef43",
+    "session_id": "3b0c0a9e-2604-4b78-a487-3fd8fa1d4a4b",
+    "device_id": "kb-demo-01",
+    "raw": {"sensor": "mq3", "value": 1200, "unit": "adc_counts"},
+    "breath_duration_ms": null,
+    "acquisition_method": "manual_timed",
+    "sample_duration_ms": 5000,
+    "source": "device",
+    "measured_at": null,
+    "received_at": "2026-10-17T01:00:05Z",
+    "estimated_bac_percent": null
+  },
+  "legacy": {
+    "id": "026af7c9-d605-4291-a1db-5b230e10ef44",
+    "session_id": "3b0c0a9e-2604-4b78-a487-3fd8fa1d4a4b",
+    "device_id": "kb-demo-01",
+    "raw": {"sensor": "mq3", "value": 1200, "unit": "adc_counts"},
+    "breath_duration_ms": 2500,
+    "source": "simulator",
+    "measured_at": null,
+    "received_at": "2026-10-17T01:00:05Z",
+    "estimated_bac_percent": null
+  }
+}

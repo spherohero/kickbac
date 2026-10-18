@@ -2,6 +2,22 @@
 
 Status: **LIVE at https://api.kickbac.vodka**,17 operations, explicitly migrated schema4. Profiles, generic private game results/stats and per-person reading history are published and deployed. See [release verification](BACKEND_RELEASE_VERIFICATION.md), [client handoff](LIAM_BACKEND_HANDOFF.md), [games/points](GAMES.md) and [reading history](READING_HISTORY.md). Profile source is published in merged [PR #3](https://github.com/spherohero/kickbac/pull/3); see `PROFILE_VERIFICATION.md` for the earlier deployment evidence. Display name **kickBAC**. REST JSON uses snake_case, opaque UUID session/measurement/result IDs, a provisioned device slug, and ISO 8601 UTC timestamps (`Z` or `+00:00`). Users are opaque verified Auth0 `sub` strings, not client-chosen IDs. No certified BAC or safe-to-drive interpretation is provided.
 
+## Manual acquisition candidate — implemented source, not deployed
+
+`backend/manual-timed-acquisition` implements the frozen
+[manual acquisition contract](FIRMWARE_DURATION_PROPOSAL.md). Current public
+OpenAPI above remains authoritative until a separately verified release.
+**BREAKING for older clients:** manual readings use required
+`breath_duration_ms:null`, `acquisition_method:"manual_timed"`, and measured
+strict integer `sample_duration_ms`1..60000. Legacy integer-duration request,
+response and stored-payload retries remain exact; new keys are omitted for legacy
+responses. Mixed/incomplete metadata is422. Manual metadata persists in all
+nested history/session/check-in/game responses; null BAC stays unavailable.
+SAMPLING means sensor acquisition, not proof of breath. Necessary iOS decoding,
+visible/accessibility notice and exact-session handling are included in isolated
+bounded client work; native CI is a separate verification gate, not a real-phone
+claim. Existing device/auth/session fields and paths are unchanged.
+
 ## Authentication
 User routes require `Authorization: Bearer <Auth0 API access token>` (not an ID token). RS256 signature, issuer, audience, expiry and subject must be validated. `/v1/me` returns only the verified subject. The Native app's SMS connection and Passwordless OTP grant are enabled for Liam's reported embedded Auth0 phone/code flow; hosted Authorization Code + PKCE remains supported. Native client ID/domain/audience/bundle/callback values must be coordinated with Liam. There is no kickBAC password/OTP endpoint or native client secret.
 

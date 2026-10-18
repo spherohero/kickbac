@@ -11,6 +11,8 @@ from pydantic import (
     StrictInt,
     StrictStr,
     field_validator,
+    model_serializer,
+    model_validator,
 )
 
 
@@ -93,13 +95,47 @@ class RawReading(Empty):
     unit: Literal["adc_counts"]
 
 
-class MeasurementUpload(Empty):
+class AcquisitionMetadata(BaseModel):
+    acquisition_method: Literal["manual_timed"] | None = None
+    sample_duration_ms: Annotated[StrictInt, Field(ge=1, le=60000)] | None = None
+
+    @model_serializer(mode="wrap")
+    def serialize_acquisition(self, handler):
+        result = handler(self)
+        if self.acquisition_method is None and self.sample_duration_ms is None:
+            result.pop("acquisition_method", None)
+            result.pop("sample_duration_ms", None)
+        return result
+
+
+class MeasurementUpload(AcquisitionMetadata, Empty):
     measurement_id: UUID
     session_id: UUID
     raw: RawReading
-    breath_duration_ms: Annotated[StrictInt, Field(ge=1, le=60000)]
+    breath_duration_ms: Annotated[StrictInt, Field(ge=1, le=60000)] | None
     source: Literal["device", "simulator"]
     measured_at: AwareDatetime | None = None
+
+    @model_validator(mode="after")
+    def require_manual_metadata_for_null_duration(self):
+        if self.breath_duration_ms is None and (
+            self.acquisition_method != "manual_timed" or self.sample_duration_ms is None
+        ):
+            raise ValueError(
+                "Null breath duration requires manual acquisition metadata"
+            )
+        if self.breath_duration_ms is not None:
+            metadata_fields = {"acquisition_method", "sample_duration_ms"}
+            supplied = self.model_fields_set & metadata_fields
+            if (
+                self.acquisition_method is not None
+                or self.sample_duration_ms is not None
+                or supplied not in (set(), metadata_fields)
+            ):
+                raise ValueError(
+                    "Legacy duration requires omitted or paired-null metadata"
+                )
+        return self
 
     @field_validator("measured_at", mode="before")
     @classmethod
@@ -116,12 +152,12 @@ class MeasurementUpload(Empty):
         return value.astimezone(UTC) if value is not None else None
 
 
-class MeasurementResponse(BaseModel):
+class MeasurementResponse(AcquisitionMetadata):
     id: str
     session_id: str
     device_id: str
     raw: RawReading
-    breath_duration_ms: int
+    breath_duration_ms: int | None
     source: Literal["device", "simulator"]
     measured_at: str | None
     received_at: str

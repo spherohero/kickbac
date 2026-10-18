@@ -10,7 +10,8 @@ on:
       - 'firmware/platformio.ini'
       - '.github/workflows/backend.yml'
   push:
-    branches: [main, 'backend/**', 'fix/**', 'ci/**']
+    # Feature branches run via pull_request; avoid duplicate push+PR matrices.
+    branches: [main]
     paths:
       - 'backend/**'
       - 'deploy/**'

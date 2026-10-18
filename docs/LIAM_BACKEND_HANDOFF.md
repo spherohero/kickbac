@@ -33,7 +33,34 @@ This replaces the older local/unpublished-profile handoff. **Backend profile, ph
   then passed. Follow-up physical execution/heartbeat persistence is not yet
   claimed at this source checkpoint; final evidence will be recorded separately.
 
-### Firmware session ownership guard — not flashed; no client change
+### Manual acquisition implementation — bounded iOS ownership until04:00, not deployed
+
+Nicholas authorizes backend/manual-timed support and necessary iOS changes until
+04:00 Eastern October18; preserve Liam's tip/dirty work and implement on isolated
+branches, not directly on main. Backend base3fd50c7; refreshed client tip0e5a6e4.
+No native build/physical acceptance is inferred. Firmware owns the actual board.
+The focused worker client patch5cc081d (based on Liam0e5a6e4) is integrated into
+the backend candidate as38a4188. Only its compatibility changes are cherry-picked;
+Liam's unrelated Party/Trivia preview is not taken over or reset. Home's one
+context conflict retains current-main layout and new mode-aware duration text.
+Five Python source guards/branding pass, but these do not compile Swift. A
+single public-repo macOS26 CI job runs actual Swift acquisition/session fixtures
+and an unsigned simulator build. No signing account/resource is created; no
+native build, rendering or iPhone acceptance is claimed before real output.
+Per Nicholas's fast-path request, backend feature checks now run on PRs rather
+than duplicate feature-push+PR matrices; merged-main checks and protections stay.
+
+**BREAKING:** current client requires integer breath duration. New manual samples
+require `breath_duration_ms:null`, `acquisition_method:"manual_timed"`, actual
+`sample_duration_ms`1..60000. Existing paths/session IDs/auth remain unchanged;
+legacy request/response/retry JSON remains exact. Full frozen request/response,
+normalization and gates: [FIRMWARE_DURATION_PROPOSAL.md](FIRMWARE_DURATION_PROPOSAL.md).
+Update nullable decoding, mode-aware Home/history and accessibility notice:
+"Timed sensor sample — breath not validated." SAMPLING is acquisition, not proof
+of breath. Preserve null BAC, no-trigger/no-result, owner-scoped caches/retries.
+This notice was given to Nicholas before implementation. New API not live yet.
+
+### Firmware session ownership guard — historical pre-flash checkpoint; no wire change
 
 - **MERGED / not flashed:** [PR #28](https://github.com/spherohero/kickbac/pull/28),
   exact reviewed head `11b5e38d40eb0868096a6dc1830bd3660b5fb6b2`, merge

@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field, StrictStr
 from .db import connect
 from .errors import fail
 from .models import Empty, ErrorEnvelope, SessionResponse
-from .sessions import User, session_response, session_transaction
+from .sessions import User, log, session_response, session_transaction
 
 router = APIRouter()
 
@@ -159,6 +159,15 @@ def check_in(
                 subject,
                 body.device_id,
             ),
+        )
+        log.info(
+            "device=%s session=%s user=%s transition=ARMED check_in=%s party=%s game=%s",
+            body.device_id,
+            session_id,
+            subject,
+            body.check_in_id,
+            party_id,
+            game_id,
         )
         return check_in_response(
             db.execute(

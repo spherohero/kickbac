@@ -34,6 +34,7 @@ void trigger_mock() {
     for (int i = 0; i < 3; ++i) device_probe_loop(); // bounded32byte USB draining
 }
 
+#if !defined(KICKBAC_MOCK_ADAPTER_LIBRARY)
 int main() {
     reset_mock_fixture();
     trigger_mock();
@@ -126,3 +127,4 @@ int main() {
     }
     std::cout << "PASS: actual adapter explicit session-bound MOCK only, trusted path/201/replay200, no reassignment, bounded failures and invalid acknowledgements (fixtures)\n";
 }
+#endif

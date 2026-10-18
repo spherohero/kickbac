@@ -12,6 +12,10 @@
 #include "session_safety.hpp"
 #include "saved_wifi.hpp"
 #include "tls_root.hpp"
+#if defined(KICKBAC_PERSIST_DEVICE_AUTH)
+#include <Preferences.h>
+#include "saved_auth.hpp"
+#endif
 #if defined(KICKBAC_MOCK_UPLOAD)
 #include <esp_system.h>
 #include "mock_upload.hpp"
@@ -37,6 +41,9 @@ std::uint32_t last_ready = 0;
 std::uint32_t last_heartbeat = 0;
 std::uint32_t last_poll = 0;
 char previous_seen[40] = {};
+#if defined(KICKBAC_PERSIST_DEVICE_AUTH)
+bool saved_auth_active = false;
+#endif
 #if defined(KICKBAC_MOCK_UPLOAD)
 kickbac::MockUpload mock_upload;
 kickbac::MockCommand mock_command;
@@ -52,6 +59,14 @@ std::int64_t utc_upper_ms() {
 }
 
 void stop_probe(const char* stage, int status) {
+#if defined(KICKBAC_PERSIST_DEVICE_AUTH)
+    if (saved_auth_active && (status == 401 || status == 403 || status == 200 || status == -2 || status == -3)) {
+        Preferences preferences;
+        const bool blocked = kickbac::block_saved_device_auth(preferences);
+        Serial.printf("device_saved state=%s\n", blocked ? "blocked" : "write_failed");
+        saved_auth_active = false;
+    }
+#endif
     negative_retry = false;
     session_fence.clear();
     recovery.clear();
@@ -262,6 +277,18 @@ bool device_take_wifi_setup() {
     return requested;
 }
 
+void device_restore_saved_auth() {
+#if defined(KICKBAC_PERSIST_DEVICE_AUTH)
+    Preferences preferences;
+    const auto state = kickbac::load_device_auth(preferences, credential);
+    saved_auth_active = state == kickbac::SavedAuthState::Loaded;
+    const char* label = saved_auth_active ? "loaded" :
+        (state == kickbac::SavedAuthState::Blocked ? "blocked" :
+         (state == kickbac::SavedAuthState::Invalid ? "invalid" : "absent"));
+    Serial.printf("device_saved state=%s\n", label);
+#endif
+}
+
 void device_probe_loop() {
     if (failed) return;
     const auto now = static_cast<std::uint32_t>(millis());
@@ -279,7 +306,22 @@ void device_probe_loop() {
                 return;
             }
             if (value >= 0 && credential.feed(static_cast<std::uint8_t>(value),
-                                              static_cast<std::uint32_t>(millis()))) { wifi_setup_command.clear(); break; }
+                                              static_cast<std::uint32_t>(millis()))) {
+                wifi_setup_command.clear();
+#if defined(KICKBAC_PERSIST_DEVICE_AUTH)
+                if (credential.save_requested()) {
+                    Preferences preferences;
+                    if (!kickbac::save_device_auth(preferences, credential)) {
+                        Serial.printf("device_saved state=write_failed\n");
+                        stop_probe("auth_store", -2);
+                        return;
+                    }
+                    saved_auth_active = true;
+                    Serial.printf("device_saved state=stored\n");
+                }
+#endif
+                break;
+            }
         }
         return;
     }

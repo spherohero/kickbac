@@ -126,15 +126,23 @@ class DeviceProvisionTests(unittest.TestCase):
         args = self.module.parse_args(["--port", "FIXTURE"])
         self.assertFalse(args.save_wifi)
         self.assertFalse(args.device_only)
+        self.assertFalse(args.save_device_auth)
         for flag in ("--save-wifi", "--device-only"):
             args = self.module.parse_args(["--port", "FIXTURE", flag])
             self.assertTrue(getattr(args, flag[2:].replace("-", "_")))
+        for mode in ([], ["--device-only"], ["--save-wifi"]):
+            args = self.module.parse_args(
+                ["--port", "FIXTURE", "--save-device-auth", *mode]
+            )
+            self.assertTrue(args.save_device_auth)
         with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
             self.module.parse_args(
                 ["--port", "FIXTURE", "--save-wifi", "--device-only"]
             )
 
-    def run_helper(self, flags=(), stages=(), identity=True, cancel=False, save=False):
+    def run_helper(
+        self, flags=(), stages=(), identity=True, cancel=False, save=False, consent=True
+    ):
         """All I/O is synthetic, including serial discovery, SSH and log writes."""
         serial = MagicMock()
         serial.SerialException = type("FixtureSerialError", (Exception,), {})
@@ -164,6 +172,11 @@ class DeviceProvisionTests(unittest.TestCase):
 
         output = io.StringIO()
         with ExitStack() as stack:
+            confirm = stack.enter_context(
+                patch.object(
+                    self.module, "confirm_device_auth_storage", return_value=consent
+                )
+            )
             stack.enter_context(
                 patch.dict(
                     sys.modules,
@@ -182,7 +195,8 @@ class DeviceProvisionTests(unittest.TestCase):
             stack.enter_context(
                 patch.object(self.module, "relay_frame", side_effect=relay)
             )
-            stack.enter_context(patch.object(self.module, "Path"))
+            log_path = stack.enter_context(patch.object(self.module, "Path"))
+            log = log_path.return_value.parents[1] / "build" / "device-connectivity.log"
             stack.enter_context(
                 patch.object(
                     self.module.time,
@@ -192,8 +206,13 @@ class DeviceProvisionTests(unittest.TestCase):
             )
             stack.enter_context(redirect_stdout(output))
             result = self.module.main()
+        for call in log.write_text.call_args_list:
+            self.assertNotIn("fixture-private", call.args[0])
+            self.assertNotIn("x" * 43, call.args[0])
         self.assertNotIn("fixture-private", output.getvalue())
         self.assertNotIn("x" * 43, output.getvalue())
+        if "--save-device-auth" not in flags:
+            confirm.assert_not_called()
         return SimpleNamespace(
             result=result,
             wifi=wifi,
@@ -203,6 +222,7 @@ class DeviceProvisionTests(unittest.TestCase):
             wifi_packet=wifi_packet,
             device_packet=device_packet,
             output=output.getvalue(),
+            confirm=confirm,
         )
 
     def test_device_only_waits_for_ready_and_never_sends_wifi(self):
@@ -314,10 +334,11 @@ class DeviceProvisionTests(unittest.TestCase):
         self.assertEqual(result.writes, [b"WIFI_SETUP\n", b"KBS1fixture-private-wifi"])
 
     def test_identity_failure_precedes_private_entry_relay_and_serial(self):
-        for flags in ([], ["--save-wifi"], ["--device-only"]):
+        for flags in ([], ["--save-wifi"], ["--device-only"], ["--save-device-auth"]):
             result = self.run_helper(flags=flags, identity=False)
             self.assertEqual(result.result, 1)
             result.wifi.private_window.assert_not_called()
+            result.confirm.assert_not_called()
             result.port.open.assert_not_called()
             self.assertEqual(result.relay_reads, [])
             self.assertEqual(result.writes, [])
@@ -327,6 +348,138 @@ class DeviceProvisionTests(unittest.TestCase):
         self.assertEqual(result.result, 2)
         result.port.open.assert_not_called()
         self.assertEqual(result.relay_reads, [])
+
+    def test_consent_is_local_default_no_and_warns_about_storage_and_usb(self):
+        tk = MagicMock()
+        tk.messagebox.NO = "no"
+        tk.messagebox.askyesno.return_value = False
+        with patch.dict(sys.modules, {"tkinter": tk}):
+            self.assertFalse(self.module.confirm_device_auth_storage())
+        args, kwargs = tk.messagebox.askyesno.call_args
+        self.assertEqual(kwargs["default"], "no")
+        self.assertEqual(kwargs["parent"], tk.Tk.return_value)
+        for warning in (
+            "existing device bearer",
+            "NVS",
+            "not verified encrypted",
+            "USB is not encrypted",
+            "No new or rotated credential",
+        ):
+            self.assertIn(warning, args[1])
+        tk.Tk.return_value.withdraw.assert_called_once()
+        tk.Tk.return_value.destroy.assert_called_once()
+
+    def test_device_auth_consent_cancel_precedes_wifi_serial_and_relay(self):
+        for mode in ([], ["--device-only"], ["--save-wifi"]):
+            result = self.run_helper(flags=["--save-device-auth", *mode], consent=False)
+            self.assertEqual(result.result, 2)
+            result.confirm.assert_called_once_with()
+            result.wifi.private_window.assert_not_called()
+            result.port.open.assert_not_called()
+            self.assertEqual(result.writes, [])
+            self.assertEqual(result.relay_reads, [])
+
+    def test_device_saved_allowlist_rejects_secrets_sdk_and_unknown_fields(self):
+        for state in (
+            "absent",
+            "loaded",
+            "stored",
+            "invalid",
+            "blocked",
+            "write_failed",
+        ):
+            line = f"device_saved state={state}"
+            self.assertEqual(self.module.safe_line(line.encode()), line)
+            for suffix in (
+                " bearer=" + "x" * 43,
+                " password=fixture-private",
+                " sdk_error=fixture-private",
+                " reason=other",
+            ):
+                self.assertIsNone(self.module.safe_line((line + suffix).encode()))
+        for line in (
+            b"device_saved state=encrypted",
+            b"E nvs: fixture-private",
+            b"KBA1" + b"x" * 43,
+        ):
+            self.assertIsNone(self.module.safe_line(line))
+
+    def test_device_auth_save_sends_existing_token_once_and_requires_later_ack(self):
+        ready = (
+            b"device_ready credential_relay=ram_only sensor=disabled uploads=disabled"
+        )
+        passed = b"DEVICE_PASS identity=kb-demo-01 heartbeats=3 polls=7 online_refresh=1 ongoing=1 uploads=disabled"
+        for states, expected in (
+            ([ready, b"device_saved state=stored", ready, passed], 0),
+            ([ready, passed], 1),
+            ([b"device_saved state=stored", ready, passed], 1),
+            ([ready, b"device_saved state=loaded", passed], 1),
+            ([ready, b"device_saved state=stored bearer=" + b"x" * 43, passed], 1),
+            ([ready, b"E nvs: fixture-private", passed], 1),
+        ):
+            with self.subTest(states=states):
+                result = self.run_helper(
+                    flags=["--save-device-auth", "--device-only"], stages=states
+                )
+                self.assertEqual(result.result, expected)
+                result.confirm.assert_called_once_with()
+                result.wifi.private_window.assert_not_called()
+                self.assertEqual(result.writes, [b"KBA1" + b"x" * 43])
+                self.assertEqual(len(result.relay_reads), 1)
+                self.assertFalse(any(result.device_packet))
+                self.assertFalse(result.port.dtr)
+                self.assertFalse(result.port.rts)
+
+    def test_device_auth_save_failures_stop_without_retry_or_reset(self):
+        ready = (
+            b"device_ready credential_relay=ram_only sensor=disabled uploads=disabled"
+        )
+        for state in ("invalid", "blocked", "write_failed"):
+            result = self.run_helper(
+                flags=["--save-device-auth", "--device-only"],
+                stages=[ready, f"device_saved state={state}".encode(), ready],
+            )
+            self.assertEqual(result.result, 1)
+            self.assertEqual(result.port.readline.call_count, 2)
+            self.assertEqual(result.writes, [b"KBA1" + b"x" * 43])
+            self.assertEqual(len(result.relay_reads), 1)
+            self.assertFalse(result.port.dtr)
+            self.assertFalse(result.port.rts)
+
+    def test_autoboot_heartbeats_cannot_satisfy_device_auth_save_without_frame_ack(
+        self,
+    ):
+        setup = [
+            b"probe_ready private_usb_provisioning=1 sensor=disabled uploads=disabled",
+            b"wifi_config state=accepted saved=1",
+            b"NETWORK_READY wifi=1 dhcp=1 dns=1 trusted_https=1 reconnect_test=skipped sensor=disabled uploads=disabled",
+        ]
+        heartbeats = [
+            f"device_heartbeat number={n} status=200 online=1 last_seen_at=2026-10-18T12:00:01Z".encode()
+            for n in (10, 11, 12)
+        ]
+        ready = (
+            b"device_ready credential_relay=ram_only sensor=disabled uploads=disabled"
+        )
+        for extra, expected in (
+            ([], 1),
+            ([b"device_saved state=stored"], 1),
+            ([ready], 1),
+            ([b"device_saved state=stored", ready], 1),
+            ([ready, b"device_saved state=stored"], 0),
+        ):
+            result = self.run_helper(
+                flags=["--save-wifi", "--save-device-auth"],
+                save=True,
+                stages=setup + extra + heartbeats,
+            )
+            self.assertEqual(result.result, expected)
+            self.assertEqual(
+                result.writes[:2], [b"WIFI_SETUP\n", b"KBS1fixture-private-wifi"]
+            )
+            self.assertEqual(
+                result.writes[2:], [b"KBA1" + b"x" * 43] if ready in extra else []
+            )
 
     def test_network_failure_before_ready_does_not_relay(self):
         result = self.run_helper(

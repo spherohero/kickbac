@@ -289,6 +289,7 @@ void setup() {
     radio_ready = WiFi.mode(WIFI_STA) && esp_wifi_set_storage(WIFI_STORAGE_RAM) == ESP_OK;
     WiFi.setAutoReconnect(false);
 #if defined(KICKBAC_OPERATIONAL_NETWORK)
+    device_restore_saved_auth();
     WiFi.onEvent([](WiFiEvent_t, WiFiEventInfo_t) { link_loss_seen.store(true); }, ARDUINO_EVENT_WIFI_STA_DISCONNECTED);
     if (radio_ready) load_saved_network();
     scan_done = true; // one configured network; no diagnostic AP scan needed at boot

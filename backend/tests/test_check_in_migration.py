@@ -59,6 +59,52 @@ def test_schema_check_requires_context(tmp_path):
         check_schema(path)
 
 
+@pytest.mark.parametrize(
+    "field", ["session_id", "party_id", "game_instance_id", "device_id"]
+)
+def test_each_new_foreign_key_rejects_orphans(tmp_path, field):
+    path = tmp_path / "db"
+    schema5(path)
+    initialize(path)
+    values = {
+        "check_in_id": "c",
+        "session_id": "s",
+        "party_id": "p",
+        "game_instance_id": "g",
+        "user_id": "opaque-owner",
+        "device_id": "old",
+    }
+    values[field] = "missing"
+    with connect(path) as db:
+        with pytest.raises(sqlite3.IntegrityError, match="FOREIGN KEY"):
+            db.execute(
+                "INSERT INTO party_check_ins VALUES (?,?,?,?,?,?)",
+                tuple(values.values()),
+            )
+        assert db.execute("SELECT COUNT(*) FROM party_check_ins").fetchone()[0] == 0
+
+
+def test_null_game_and_unique_session_constraints(tmp_path):
+    path = tmp_path / "db"
+    schema5(path)
+    initialize(path)
+    with connect(path) as db:
+        db.execute(
+            "INSERT INTO party_check_ins VALUES ('c','s','p',NULL,'opaque-owner','old')"
+        )
+        with pytest.raises(sqlite3.IntegrityError, match="UNIQUE"):
+            db.execute(
+                "INSERT INTO party_check_ins VALUES ('c2','s','p',NULL,'opaque-owner','old')"
+            )
+        db.execute(
+            "INSERT INTO sessions VALUES ('s2','old','opaque-owner','COMPLETE','created','expires','done')"
+        )
+        with pytest.raises(sqlite3.IntegrityError, match="UNIQUE"):
+            db.execute(
+                "INSERT INTO party_check_ins VALUES ('c','s2','p',NULL,'opaque-owner','old')"
+            )
+
+
 def test_populated5_upgrade_repeat_backup_restart(tmp_path):
     path = tmp_path / "db"
     schema5(path)

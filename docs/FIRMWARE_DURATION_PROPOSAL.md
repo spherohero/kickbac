@@ -1,6 +1,6 @@
 # Firmware duration / manual acquisition — implementation contract
 
-**Approved direction for implementation; NOT IMPLEMENTED/DEPLOYED yet.** Nicholas
+**Implemented candidate; independent review/native CI pending; NOT DEPLOYED.** Nicholas
 authorizes truthful unvalidated acquisition with a notice and, until 04:00 Eastern
 on October18, necessary iOS implementation in parallel. Backend owner is working
 on `backend/manual-timed-acquisition`, base3fd50c7. Firmware owns physical work.

@@ -8,6 +8,16 @@ Nicholas authorizes backend/manual-timed support and necessary iOS changes until
 04:00 Eastern October18; preserve Liam's tip/dirty work and implement on isolated
 branches, not directly on main. Backend base3fd50c7; refreshed client tip0e5a6e4.
 No native build/physical acceptance is inferred. Firmware owns the actual board.
+The focused worker client patch5cc081d (based on Liam0e5a6e4) is integrated into
+the backend candidate as38a4188. Only its compatibility changes are cherry-picked;
+Liam's unrelated Party/Trivia preview is not taken over or reset. Home's one
+context conflict retains current-main layout and new mode-aware duration text.
+Five Python source guards/branding pass, but these do not compile Swift. A
+single public-repo macOS26 CI job runs actual Swift acquisition/session fixtures
+and an unsigned simulator build. No signing account/resource is created; no
+native build, rendering or iPhone acceptance is claimed before real output.
+Per Nicholas's fast-path request, backend feature checks now run on PRs rather
+than duplicate feature-push+PR matrices; merged-main checks and protections stay.
 
 **BREAKING:** current client requires integer breath duration. New manual samples
 require `breath_duration_ms:null`, `acquisition_method:"manual_timed"`, actual

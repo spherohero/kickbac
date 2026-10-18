@@ -1,5 +1,23 @@
 # kickBAC backend handoff — Liam / iOS agents
 
+### Final iOS release publication — October 18, 2026
+
+=== LIAM / iOS IMPACT ===
+
+Owner Liam/iOS. Liam explicitly authorized committing all current work and merging
+the final version into main. Release snapshot `edc66c2` on `liam/party-setup`
+includes onboarding appearance/session gating, NFC-triggered local 0.00 App
+readings, random touch demos, party setup cancellation, atomic resolve/current
+adoption, quiet Party UI and nearby host-authoritative Trivia. Main `aa90d4c` was
+integrated cleanly as `d5bf2a1`; no backend/firmware source changes versus main.
+NON-BREAKING REST integration; existing endpoints/schema/payloads unchanged.
+App readings remain local; no sensor measurement or cloud-sync claim is made.
+Native fixtures and Debug/Release builds are release gates; PR/merge readback
+will be recorded after publication. Two-phone physical gameplay acceptance
+remains separate from encoded host/guest model checks and installation evidence.
+No external teammate message was sent. Historical uncommitted/blocked notes
+below are superseded by this release and current deployed API documentation.
+
 ### Latest Liam adoption and nearby Trivia — October 18, 2026
 
 === LIAM / iOS IMPACT ===

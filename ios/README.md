@@ -56,7 +56,7 @@ The Me tab supports sign-in, sign-out, and retrying the private API connection. 
 Run the isolated request/response checks from the repository root:
 
 ```sh
-swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/AuthConfiguration.swift ios/KickBAC/KickBACAPI.swift ios/checks/AuthContractChecks.swift -o /tmp/kickbac-auth-checks
+swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/AuthConfiguration.swift ios/KickBAC/KickBACAPI.swift ios/KickBAC/PartyAPI.swift ios/checks/AuthContractChecks.swift -o /tmp/kickbac-auth-checks
 /tmp/kickbac-auth-checks ios/KickBAC/Auth0.plist
 ```
 
@@ -103,7 +103,7 @@ Games played, Wins, and Points all open Recent games. It reads `GET /v1/me/game-
 Run the recent-game decoding, pagination, retry and account-isolation checks:
 
 ```sh
-DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/KickBACAPI.swift ios/KickBAC/RecentGamesStore.swift ios/checks/RecentGamesChecks.swift -o /tmp/kickbac-recent-games-checks
+DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/KickBACAPI.swift ios/KickBAC/PartyAPI.swift ios/KickBAC/RecentGamesStore.swift ios/checks/RecentGamesChecks.swift -o /tmp/kickbac-recent-games-checks
 /tmp/kickbac-recent-games-checks
 ```
 
@@ -112,7 +112,7 @@ The authentication integration checks also cover the game-history access-token r
 Run the local storage and timestamp checks alongside the authentication checks above:
 
 ```sh
-swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/ProfileStore.swift ios/KickBAC/ProfilePhoto.swift ios/KickBAC/KickBACAPI.swift ios/checks/ProfileChecks.swift -o /tmp/kickbac-profile-checks
+swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/ProfileStore.swift ios/KickBAC/ProfilePhoto.swift ios/KickBAC/KickBACAPI.swift ios/KickBAC/PartyAPI.swift ios/checks/ProfileChecks.swift -o /tmp/kickbac-profile-checks
 /tmp/kickbac-profile-checks
 ```
 
@@ -139,7 +139,7 @@ Nicholas's published firmware still disables real sampling/uploads pending elect
 Run the isolated device/session checks:
 
 ```sh
-swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/DeviceSessionStore.swift ios/KickBAC/KickBACAPI.swift ios/checks/DeviceSessionChecks.swift -o /tmp/kickbac-device-checks
+swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/DeviceSessionStore.swift ios/KickBAC/KickBACAPI.swift ios/KickBAC/PartyAPI.swift ios/checks/DeviceSessionChecks.swift -o /tmp/kickbac-device-checks
 /tmp/kickbac-device-checks
 ```
 

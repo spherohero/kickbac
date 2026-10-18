@@ -122,6 +122,20 @@ concurrent HTTP acceptance running. No native NFC/multi-phone claim.
 
 ### Firmware communication runtime — no client action
 
+Firmware-only saved Wi-Fi change: `firmware/saved-wifi-recovery`, base `22c1215`;
+physical runtime `9b0ca25`, [PR41](https://github.com/spherohero/kickbac/pull/41).
+Actual opt-in NVS save/software-reset restore (bearer-only re-entry) and powered
+hotspot-loss/backoff/return with authenticated heartbeat passed. Subsequent server
+readback advances inside30s, accepted demo preserved exactly once. Physical cable
+power-cycle/bearer persistence not claimed; no new arm/upload/app changes.
+publishing PR/head gives exact state. [SAVED_WIFI.md](../firmware/SAVED_WIFI.md)
+defines explicit unchecked private opt-in for one NVS network, lifetime capped-
+jitter reconnect, session/pending-payload fencing and RAM-only bearer bootstrap.
+**NON-BREAKING/no app action**: API endpoints/fields/examples/session expiry/raw
+units/measurement meaning unchanged; no server/iOS edits. Host/Ruff/all3builds
+pass; hardware save/reboot/outage results are separate. Previously accepted
+simulator measurement is preserved; no new live user/arm/upload is required.
+
 New firmware-owned explicit mock uploader: `firmware/explicit-mock-uploader`,
 base `8f60967`; exact publishing head/PR records state. [MOCK_DEMO.md](../firmware/MOCK_DEMO.md)
 documents one USB session-bound command AFTER actual signed-in app arm. Uses

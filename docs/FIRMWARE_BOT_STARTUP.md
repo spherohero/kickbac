@@ -1,5 +1,29 @@
 # kickBAC firmware bot — current startup handoff
 
+## One saved Wi-Fi / lifetime recovery — focused firmware change
+
+Physical update: [PR41](https://github.com/spherohero/kickbac/pull/41) runtime
+`9b0ca25` flashed/hashverified; explicit private save confirmed stored/saved1.
+Software reset restored Wi-Fi with NO Wi-Fi frame; bearer-only bootstrap passed.
+Operator hotspot-loss/return test observed attempts/backoff/trusted rejoin and
+authenticated heartbeat resume without reset/re-entry. Post-listener server
+heartbeat advanced10:38:32.407638→10:38:45.315899UTC inside30s; accepted demo remains
+exactly1/COMPLETE. See actual evidence/limits in the guide below. Serial released;
+no physical power-bank/cable cold-cycle or bearer persistence claim.
+
+`firmware/saved-wifi-recovery`, base `22c1215`; see
+[SAVED_WIFI.md](../firmware/SAVED_WIFI.md) for private unchecked opt-in, exact
+commands, single NVS key and tested1..60s jitter/30s association/lifetime retry.
+Network loss invalidates tickets and holds unresolved payloads without auto-upload;
+auth/schema failures remain separate. Cold boot restores Wi-Fi ONLY: bearer stays
+RAM-only, with explicit `--device-only` private bootstrap after trusted readiness.
+No NVS encryption claim, eFuse/security change, app or measurement-wire change.
+Host/Ruff/all3builds pass; corrected independent-review findings were regression-
+tested, not silently declared a second independent approval. Actual physical
+save/reboot/outage and exact source/PR state must be checked before claiming them.
+Preserve accepted mock measurement `ade105cf-2dd3-4f4e-8e38-3bf7ac982154` and
+session `21dbab79-4db0-4c8c-9c1e-7ab9525ba15f`; no new arm/upload for this task.
+
 ## Explicit mock uploader — current source, physical acceptance still gated
 
 Branch `firmware/explicit-mock-uploader`, base `8f60967`. Read

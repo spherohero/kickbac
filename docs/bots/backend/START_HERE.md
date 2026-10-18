@@ -2,6 +2,17 @@
 
 Snapshot prepared after backend/CI delivery and Liam's source review, with remote main `016d5b8a4c43d0f8a599f7e75303262de9b09db9` (firmware diagnostic PR10 subsequently included; no backend contract change). These are dated checkpoints, not evidence of the environment on your next launch. Fetch/reinspect before work. This is the backend role's handoff, not firmware instructions.
 
+## Latest ownership direction
+
+Nicholas returned remaining app work/control to Liam after the temporary cutoff
+extension. Backend stopped its client worker and verified no review fix or push
+was completed. PR32 stays draft/unmerged, local main-sync commit3600a57 is clean
+and preserved, original Liam ref untouched. Exact heads and three unresolved SPEC
+findings are in [the shared handoff](../../LIAM_BACKEND_HANDOFF.md). Do not resume
+iOS takeover from the historical04:00 extension below. Backend-only host evidence
+is in [HOST_TLS_INVESTIGATION.md](../../HOST_TLS_INVESTIGATION.md); no TLS/firewall/
+logging change or new private provisioning was performed.
+
 ## Current release superseding the startup snapshot
 
 Read [release verification](../../BACKEND_RELEASE_VERIFICATION.md) and the latest

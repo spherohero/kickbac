@@ -2,7 +2,53 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
-### Current live acquisition/NFC release — continued client authorization
+### Latest ownership — Liam controls all remaining iOS work
+
+Nicholas's newer direction: Liam is back and controls the rest of the app.
+This **ends** the temporary backend-led iOS implementation, including the
+previously lifted04:00 cutoff below. Backend stopped client worker
+`deleg_0dd745ec` immediately; interruption completed and exact worktree/ref status
+was independently checked. No more client edits, client publication or PR32 merge
+are being performed by backend under the temporary authorization.
+
+- Original `liam/party-setup` remains `0e5a6e4c87e650d5ea40090d7d232e9807d9dc2f`.
+  Published [draft PR32](https://github.com/spherohero/kickbac/pull/32) remains
+  `ios/manual-acquisition-notice@f9cbce63553712806b8d39760261975e5f817088`,
+  **OPEN/DRAFT/UNMERGED** at handoff. Existing native CIgreen predates fixes below.
+- Preserved isolated local worktree
+  `C:/Users/nicho/Desktop/SwampHacks26/kickbac-ios-acquisition-worker` is clean at
+  `3600a57a8aa511097d5945ab9b962d3fdf47df11`: worker only merged verified main74fd612
+  locally. The `ios/` subtree is byte-for-byte the published PR32. No review fix,
+  new test, remote push or merge was completed; do not call the findings fixed.
+  Liam may inspect/use this preserved work, not assume it is his own checkout.
+- Independent SPEC review found three concrete blockers in PR32: (1) normal
+  party/create/join/invite screens do not clearly disclose local unsaved fixture
+  code/membership; (2) trivia advertises sensor/NFC check-in but Release cannot
+  progress and the fresh Home store is not connected; (3) local score/leaderboard/
+  solo podium provenance is not continuously visible/accessibly labelled or
+  distinguished from server participation points. No new privacy leak found.
+  See `PartyView.swift`, `PartyPreview.swift`, `TriviaView.swift`, `TriviaPodium.swift`.
+  Proposed minimal correction was disclosures plus explicit no-sample local
+  progression, not fake sensor completion or a gameplay backend; **NOT implemented**.
+- **NON-BREAKING handoff; existing API unchanged.** Liam owns resolution, review,
+  native acceptance and further client work. Core nullable acquisition/fences are
+  already on main/live-backend support and passed real Swift/unsigned CI in PR30;
+  no signed phone/NFC/real acquisition acceptance is implied.
+
+### Backend-only network investigation — actual rollout502, later TLS unresolved
+
+Owner backend, `docs/host-tls-liam-return`, base74fd612; publishing PR records exact
+head/state. [HOST_TLS_INVESTIGATION.md](HOST_TLS_INVESTIGATION.md) records read-only
+host evidence requested by firmware: one device-session poll502 at07:55:19UTC
+during API replacement, Caddy never restarted, host TCP443 permitted, no configured
+proxy limiter or logged443drops. Diagnostic source permanently stops after bad
+poll; this is a mechanism, not proof that exact board saw502. Later reconnect-1
+root cause remains unknown; access logs intentionally absent, no packet capture.
+No services/protections/TLS/logging changed, no reset/private entry/live arm.
+**NON-BREAKING; no Liam action.** Endpoints/schema/examples/cadence remain as in
+[API.md](API.md); only firmware/backend continue their owned diagnosis.
+
+### Current live acquisition/NFC release — historical client authorization
 
 Nicholas lifted the04:00 cutoff and authorizes continuing necessary iOS work;
 preserve Liam's concurrent work/branches and existing designs. Backend is NOW

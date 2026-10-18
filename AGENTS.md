@@ -22,6 +22,15 @@ Use concise actionable group messages with owner, current/proposed contract, bra
 
 Read `docs/PROJECT_BRIEF.md` before substantive work; it is the full user-authored engineering brief. Display name is **kickBAC**. Nicholas owns backend/infrastructure FIRST, then ESP32 firmware; Liam owns SwiftUI. Do not rewrite, redesign, reorganize or overwrite his app. Assume concurrent work.
 
+## Latest client ownership superseding temporary takeover
+
+Nicholas has returned all remaining iOS work/control to Liam. Backend stopped its
+isolated client worker; PR32 stays draft/unmerged and the original Liam ref is
+preserved. Read `docs/LIAM_BACKEND_HANDOFF.md` for exact clean local/published heads
+and unresolved SPEC findings. The earlier04:00 extension is historical, not
+continued permission for backend to edit/push/merge the app. Backend/API/hosting
+and firmware-owner coordination continue within their existing ownership.
+
 ## Current release checkpoint superseding older delivery counts
 
 Existing authorized production is now schema6/33 operations from immutable

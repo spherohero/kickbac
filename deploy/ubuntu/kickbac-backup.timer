@@ -1,0 +1,11 @@
+[Unit]
+Description=Daily kickBAC SQLite snapshot
+
+[Timer]
+OnCalendar=*-*-* 03:15:00 UTC
+Persistent=true
+RandomizedDelaySec=15m
+Unit=kickbac-backup.service
+
+[Install]
+WantedBy=timers.target

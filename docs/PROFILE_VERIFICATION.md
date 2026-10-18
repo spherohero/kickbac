@@ -1,5 +1,7 @@
 # kickBAC profile backend — deployed checkpoint
 
+**Historical initial profile-deployment checkpoint.** Profiles are now published in merged [PR #3](https://github.com/spherohero/kickbac/pull/3); later phone/deployment/auth hardening/games are also published. Current games/schema4 release supersedes this schema3 symlink. Use [BACKEND_RELEASE_VERIFICATION.md](BACKEND_RELEASE_VERIFICATION.md) for current source/runtime status. The working-tree/no-push wording below describes the original deployment, not a current publication blocker.
+
 **Live:** https://api.kickbac.vodka ; contract: https://api.kickbac.vodka/openapi.json ; docs: https://api.kickbac.vodka/docs .
 
 ## Implemented and verified

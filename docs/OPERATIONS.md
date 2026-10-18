@@ -1,5 +1,7 @@
 # Ubuntu operations (operator runbook)
 
+**Latest release checkpoint:** games/schema4 is live at https://api.kickbac.vodka after backed-up schema3→4 migration. See [BACKEND_RELEASE_VERIFICATION.md](BACKEND_RELEASE_VERIFICATION.md) for exact current release/source evidence. The profile-era schema3 paths/checks below are historical context, not the current symlink. Current source requires schema4; do not start schema2/3-only code over it or silently restore old data. Release-local venv, durable DB, single loopback worker and snapshot procedures remain unchanged.
+
 Target: existing authorized Vultr VM `144.202.38.243`, Ubuntu 24.04, Python
 3.12; public origin `https://api.kickbac.vodka`. These files are deployment
 artifacts, **not evidence of a completed deployment**. Execute the reviewed steps
@@ -15,7 +17,7 @@ This update uses a **release-local hashed venv** at `/opt/kickbac/current/venv`,
 
 SQLite snapshots include private profile image BLOBs. Profile requests are bounded and sanitized before persistence; do not dump those rows. **Rollback is not a blind symlink swap:** pre-profile code only accepts schema2, while live is now3. Preserve current data/profile rows, validate the target schema/runtime and coordinate any explicit downgrade/restore; no silent data loss or automatic snapshot restore. Profile/native acceptance and real Auth0 token checks remain Liam-owned.
 
-**Production release gate:** this branch now includes the reviewed published profile backend and migration003 from current main, requiring schema3. Parent ran196 combined backend/deployment tests successfully; the backup fixture restores the complete current migration set, not a hardcoded schema2 subset. Package only reviewed committed code with its matching lockfile and migrations; check actual live schema before activation. Recorded live checks above are executed parent checkpoints, not a fresh host inspection by publishing these artifacts.
+**Production release gate:** current main includes published profiles, auth hardening and games with migration004/schema4. Backup fixtures restore the complete current migration set, not a hardcoded schema2/3 subset. Package only reviewed committed code with its matching lockfile and migrations; inspect actual live schema before activation and preserve all existing profiles/readings/game rows. An old-runtime symlink swap or automatic snapshot restore is not a safe downgrade.
 
 ## Current layout and decisions
 

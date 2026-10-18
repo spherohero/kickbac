@@ -1,5 +1,7 @@
 # Verification scope — phone-login publication
 
+**Historical phone-publication evidence below.** Current combined backend, games/schema4 and deployed source verification are in [BACKEND_RELEASE_VERIFICATION.md](BACKEND_RELEASE_VERIFICATION.md). JWKS per-key cache freshness has since been fixed/reviewed in [PR #6](https://github.com/spherohero/kickbac/pull/6); the old follow-up paragraph is not an unresolved current blocker. Actual native/provider-runtime acceptance remains explicitly unverified.
+
 These are actual local executions on `backend/phone-otp`, not predicted results.
 Production API source, migrations, dependencies and iOS source are unchanged by
 this branch. Earlier implementation/security review applies to the initial local

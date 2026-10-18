@@ -48,7 +48,9 @@ No verified perfboard assembly, module heater current, checked supply/divider, p
 
 ## Electrical gate before ADC
 
-Use Austin's versioned guide as the conditional design, not a claim of construction:
+**New group-shared revision:** Nicholas supplied a LiPo + switched boost / isolated-pad perfboard plan with **no installed JP1**. Read `docs/BATTERY_BOOST_COMMISSIONING.md` before treating the older USB/external-supply sequence below as applicable. Battery/protection identity, boost ratings/output bounds, charge/load behavior, actual assembly photos and all electrical measurements remain unverified. Keep an equivalent removable TP_ADC-to-D0 connection physically open (insulated disconnected lead, or socketed controller with D0 isolated); removing USB alone is not isolation when a battery is attached. Do not permanently solder D0 for initial commissioning. Pressure sensing remains confirmed unavailable. The shared drawing's hole coordinates are not verified against actual parts.
+
+Use Austin's original versioned guide as the conditional **USB / external-supply** design, not a claim of construction or battery/boost approval:
 
 - Candidate MCU input: XIAO D0/A0 = GPIO1 = ADC1_CH0. It is not enabled yet.
 - Candidate divider: AO→10kOhm R1→protected node; 10kOhm R2 node→GND;100nF node→GND; removable normally-open JP1 node→D0. Prefer measured1% parts. Full-scale ceiling/assumed supply calculations in the guide must be rechecked if actual parts/bounds differ.
@@ -92,7 +94,7 @@ PlatformIO Core6.1.19, espressif32 platform7.1.3, framework `4.20017.260907+sha.
 
 Private helpers are `firmware/tools/provision_wifi.py` and `provision_device.py`; inspect before reuse. They use local masked entry/RAM and the existing secure operator relay, not chat passwords, saved OS profile extraction or new public auth. USB provisioning itself is unencrypted. Never display/commit secrets, response bodies or credential frames. Current device diagnostic clears its bearer and stops on error; reset/reprovision is required. Heartbeat/poll intervals are nominal after completion, not hard-real-time guarantees; production backoff/reconnect remains separate.
 
-Adapter-fault follow-up: `test/device-adapter-faults` (base `e8368eb`) expands host fixtures for both heartbeat and polling: unknown/zero/oversized lengths, partial/zero reads, malformed JSON, wrong identity, begin/transport/HTTP errors, exact768-byte boundary, embedded NUL, Wi-Fi loss and the negative-auth gate. Local host suite, helper lint/format and all three cross-builds pass; scratch-only negative controls detect seven deliberate regressions. See `docs/DEVICE_CONNECTIVITY.md`. Production firmware/API are unchanged; these synthetic results are not physical fault injection, new serial/network execution or acquisition/upload acceptance. Refresh remote PR/CI state before claiming merge readiness.
+Adapter-fault follow-up: `test/device-adapter-faults` (base `e8368eb`) expands host fixtures for both heartbeat and polling: unknown/zero/oversized lengths, partial/zero reads, malformed JSON, wrong identity, begin/transport/HTTP errors, exact768-byte boundary, embedded NUL, Wi-Fi loss and the negative-auth gate. Local host suite, helper lint/format and all three cross-builds pass; scratch-only negative controls detect seven deliberate regressions. See `docs/DEVICE_CONNECTIVITY.md`. Production firmware/API are unchanged; these synthetic results are not physical fault injection, new serial/network execution or acquisition/upload acceptance. PR #16 merged at `64b706c724cf699e690847d6362b515a1524b7e5` after independent assistant review and exact-head PR CI run `39090730535` passed; merge tree equals the reviewed tree. Merged-main firmware CI run `39091023006` also passed at that exact merge SHA; CI still does not establish physical sensor or native acceptance.
 
 ## Group and Git discipline
 

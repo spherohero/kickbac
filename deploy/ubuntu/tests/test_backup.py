@@ -59,6 +59,15 @@ def test_repository_schema_survives_backup_restore(tmp_path):
             "INSERT INTO devices(id, credential_hash) VALUES (?, ?)",
             ("fixture", "fixture-hash"),
         )
+        db.execute(
+            "INSERT INTO parties VALUES ('party','owner','Fixture','ABCDEFGH','time','OPEN',NULL)"
+        )
+        db.execute("INSERT INTO party_members VALUES ('party','owner','time',NULL)")
+        db.execute("INSERT INTO party_devices VALUES ('party','fixture')")
+        db.execute(
+            "INSERT INTO party_resolve_requests VALUES ('2889d6a0-4719-4f23-a397-37c51d24129e','owner','fixture','Fixture','party','created')"
+        )
+        expected = list(db.iterdump())
         db.commit()
     output = tmp_path / "backups"
     result = run_backup(source, output)
@@ -80,6 +89,8 @@ def test_repository_schema_survives_backup_restore(tmp_path):
     assert check.returncode == 0, check.stderr
     with sqlite3.connect(restored) as db:
         assert db.execute("PRAGMA integrity_check").fetchall() == [("ok",)]
+        assert db.execute("PRAGMA user_version").fetchone() == (7,)
+        assert list(db.iterdump()) == expected
         assert db.execute("SELECT id FROM devices").fetchall() == [("fixture",)]
 
 

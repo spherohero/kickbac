@@ -2,6 +2,98 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+### LIVE linked-party resolve — client can adopt now
+
+**Deployed2026-10-18T10:29:53UTC:** schema7/35operations, immutable runtime
+`768e992e15c9c7decfb963264e30159eb818abcd`, release
+`/opt/kickbac/releases/party-resolve-768e992-20261018T102303Z`.
+[PR40](https://github.com/spherohero/kickbac/pull/40) head9b59021 merged
+`9d523902dc97595fe5982fbd1fa3e54abfe59187`; parents/tree/remote ancestry verified.
+Public OpenAPI exactly matches candidate and protected new routes401/no-store
+without auth. Independent SPEC+QUALITY,588combined tests,36target tests,
+retained backup/private-copy6→7 exact old-data preservation, finalbackup/actual
+PID/cwd/92manifest hashes/schema integrity/FK/postbackup/services passed. No
+production fixture/user/arm/grant or party cleanup was performed.
+
+**Liam's exact action:** adopt already-frozen authenticated
+`POST /v1/parties/resolve` `{request_id:<persistedUUID>,device_id:"kb-demo-01",name?}`.
+Defaultname`Party`;201created/200joined or acceptedreplay, response`{action,party}`
+already device-bound. No operator grant or legacycreate/bind fallback. Preserve
+UUID/body across retry; changed409/foreign404. Current restoration may use
+`GET /v1/me/parties/current` →PartyResponse|null; legacyduplicates409
+`active_party_conflict` with own `current_parties`/`has_more`, no silent switching.
+Delete remains existinghostPOST/close{}; confirmCLOSED/device null before clearing
+activeUI, private readings/game histories remain. OneOPENuser policy is deliberate
+behavior change across all create/join paths; no app source altered by backend.
+Exact[contract](DEVICE_PARTY_RESOLVE.md)/[release proof](BACKEND_RELEASE_VERIFICATION.md).
+
+Appreading POST/GET/summary target remains NOTDEPLOYED and in separate worker;
+do not add upload claims/outbox acceptance until its own release. SavedWiFi task
+is firmware-owned. Lower pendingparty/schema6 entries are historical checkpoints.
+Native authenticated successful resolve/two-phone/NFC acceptance remains Liam's.
+
+### Final consolidated scope — parties, App readings, saved Wi-Fi
+
+Nicholas's forwarded `combined.md` is the final reference. Finish atomic linked
+parties first; separately add private App reading persistence without touching
+Liam's existing local records/dirty app work. Frozen App contract:
+[APP_READINGS.md](APP_READINGS.md): authenticated POST/GET `/v1/me/app-readings`,
+GET `/v1/me/app-reading-summary`; existing local UUID/value/aware recorded_at/
+actual hold duration/source `app_generated`,201new/200exactretry/409changed.
+Strict finite value0..1, duration1..60000ms,32KiB body,60new saves/minute with
+accepted replay exempt. Separate owner ledger/summary, no device/session/rawADC/
+physical BAC or point fabrication. These routes are targets, NOT deployed yet;
+Liam adds owner-scoped outbox/receipt validation/dedupe only after release proof.
+Keep guest records local until explicit account assignment, preserve every local
+record on failures. Additive API; no backend takeover of iOS/presentation.
+
+Nicholas also explicitly requests the powered ESP32 continually try one privately
+saved Wi-Fi network at boot and after loss, with capped retry delays/no hot loop.
+Firmware owner handles private network entry/on-device persistence/reconnect;
+never request the password in chat, hardcode it in Git, change eFuses/security
+state or infer encrypted NVS. This does not change device/App reading semantics.
+Client/backend party/App work remains independent. Device bearer cold-boot
+bootstrap policy must be stated separately from saving a Wi-Fi connection.
+
+### Device parties / one current party — implemented source, release pending
+
+Published runtime checkpoint768e992; parent combined588tests/lint/77-fileformat/
+compile/simulator pass, including3actualHTTP resolver lifecycle/restart/race cases.
+This supersedes the earlier missing-endpoint RED checkpoint below. Independent
+review/exact CI and target retained backup/private-copy preservation/activation
+are still required; live33/schema6 is not yet the new35/schema7. No UI edits or
+production party cleanup. App reading implementation follows this release.
+
+Owner backend, `backend/device-party-resolve`, base22c1215; frozen contractcdba99b
+was published before implementation. Exact publishing PR/head/check/deployment
+will be recorded with finished source. Nicholas forwarded Liam's requested
+change; this is NOT permission to touch Liam's Mac dirty/untracked app work,
+switch/reset/rebase his branch or merge PR32.
+
+**Additive API, intentional membership/assignment policy change:** replace
+create→operator grant→bind with authenticated `POST /v1/parties/resolve`:
+`{request_id:<persisted UUID>,device_id,name?}`; default name `Party`. Response
+`{action:"created"|"joined",party:<PartyResponse>}`,201new/200join or accepted replay,
+already bound on creation. Existing-party scans retain host/name/code. Same party
+is idempotent; other OPEN membership409 `active_party_conflict` with only own
+current-party context for explicit member leave/host close. All legacy create/
+code/device joins share one-OPEN-user policy; current restoration uses new
+`GET /v1/me/parties/current` (PartyResponse/null), never silently switches.
+
+Delete UI keeps existing `POST /v1/parties/{id}/close` `{}`: verify CLOSED/unbound,
+then clear active view. Open games end/code invalidates/unit released; metadata,
+private measurements/results/check-ins remain. Source will require schema7;
+007preserves every legacy row/duplicate membership until explicit close/leave.
+Fresh liveRO09:53UTC found one account with6OPEN unbound memberships, not the
+reported20. No production cleanup or reading deletion has occurred.
+
+Exact examples/errors/retries/policy/migration plan:
+[DEVICE_PARTY_RESOLVE.md](DEVICE_PARTY_RESOLVE.md), [API.md](API.md),
+[PARTIES.md](PARTIES.md). Public device GET stays read-only, no test/firmware/
+credential/BAC/point change. Client adoption waits for deployed OpenAPI/readback.
+Parent actualHTTP RED observed405 for missing resolve endpoint; worker TDD and
+concurrent HTTP acceptance running. No native NFC/multi-phone claim.
+
 ### Firmware communication runtime — no client action
 
 Firmware-only saved Wi-Fi change: `firmware/saved-wifi-recovery`, base `22c1215`;

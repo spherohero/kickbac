@@ -1,5 +1,12 @@
 # Parties and richer private profile history — reviewed backend source
 
+**Current release:** LIVE schema7/35operations, atomic resolve/current-party policy
+activated2026-10-18T10:29:53UTC, runtime768e992, PR40merge9d52390. Verified
+backup/old-object-row-BLOB-hash preservation/private-copy/target/public readback:
+[release proof](BACKEND_RELEASE_VERIFICATION.md). Lower schema6/33/source-target
+checkpoints are historical; device resolve/current is deployed, App reading8isnot.
+No production party cleanup/history deletion or iOS edits were performed.
+
 **Status: DEPLOYED after reviewed source/CI, backup/copy trial and target/public verification.** Owner:
 backend Bot, integration branch `backend/party-profile-completion`, publishing
 branch `backend/party-profile-contract` in [PR #26](https://github.com/spherohero/kickbac/pull/26),
@@ -20,6 +27,31 @@ BEFORE acquisition. Exact POST/GET/retry/lifecycle semantics are canonical in
 exercised; this is not native tag-reading or physical sensing acceptance.
 
 ## === LIAM / iOS IMPACT ===
+
+### Current requested change — device resolve / one OPEN party
+
+Exact target: [DEVICE_PARTY_RESOLVE.md](DEVICE_PARTY_RESOLVE.md). Replace
+create-then-bind with authenticated `POST /v1/parties/resolve`, using persisted
+`request_id`, `device_id`, optional `name` (default `Party`). `{action,party}` is
+already bound when created; assigned-unit scans join the same OPEN party without
+changing host/name/code. No additional Join button/operator grant. Unknown units
+are errors; creation rejects live tests, existing-party joining never alters one.
+
+Use `GET /v1/me/parties/current` for sole OPEN PartyResponse/null restoration.
+Another current membership gives409 `active_party_conflict` with only own party
+snapshots; no silent switch. Legacy create/code/device joins share this policy.
+Migration007 preserves all existing rows and duplicate memberships until explicit
+user close/leave; no bulk cleanup, winner choice or history deletion.
+
+**Delete party = existing host-only close, not purge.** POST
+`/v1/parties/{party_id}/close` `{}` stays retry-safe/active-test fenced, closes games,
+releases binding, invalidates invitation and stops current restoration. Historical
+party/membership rows, readings, game results/check-ins remain. A later party gets
+a different UUID/code. Clear active UI after verified CLOSED/null-device response.
+
+These are additive routes plus intentional behavior/policy changes, not yet a
+deployment claim. Operator-approval text below describes legacy PUT/device only,
+not the new resolve path. Firmware wire/private identity/BAC/points unchanged.
 
 **Additive / NON-BREAKING.** Preserve every existing route, request/response shape, Auth0 access-token behavior, opaque subject ownership, session state/expiry/duration and `completion_v1` scoring policy. No iOS redesign or edits are made by backend. New operations below use the same user API access token. Server-derived `total_points`, `games_played`, `wins` remain on `GET /v1/me/stats`; raw game `score` and fixed `awarded_points:10` remain different values. New profile/game reads avoid inferring lifetime totals from loaded pages.
 

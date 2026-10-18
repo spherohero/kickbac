@@ -19,6 +19,7 @@ def is_party_private(path):
 
 
 MESSAGES = {
+    "active_party_conflict": "Leave or close your current party before joining another.",
     "rate_limited": "Too many join attempts.",
     "device_assigned": "Device is assigned to another party.",
     "already_completed": "A result is already stored for this game.",
@@ -58,8 +59,13 @@ def install_errors(app):
         ):
             exc = StarletteHTTPException(422, "validation_error")
         code = exc.detail if exc.detail in MESSAGES else "not_found"
+        context = (
+            getattr(exc, "authorized_party_context", {})
+            if code == "active_party_conflict"
+            else {}
+        )
         return JSONResponse(
-            {"error": {"code": code, "message": MESSAGES[code]}},
+            {"error": {"code": code, "message": MESSAGES[code], **context}},
             status_code=exc.status_code,
             headers=exc.headers,
         )

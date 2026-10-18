@@ -59,7 +59,7 @@ def test_populated_schema4_upgrade_is_additive_repeatable_and_backup_safe(tmp_pa
     initialize(path)
     initialize(path)
     with connect(path) as db:
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 6
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 7
         tables = {
             row[0]
             for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")
@@ -121,8 +121,8 @@ def populated_context(path):
         db.execute("INSERT INTO devices VALUES ('two','other-fixture-hash',NULL)")
         for party, code in (("p", "ABCDEFGH"), ("p2", "JKLMNPQR")):
             db.execute(
-                "INSERT INTO parties VALUES (?,'opaque-owner','Fixture',?,'created','OPEN',NULL)",
-                (party, code),
+                "INSERT INTO parties VALUES (?,?,'Fixture',?,'created','OPEN',NULL)",
+                (party, "opaque-owner" if party == "p" else "second-host", code),
             )
         db.execute(
             "INSERT INTO party_members VALUES ('p','opaque-owner','joined',NULL)"
@@ -157,7 +157,7 @@ def test_populated_party_context_survives_online_backup_and_app_restart(tmp_path
         source.backup(target)
     check_schema(backup)
     with connect(backup) as db:
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 6
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 7
         assert db.execute("PRAGMA foreign_key_check").fetchall() == []
         for table, rows in snapshot.items():
             assert [tuple(row) for row in db.execute("SELECT * FROM " + table)] == rows

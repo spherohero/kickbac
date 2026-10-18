@@ -3,8 +3,8 @@ import re
 import secrets
 import unicodedata
 from datetime import datetime, timedelta
-from typing import Annotated, Literal
-from uuid import UUID
+from typing import Annotated, Any, Literal
+from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
 from pydantic import BaseModel, Field, StrictStr, field_validator, model_validator
@@ -56,6 +56,42 @@ class PartyList(BaseModel):
     has_more: bool
 
 
+class ActivePartyConflictDetail(BaseModel):
+    code: Literal["active_party_conflict"]
+    message: str
+    current_parties: list[PartyResponse]
+    has_more: bool
+
+
+class ActivePartyConflict(BaseModel):
+    error: ActivePartyConflictDetail
+
+
+ACTIVE_CONFLICT: dict[int | str, dict[str, Any]] = {
+    409: {"model": ActivePartyConflict | ErrorEnvelope}
+}
+
+
+def current_rows(db, subject):
+    return db.execute(
+        PARTY_SELECT
+        + " WHERE p.state='OPEN' AND (p.host_user_id=? OR EXISTS (SELECT 1 FROM party_members m WHERE m.party_id=p.party_id AND m.user_id=? AND m.left_at IS NULL)) ORDER BY p.created_at DESC,p.party_id DESC LIMIT 101",
+        (subject, subject),
+    ).fetchall()
+
+
+def check_current(db, subject, intended=None):
+    rows = current_rows(db, subject)
+    if rows and (len(rows) != 1 or rows[0]["party_id"] != intended):
+        exc = HTTPException(409, "active_party_conflict")
+        exc.authorized_party_context = {
+            "current_parties": [party_response(r, subject) for r in rows[:100]],
+            "has_more": len(rows) > 100,
+        }
+        raise exc
+    return rows
+
+
 PARTY_SELECT = """SELECT p.*,
  (SELECT COUNT(*) FROM party_members m WHERE m.party_id=p.party_id AND m.left_at IS NULL) AS member_count,
  (SELECT device_id FROM party_devices d WHERE d.party_id=p.party_id) AS device_id
@@ -103,7 +139,7 @@ def party_response(row, subject):
     "/v1/parties",
     status_code=201,
     response_model=PartyResponse,
-    responses={200: {"model": PartyResponse}},
+    responses={200: {"model": PartyResponse}, **ACTIVE_CONFLICT},
 )
 def create_party(
     body: PartyCreate, request: Request, response: Response, subject: User
@@ -119,6 +155,7 @@ def create_party(
                 fail(409, "idempotency_conflict")
             response.status_code = 200
             return party_response(party_row(db, body.party_id), subject)
+        check_current(db, subject)
         now = instant(request).isoformat()
         while True:
             code = "".join(secrets.choice(CODE_ALPHABET) for _ in range(8))
@@ -167,6 +204,7 @@ class PartyJoin(Empty):
     "/v1/parties/join",
     response_model=PartyResponse,
     responses={
+        **ACTIVE_CONFLICT,
         429: {
             "model": ErrorEnvelope,
             "headers": {
@@ -175,7 +213,7 @@ class PartyJoin(Empty):
                     "description": "Seconds until this subject's fixed join window resets.",
                 }
             },
-        }
+        },
     },
 )
 def join_party(body: PartyJoin, request: Request, subject: User):
@@ -221,6 +259,7 @@ def join_party(body: PartyJoin, request: Request, subject: User):
         if row is None:
             fail(404, "not_found")
         party_id = row["party_id"]
+        check_current(db, subject, party_id)
         db.execute(
             "INSERT INTO party_members VALUES (?,?,?,NULL) ON CONFLICT(party_id,user_id) DO UPDATE SET left_at=NULL",
             (party_id, subject, instant(request).isoformat()),
@@ -263,6 +302,112 @@ def require_idle(db, device_ids, now):
 
 class PartyDevice(Empty):
     device_id: Annotated[StrictStr, Field(pattern=r"^[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}$")]
+
+
+class PartyResolve(PartyDevice):
+    request_id: UUID
+    name: StrictStr = "Party"
+
+    valid_name = field_validator("name")(PartyCreate.valid_name.__func__)
+
+
+class PartyResolveResponse(BaseModel):
+    action: Literal["created", "joined"]
+    party: PartyResponse
+
+
+@router.post(
+    "/v1/parties/resolve",
+    status_code=201,
+    response_model=PartyResolveResponse,
+    responses={200: {"model": PartyResolveResponse}, **ACTIVE_CONFLICT},
+)
+def resolve_party(
+    body: PartyResolve, request: Request, response: Response, subject: User
+):
+    with transaction(request.app.state.settings.db_path) as db:
+        accepted = db.execute(
+            "SELECT * FROM party_resolve_requests WHERE request_id=?",
+            (str(body.request_id),),
+        ).fetchone()
+        if accepted is not None:
+            if accepted["user_id"] != subject:
+                fail(404, "not_found")
+            if (accepted["device_id"], accepted["name"]) != (body.device_id, body.name):
+                fail(409, "idempotency_conflict")
+            response.status_code = 200
+            return {
+                "action": accepted["action"],
+                "party": party_response(party_row(db, accepted["party_id"]), subject),
+            }
+        if (
+            db.execute("SELECT 1 FROM devices WHERE id=?", (body.device_id,)).fetchone()
+            is None
+        ):
+            fail(404, "not_found")
+        assigned = db.execute(
+            "SELECT p.party_id FROM parties p JOIN party_devices d ON d.party_id=p.party_id WHERE d.device_id=? AND p.state='OPEN'",
+            (body.device_id,),
+        ).fetchone()
+        if assigned is not None:
+            party_id = assigned["party_id"]
+            check_current(db, subject, party_id)
+            db.execute(
+                "INSERT INTO party_members VALUES (?,?,?,NULL) ON CONFLICT(party_id,user_id) DO UPDATE SET left_at=NULL",
+                (party_id, subject, instant(request).isoformat()),
+            )
+            db.execute(
+                "INSERT INTO party_resolve_requests VALUES (?,?,?,?,?,?)",
+                (
+                    str(body.request_id),
+                    subject,
+                    body.device_id,
+                    body.name,
+                    party_id,
+                    "joined",
+                ),
+            )
+            response.status_code = 200
+            return {
+                "action": "joined",
+                "party": party_response(party_row(db, party_id), subject),
+            }
+        check_current(db, subject)
+        require_idle(db, [body.device_id], instant(request))
+        party_id = str(uuid4())
+        now = instant(request).isoformat()
+        while True:
+            code = "".join(secrets.choice(CODE_ALPHABET) for _ in range(8))
+            if (
+                db.execute(
+                    "SELECT 1 FROM parties WHERE join_code=?", (code,)
+                ).fetchone()
+                is None
+            ):
+                break
+        db.execute(
+            "INSERT INTO parties VALUES (?,?,?,?,?,'OPEN',NULL)",
+            (party_id, subject, body.name, code, now),
+        )
+        db.execute(
+            "INSERT INTO party_members VALUES (?,?,?,NULL)", (party_id, subject, now)
+        )
+        db.execute("INSERT INTO party_devices VALUES (?,?)", (party_id, body.device_id))
+        db.execute(
+            "INSERT INTO party_resolve_requests VALUES (?,?,?,?,?,?)",
+            (
+                str(body.request_id),
+                subject,
+                body.device_id,
+                body.name,
+                party_id,
+                "created",
+            ),
+        )
+        return {
+            "action": "created",
+            "party": party_response(party_row(db, party_id), subject),
+        }
 
 
 @router.put("/v1/parties/{party_id}/device", response_model=PartyResponse)
@@ -335,6 +480,21 @@ def get_party(party_id: UUID, request: Request, subject: User):
         db.execute("PRAGMA query_only=ON")
         require_member(db, party_id, subject)
         return party_response(party_row(db, party_id), subject)
+
+
+@router.get(
+    "/v1/me/parties/current",
+    response_model=PartyResponse | None,
+    responses=ACTIVE_CONFLICT,
+)
+def current_party(request: Request, subject: User):
+    with connect(request.app.state.settings.db_path) as db:
+        db.execute("PRAGMA query_only=ON")
+        db.execute("BEGIN")
+        rows = current_rows(db, subject)
+        if len(rows) > 1:
+            check_current(db, subject)
+        return party_response(rows[0], subject) if rows else None
 
 
 @router.get("/v1/me/parties", response_model=PartyList)

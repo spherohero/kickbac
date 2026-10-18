@@ -1,5 +1,12 @@
 # NFC-first party check-in — implementation direction
 
+**Current:** device-party resolve/current policy is deployed schema7/35operations
+from768e992, PR40merge9d52390, activated10:29:53UTC October18. Stable tag URL and
+private test/upload contract unchanged. [Release proof](BACKEND_RELEASE_VERIFICATION.md).
+Older33/schema6/grant-first/setup-target wording below is a historical checkpoint,
+not a reason to keep using create-then-bind or request a grant for resolve.
+Native NFC/URL/multi-phone acceptance remains separate and Liam-owned.
+
 **Status: DEPLOYED on schema6/33 operations; source/native/target checks passed; physical acceptance separate.** Nicholas confirmed host NFC linking, then player tap BEFORE measurement to reserve that person's next test and show accepted app status/result. [PR #26](https://github.com/spherohero/kickbac/pull/26), head `8cdab3a`, merged as `67c46916bda95250cdae739fd99e19cde8634667`; exact merge parents, remote-main ancestry and reviewed-tree equality were verified. The NFC reservation handlers reviewed at2f04074 are unchanged; measurement models now also support the coordinated manual mode from PR30. Source and trusted public OpenAPI now have33 operations/schema6, including check-in routes and coordinated manual-acquisition support; see [release verification](BACKEND_RELEASE_VERIFICATION.md). Native NFC/Universal Link delivery and physical sensor acquisition are separate, unverified gates. The [party contract](PARTIES.md) and this immutable session context preserve all existing public operation/schema shapes.
 
 ## What to write to each sticker
@@ -15,6 +22,21 @@ This example is the existing registered demo unit, not a reusable ID for every b
 The sticker is passive identification. It has no electrical connection to the ESP32 and does not notify the board itself. HTTPS GET resolution remains read-only and returns the unchanged `{"device_id":"kb-demo-01"}` JSON. A URL fetch, preview, notification or cached launch must never arm, join or bind anything.
 
 ## Three separate user intentions
+
+### New Party setup target — atomic resolve, no tag rewrite
+
+For an explicit authenticated Party scan/ID action, call the new
+`POST /v1/parties/resolve` with `{request_id,device_id,name?}`, not
+create-unbound→operator-grant→bind. Stable tag URL stays unchanged. Assigned OPEN
+unit joins that same party; otherwise an idle registered unit gets a new bound
+party whose requester is host, default name `Party`. One OPEN membership per
+subject includes hosts; conflict requires explicit leave/close, no reassignment.
+`GET /v1/me/parties/current` restores current state; host Delete uses existing
+POST/close, preserving history and releasing the unit for a new UUID/code.
+Joining is NOT arming, public GET stays read-only; no NFC entitlement/native or
+firmware change is implied. Exact target/retry/migration details:
+[DEVICE_PARTY_RESOLVE.md](DEVICE_PARTY_RESOLVE.md). Old grant-first setup below
+is historical outside legacy PUT/device; implementation/deployment gates remain.
 
 1. **Host setup:** create party → select “Link breathalyzer” → scan device URL → authenticated, explicit host confirmation → server validates assignment permission and atomically binds current device. Implemented source: `PUT /v1/parties/{party_id}/device` with `{"device_id":"kb-demo-01"}`. Public device IDs are not ownership proof; keep backend operator approval for the demo units, not a secret on the tag. Busy/conflicting units cannot be stolen.
 2. **Membership:** a player may join the currently assigned party using the device locator (or host code). Implemented source: `POST /v1/parties/join` with `{"device_id":"kb-demo-01"}`. Joining never arms.

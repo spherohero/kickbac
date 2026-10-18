@@ -63,6 +63,11 @@ def install_errors(app):
             # ServerErrorMiddleware is outside our profile body/cache middleware.
             headers={"Cache-Control": "no-store"}
             if request.url.path.rstrip("/")
-            in {"/v1/me/profile", "/v1/me/game-results", "/v1/me/stats"}
+            in {
+                "/v1/me/profile",
+                "/v1/me/game-results",
+                "/v1/me/stats",
+                "/v1/me/reading-summary",
+            }
             else None,
         )

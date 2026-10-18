@@ -8,6 +8,7 @@ PRIVATE_BODY_POLICIES = {
     "/v1/me/profile": ("PUT", PROFILE_BODY_LIMIT),
     "/v1/me/game-results": ("POST", GAME_BODY_LIMIT),
     "/v1/me/stats": (None, 0),
+    "/v1/me/reading-summary": (None, 0),
 }
 
 

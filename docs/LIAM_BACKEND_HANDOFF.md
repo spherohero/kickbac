@@ -2,6 +2,23 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+### Additive reading summary — local implementation for parent review
+
+- Owner: backend reading-summary worker, `backend/reading-summary`, base
+  `d9aeb744663cc77a25a1012cf62c9d876b35c451`. Local commit only; no PR, push,
+  merge or deployment. Parent owns integration and the wider party contract.
+- **NON-BREAKING:** `GET /v1/me/reading-summary` adds exact lifetime owned SQL
+  count and latest accepted measurement, independent of profile/history pages.
+  Existing operations/models are unchanged. Optional client adoption only; keep
+  errors unavailable, null BAC unavailable, and caches scoped to the validated subject.
+- Bodyless authenticated GET; response example and semantics:
+  [API.md](API.md#private-reading-summary). Private success and errors are no-store.
+- Local Python 3.12 signed-token/simulator fixtures exercise empty totals, retries,
+  receipt-time/ID ordering, ownership, profile edits, restart, expiry read-only
+  behavior and private 401/500. Reproduce from `backend/` with
+  `uv run --locked --python 3.12 pytest -q tests/test_reading_summary.py`.
+  This is not live Auth0, iPhone, deployed API or physical sensor acceptance.
+
 ## Read first — agent sync and latest branch/change checkpoint
 
 This is the shared catch-up entry point for Liam and his agent, not a request to redo completed integration. Before work, fetch without changing the active checkout:

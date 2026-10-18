@@ -13,6 +13,30 @@ Initial Auth0 audience: `https://kickbac-api` (no trailing slash). This is a log
 
 Approved primary login is **phone number + SMS OTP through Auth0/Twilio, not SMS MFA**. Provider configuration, earlier team delivery and separate Post Login feedback binding are verified; actual native token/API acceptance, feedback execution and newly unlisted-recipient delivery are not. See [PHONE_LOGIN.md](PHONE_LOGIN.md) for the embedded OTP requests and client handoff. Hosted PKCE remains supported with `connection=sms` and the same audience. The backend still receives only an API access token, never a raw phone number or OTP, and does not require an email claim or a particular subject prefix. `/v1/me` and all ownership rules are unchanged. Separate SMS/database subjects are separate users; matching contact claims do not link accounts or history.
 
+## Private reading summary
+
+**Additive local implementation; not yet deployed.** With this slice the local
+API has 18 operations; the live 17-operation release above is unchanged.
+
+`GET /v1/me/reading-summary` uses the existing user API access token, with no
+request body or pagination/filter parameters. Example for an empty account:
+
+```json
+{"user_id":"sms|opaque-example","saved_readings":0,"latest_measurement":null}
+```
+
+`saved_readings` is the exact SQL count of all accepted measurements belonging to
+the validated subject, including simulator and game-use readings. It is not the
+number of loaded pages, attempts, games or profiles. Retries do not duplicate it.
+`latest_measurement` is the existing full `MeasurementResponse` object (same shape
+as a history item), selected by `received_at DESC,id DESC`, or null if none exist.
+Acquisition time does not choose latest; unavailable BAC stays null, never zero.
+Count and latest share one read-only SQL snapshot. This GET creates no profile,
+expires no sessions and writes no rows. Profile edits and restart do not reset it.
+Success and errors, including missing-auth 401 and storage-failure 500, return
+`Cache-Control: no-store`; existing auth/error envelopes are unchanged. Errors
+mean unavailable, not a zero-reading account. No other operation shape changes.
+
 ## Endpoint summary
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
@@ -24,6 +48,7 @@ Approved primary login is **phone number + SMS OTP through Auth0/Twilio, not SMS
 | POST | `/v1/me/game-results` | user | persist completed client-reported game, award10 participation points once |
 | GET | `/v1/me/game-results` | user | own paginated game ledger, optional game_id filter |
 | GET | `/v1/me/stats` | user | profile-wide points/games/wins and per-game aggregates |
+| GET | `/v1/me/reading-summary` | user | local additive slice: exact saved reading count and latest owned measurement; not yet deployed |
 | GET | `/v1/devices/{device_id}` | user | current derived availability and online state |
 | POST | `/v1/devices/{device_id}/sessions` | user | arm known unit; empty JSON `{}` |
 | GET | `/v1/sessions/{session_id}` | owning user | session and optional result |

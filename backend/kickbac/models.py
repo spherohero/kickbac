@@ -128,6 +128,12 @@ class MeasurementResponse(BaseModel):
     estimated_bac_percent: None = None
 
 
+class ReadingSummaryResponse(BaseModel):
+    user_id: str
+    saved_readings: int
+    latest_measurement: MeasurementResponse | None
+
+
 class HistoryResponse(BaseModel):
     items: list[MeasurementResponse]
     limit: int

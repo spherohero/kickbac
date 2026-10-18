@@ -1,7 +1,7 @@
 def test_game_openapi_complete_typed_additive_contract(world):
     c, *_ = world
     spec = c.get("/openapi.json").json()
-    assert sum(len(ops) for ops in spec["paths"].values()) == 17
+    assert sum(len(ops) for ops in spec["paths"].values()) == 18
     schemas = spec["components"]["schemas"]
     for path, method, model, success in [
         ("/v1/me/game-results", "post", "GameResultResponse", "201"),

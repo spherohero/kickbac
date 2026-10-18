@@ -73,6 +73,7 @@ class DeviceProvisionTests(unittest.TestCase):
     def test_exact_sanitized_device_stage_is_retained(self):
         for line in [
             "device_auth_negative status=401 rejected=1",
+            "probe_https_error attempt=2 tls_code=-1 duration_ms=7001",
             "device_heartbeat number=1 status=200 online=1 last_seen_at=2026-10-18T00:30:01.123456+00:00",
             "device_poll number=1 status=200 active_state=IDLE actions=disabled",
             "DEVICE_PASS identity=kb-demo-01 heartbeats=3 polls=7 online_refresh=1 ongoing=1 uploads=disabled",

@@ -46,8 +46,8 @@ manually allowlisted or claim untested general-recipient delivery.
 
 No phone values or provider secrets belong in the backend/iOS. Phone remains in
 Auth0. Live display name/picture persistence uses separately owned GET/PUT
-`/v1/me/profile`; consult integrated API docs/live OpenAPI, not this branch's older
-schema, for the profile contract. Never auto-link subjects by phone/email.
+`/v1/me/profile`; this branch now includes the published schema3 profile code.
+Consult API.md/PROFILES.md and live OpenAPI. Never auto-link subjects by phone/email.
 
 ## Backend and hosting
 
@@ -61,8 +61,8 @@ not a native login service or measured BAC.
 The existing Vultr service at `https://api.kickbac.vodka` has verified public trusted
 HTTPS. Cloudflare DNS delegation/TLS are no longer pending. No new VM, domain,
 paid add-on or billing change is authorized by these instructions. Deployment and
-profile branches own host artifacts, schema upgrades and operational evidence;
-this phone branch does not publish their source. One API worker and persistent
+profile documentation owns host artifacts, schema upgrades and operational evidence;
+the original phone-only test count is historical. One API worker and persistent
 SQLite remain required. Never expose device credentials in app/NFC/QR.
 
 ## Remaining acceptance

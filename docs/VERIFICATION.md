@@ -5,7 +5,11 @@ Production API source, migrations, dependencies and iOS source are unchanged by
 this branch. Earlier implementation/security review applies to the initial local
 backend milestone, not to unverified native/provider/hardware integrations.
 
-## Reproduced checks
+## Integrated publication checkpoint
+
+After reconciling current profile main, parent independently ran **192 backend tests** on Python3.12.5, **78 Action fixtures**, Ruff lint and **40-file** formatting: all passed. Profiles/readings remain subject-private. The original phone-only107/schema2 evidence below is historical, not the current integrated runtime/schema. No new real SMS, dashboard mutation or native acceptance occurred.
+
+## Reproduced original phone-only checks
 
 From repository root:
 

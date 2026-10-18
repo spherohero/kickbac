@@ -69,8 +69,8 @@ Treat the entire subject as opaque; do not parse a phone or require a prefix.
 SMS/database accounts do not automatically share history when contact claims
 match. No automatic linking by phone/email is implemented. Phone stays in Auth0.
 Display name/picture use the separately implemented live `GET`/`PUT /v1/me/profile`;
-its source/schema belongs to the profile branch, not this branch. Use integrated
-`docs/API.md`/live OpenAPI for that contract.
+its published source/schema is now included from current main. Use
+`docs/API.md`/`docs/PROFILES.md`/live OpenAPI for that contract.
 
 ## Versioned Actions and operator configuration
 

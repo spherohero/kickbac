@@ -4,6 +4,14 @@ Owner backend; branch `backend/device-party-resolve`, base
 `22c1215848aa17fdfd238c9b1759fd4be4575f00`. Requested by Nicholas from Liam's
 forwarded device-party/one-current-party handoff. This document freezes the
 implementation target; publication/implementation/deployment are separate gates.
+**Source implemented; local acceptance passed, deployment pending.** Runtime
+checkpoint `768e992e15c9c7decfb963264e30159eb818abcd` is published; parent combined
+suite588tests, Ruff/77-file formatting, compile and real-loopback simulator pass.
+Three actual HTTP cases include full lifecycle/private history/restart and both
+first-scan/same-user-two-device races. Independent review/CI and immutable target
+backup/private6→7 preservation trial gate production activation. Existing live
+schema6/33 operations remains unchanged until explicit verified release.
+
 Liam owns all iOS work, including dirty/untracked work on his Mac. No app edits,
 branch reset or PR32 merge are authorized by this task.
 

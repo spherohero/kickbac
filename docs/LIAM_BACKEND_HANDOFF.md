@@ -25,7 +25,14 @@ state or infer encrypted NVS. This does not change device/App reading semantics.
 Client/backend party/App work remains independent. Device bearer cold-boot
 bootstrap policy must be stated separately from saving a Wi-Fi connection.
 
-### Device parties / one current party — requested implementation
+### Device parties / one current party — implemented source, release pending
+
+Published runtime checkpoint768e992; parent combined588tests/lint/77-fileformat/
+compile/simulator pass, including3actualHTTP resolver lifecycle/restart/race cases.
+This supersedes the earlier missing-endpoint RED checkpoint below. Independent
+review/exact CI and target retained backup/private-copy preservation/activation
+are still required; live33/schema6 is not yet the new35/schema7. No UI edits or
+production party cleanup. App reading implementation follows this release.
 
 Owner backend, `backend/device-party-resolve`, base22c1215; frozen contractcdba99b
 was published before implementation. Exact publishing PR/head/check/deployment

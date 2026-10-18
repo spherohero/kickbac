@@ -2,16 +2,19 @@
 
 Connected breathalyzer **prototype**: authenticated phone user explicitly arms a
 known device, which uploads one raw sample into a short-lived, private session.
-The backend is implemented locally; this is **not** a deployed service or a
-certified BAC instrument.
+The backend is deployed at **https://api.kickbac.vodka** with trusted HTTPS.
+Native-client and sensor acceptance are separate; this is not a certified BAC
+instrument. Private display-name/picture profiles are deployed; see
+[verification](docs/PROFILE_VERIFICATION.md) and [client contract](docs/PROFILES.md).
 
 ## Layout and contract
 
 - `backend/`: Python/FastAPI, versioned SQLite migrations, tests and simulator.
-- [`docs/API.md`](docs/API.md): frozen v0 paths, bodies, errors and lifecycle.
+- [`docs/API.md`](docs/API.md): paths, bodies, errors and lifecycle.
+- [`docs/PROFILES.md`](docs/PROFILES.md): private display-name/picture onboarding; phone identity remains with Auth0.
 - [`docs/SETUP.md`](docs/SETUP.md): Auth0 account/Native app and hosting checklist.
-- [`docs/CLOUDFLARE_DNS.md`](docs/CLOUDFLARE_DNS.md): verified Cloudflare records and the pending registrar nameserver step.
-- `ios/`: Liam's separately owned SwiftUI client; the starter is in [PR #1](https://github.com/spherohero/kickbac/pull/1), not this backend change.
+- [`docs/CLOUDFLARE_DNS.md`](docs/CLOUDFLARE_DNS.md): DNS setup history; public delegation and HTTPS now verified.
+- `ios/`: Liam's separately owned SwiftUI client. Current native auth/profile work is concurrent/unpublished and was not edited here; he needs to integrate the additive profile save/load calls.
 - ESP32 firmware and physical calibration are separate integration work.
 
 ## Local setup
@@ -39,12 +42,13 @@ Environment:
 | `AUTH0_DOMAIN` | Actual tenant DNS name only, e.g. `dev-EXAMPLE.us.auth0.com`; no scheme, port, path or trailing slash. |
 | `AUTH0_AUDIENCE` | Exact custom API identifier, coordinated as `https://kickbac-api` (no trailing slash). A logical identifier, **not a backend host**. |
 
-`init-db` explicitly applies migrations 001 and 002, preserving existing devices;
+`init-db` explicitly applies migrations 001–003, preserving existing device/session/history rows;
 re-running it is safe. Normal startup never initializes or upgrades a database
-and fails closed without schema 2 and Auth0 configuration. Back up the SQLite
+and fails closed without schema 3 and Auth0 configuration. Back up the SQLite
 file before upgrades. Do not put SQLite on an ephemeral container filesystem or
 run multiple replicas: use **one API instance with a persistent local disk**.
-No hosted database, backups or Vultr deployment are configured by this code.
+The existing Vultr host uses persistent local SQLite and online daily snapshots;
+these operational resources are not automatically created by running this code.
 
 ### Provision a device (operator only)
 

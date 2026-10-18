@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 MESSAGES = {
+    "payload_too_large": "Profile request or picture exceeds the size limit.",
     "unauthorized": "Invalid or missing credentials.",
     "not_found": "Resource not found.",
     "device_busy": "Device has an active test session.",
@@ -50,4 +51,8 @@ def install_errors(app):
         return JSONResponse(
             {"error": {"code": "internal_error", "message": "Internal server error."}},
             status_code=500,
+            # ServerErrorMiddleware is outside our profile body/cache middleware.
+            headers={"Cache-Control": "no-store"}
+            if request.url.path.rstrip("/") == "/v1/me/profile"
+            else None,
         )

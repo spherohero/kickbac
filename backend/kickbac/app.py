@@ -32,6 +32,9 @@ def create_app(settings=None, verifier=None, clock=None):
     from .errors import install_errors
 
     install_errors(app)
+    from .profile_body import ProfileBodyLimit
+
+    app.add_middleware(ProfileBodyLimit)
     app.state.settings = settings
     app.state.verifier = verifier
     app.state.clock = clock or (lambda: datetime.now(UTC))
@@ -51,10 +54,12 @@ def create_app(settings=None, verifier=None, clock=None):
         return {"user_id": subject}
 
     from .measurements import router as measurements_router
+    from .profiles import router as profiles_router
     from .sessions import router
 
     app.include_router(router)
     app.include_router(measurements_router)
+    app.include_router(profiles_router)
     return app
 
 

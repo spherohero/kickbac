@@ -1,5 +1,15 @@
 # kickBAC firmware — USB/Wi-Fi bring-up and local signal experiments
 
+**New source checkpoint (not flashed):**
+[`FIRMWARE_SESSION_GUARD.md`](../docs/FIRMWARE_SESSION_GUARD.md) records the
+current-base session UUID/expiry retention, fail-closed ticket guard and tested
+immutable RAM retry-byte slot. Host suite/all three cross-builds pass; ADC,
+sampling and uploads remain disabled. Fresh USB enumeration matches the known
+COM3 target, not proof of its current firmware or network state. The assembly is
+now owner-reported complete; minimal measured protection/serial exclusivity and
+truthful deployed acquisition metadata remain physical/integration gates.
+The physical connectivity/image statements below are historical evidence.
+
 **Status:** USB-only, Wi-Fi and authenticated-device diagnostic targets build;
 the new `xiao_device` image is flashed/hash-verified on COM3. Earlier actual
 association/DHCP/DNS/SNTP/trusted health HTTPS and software reconnect passed.

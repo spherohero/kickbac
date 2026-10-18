@@ -1,5 +1,24 @@
 # kickBAC firmware bot — current startup handoff
 
+## Latest firmware integration checkpoint — session guard, not flashed
+
+Read [FIRMWARE_SESSION_GUARD.md](FIRMWARE_SESSION_GUARD.md). Firmware owner branch
+`firmware/session-ownership-guard`, base `86adb12b4c1f669aafb1ee5ee1726f6da87454bb`,
+adds exact session UUID/expiry retention, fail-closed acquisition tickets and a
+transport-neutral immutable retry-byte slot. Full host suite and all three pinned
+cross-builds passed; no ADC/sampling/upload is enabled and no flash occurred.
+Fresh USB enumeration matches COM3 / `303A:1001` / `80:B5:4E:F1:B7:30`; private
+read-only relay verified the existing `kb-demo-01` credential hash/record without
+USB provisioning. Currently running image/online status remain unverified.
+
+Nicholas now reports the completed board plugged in/electrically correct, relayed
+by backend Bot. Treat the older placement-only paragraphs below as historical,
+not a denial of that owner report. Minimal actual electrical measurements/photos
+and exclusive serial access remain unavailable to firmware; clarification was
+undelivered in unattended mode. Reuse existing check evidence rather than repeat
+completed setup. No manual-timed contract deployment or acceptance is inferred;
+coordinate truthful fields/client compatibility before enabling production sends.
+
 ## Latest owner decision — USB-C-only demo
 
 Nicholas has removed battery operation from this demo. Read

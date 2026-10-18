@@ -23,6 +23,11 @@ python -m unittest discover -s firmware/tests -p test_wifi_provision.py -v
   firmware/tests/device_diagnostic_test.cpp -o firmware/build/device_diagnostic_tests.exe
 ./firmware/build/device_diagnostic_tests.exe
 "${CXX:-g++}" -std=c++11 -Wall -Wextra -Werror -Wconversion -Wshadow -pedantic \
+  -fno-exceptions -fno-rtti -I firmware/include \
+  -I firmware/.pio/libdeps/xiao_device/ArduinoJson/src \
+  firmware/tests/session_safety_test.cpp -o firmware/build/session_safety_tests.exe
+./firmware/build/session_safety_tests.exe
+"${CXX:-g++}" -std=c++11 -Wall -Wextra -Werror -Wconversion -Wshadow -pedantic \
   -fno-exceptions -fno-rtti -DARDUINO_XIAO_ESP32S3=1 -DKICKBAC_DEVICE_DIAGNOSTIC=1 \
   -I firmware/tests/device_stub -I firmware/include \
   -I firmware/.pio/libdeps/xiao_device/ArduinoJson/src \

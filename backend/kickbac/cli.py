@@ -6,7 +6,7 @@ import secrets
 import sqlite3
 from pathlib import Path
 
-from .db import check_schema, initialize, transaction
+from .db import check_schema, connect, initialize, transaction
 from .settings import Settings
 
 
@@ -42,7 +42,9 @@ def main():
     try:
         if args.command == "init-db":
             initialize(path)
-            print("Database initialized (schema 3).")
+            with connect(path) as db:
+                version = db.execute("PRAGMA user_version").fetchone()[0]
+            print(f"Database initialized (schema {version}).")
         else:
             provision_device(path, args.device_id, args.credential_file)
             print(

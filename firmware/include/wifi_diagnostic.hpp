@@ -15,6 +15,7 @@ public:
     bool ready() const { return ready_; }
     const char* ssid() const { return ssid_; }
     const char* password() const { return password_; }
+    bool save_requested() const { return ready_ && save_; }
 
     bool expire(std::uint32_t now) {
         if (!ready_ && position_ != 0 && now - last_byte_at_ > 3000U) {
@@ -34,6 +35,7 @@ public:
         password_length_ = 0;
         last_byte_at_ = 0;
         ready_ = false;
+        save_ = false;
     }
 
     bool feed(std::uint8_t value, std::uint32_t now) {
@@ -42,6 +44,11 @@ public:
         last_byte_at_ = now;
         static const char magic[] = "KBW1";
         if (position_ < 4) {
+            if (position_ == 2 && (value == 'W' || value == 'S')) {
+                save_ = value == 'S';
+                ++position_;
+                return false;
+            }
             position_ = value == static_cast<std::uint8_t>(magic[position_])
                             ? position_ + 1 : (value == 'K' ? 1U : 0U);
             return false;
@@ -74,6 +81,7 @@ private:
     std::uint8_t password_length_ = 0;
     std::uint32_t last_byte_at_ = 0;
     bool ready_ = false;
+    bool save_ = false;
 };
 
 inline bool health_response_ok(int status, const char* body) {

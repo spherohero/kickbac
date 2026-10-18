@@ -20,6 +20,10 @@ mkdir -p firmware/build
   -fno-exceptions -fno-rtti -I firmware/include \
   firmware/tests/network_runtime_test.cpp -o firmware/build/network_runtime_tests.exe
 ./firmware/build/network_runtime_tests.exe
+"${CXX:-g++}" -std=c++11 -Wall -Wextra -Werror -Wconversion -Wshadow -pedantic \
+  -fno-exceptions -fno-rtti -I firmware/include \
+  firmware/tests/saved_wifi_test.cpp -o firmware/build/saved_wifi_tests.exe
+./firmware/build/saved_wifi_tests.exe
 python -m unittest discover -s firmware/tests -p test_wifi_provision.py -v
 "${CXX:-g++}" -std=c++11 -Wall -Wextra -Werror -Wconversion -Wshadow -pedantic \
   -fno-exceptions -fno-rtti -I firmware/include \

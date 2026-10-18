@@ -1,10 +1,14 @@
 """Synthetic tests only: never accesses a real credential or board."""
 
 import importlib.util
+import io
 import subprocess
+import sys
 import unittest
+from contextlib import ExitStack, redirect_stderr, redirect_stdout
 from pathlib import Path
-from unittest.mock import patch
+from types import SimpleNamespace
+from unittest.mock import MagicMock, patch
 
 SPEC = importlib.util.spec_from_file_location(
     "provision_device", Path(__file__).parents[1] / "tools" / "provision_device.py"
@@ -82,6 +86,258 @@ class DeviceProvisionTests(unittest.TestCase):
             "DEVICE_PASS identity=kb-demo-01 heartbeats=3 polls=7 online_refresh=1 ongoing=1 uploads=disabled",
         ]:
             self.assertEqual(self.module.safe_line(line.encode()), line)
+
+    def test_saved_wifi_and_recovery_allowlist_is_exact(self):
+        stages = [
+            *(
+                f"wifi_saved state={state}"
+                for state in ("absent", "loaded", "stored", "invalid", "write_failed")
+            ),
+            "wifi_connect state=started attempt=1 timeout_ms=30000",
+            "wifi_connect state=waiting wait_ms=1234",
+            "wifi_connect state=joined attempt=2",
+            "wifi_link state=lost acquisition=invalidated",
+            "device_network state=lost credential=ram_retained pending=0",
+            "device_network state=lost credential=ram_retained pending=1",
+        ]
+        for line in stages:
+            self.assertEqual(self.module.safe_line(line.encode()), line)
+            for suffix in (
+                " ssid=fixture",
+                " password=fixture",
+                " bearer=fixture",
+                " sdk_error=fixture",
+            ):
+                self.assertIsNone(self.module.safe_line((line + suffix).encode()))
+        for line in [
+            "wifi_saved state=encrypted",
+            "wifi_saved state=stored password=fixture",
+            "wifi_connect state=started attempt=1 timeout_ms=1",
+            "wifi_connect state=joined attempt=fixture",
+            "device_network state=lost credential=persisted pending=0",
+            "device_network state=lost credential=ram_retained pending=2",
+            "wifi_link state=lost acquisition=valid",
+            "KBS1fixture-private-networkfixture-password",
+            "E wifi: fixture-private-password",
+        ]:
+            self.assertIsNone(self.module.safe_line(line.encode()))
+
+    def test_cli_modes_default_and_exclusion(self):
+        args = self.module.parse_args(["--port", "FIXTURE"])
+        self.assertFalse(args.save_wifi)
+        self.assertFalse(args.device_only)
+        for flag in ("--save-wifi", "--device-only"):
+            args = self.module.parse_args(["--port", "FIXTURE", flag])
+            self.assertTrue(getattr(args, flag[2:].replace("-", "_")))
+        with redirect_stderr(io.StringIO()), self.assertRaises(SystemExit):
+            self.module.parse_args(
+                ["--port", "FIXTURE", "--save-wifi", "--device-only"]
+            )
+
+    def run_helper(self, flags=(), stages=(), identity=True, cancel=False, save=False):
+        """All I/O is synthetic, including serial discovery, SSH and log writes."""
+        serial = MagicMock()
+        serial.SerialException = type("FixtureSerialError", (Exception,), {})
+        port = serial.Serial.return_value
+        port.readline.side_effect = list(stages) + [b""]
+        writes = []
+        port.write.side_effect = lambda packet: writes.append(bytes(packet))
+        target = SimpleNamespace(
+            device="FIXTURE",
+            vid=0x303A,
+            pid=0x1001,
+            serial_number="80:B5:4E:F1:B7:30" if identity else "other",
+        )
+        list_ports = MagicMock()
+        list_ports.comports.return_value = [target]
+        wifi = MagicMock()
+        wifi_packet = bytearray(
+            (b"KBS1" if save else b"KBW1") + b"fixture-private-wifi"
+        )
+        wifi.private_window.return_value = None if cancel else wifi_packet
+        device_packet = bytearray(b"KBD1" + b"x" * 43)
+        relay_reads = []
+
+        def relay():
+            relay_reads.append(port.readline.call_count)
+            return device_packet
+
+        output = io.StringIO()
+        with ExitStack() as stack:
+            stack.enter_context(
+                patch.dict(
+                    sys.modules,
+                    {
+                        "serial": serial,
+                        "serial.tools": SimpleNamespace(list_ports=list_ports),
+                        "provision_wifi": wifi,
+                    },
+                )
+            )
+            stack.enter_context(
+                patch.object(
+                    sys, "argv", ["provision_device", "--port", "FIXTURE", *flags]
+                )
+            )
+            stack.enter_context(
+                patch.object(self.module, "relay_frame", side_effect=relay)
+            )
+            stack.enter_context(patch.object(self.module, "Path"))
+            stack.enter_context(
+                patch.object(
+                    self.module.time,
+                    "monotonic",
+                    side_effect=[0] + [1] * len(stages) + [241],
+                )
+            )
+            stack.enter_context(redirect_stdout(output))
+            result = self.module.main()
+        self.assertNotIn("fixture-private", output.getvalue())
+        self.assertNotIn("x" * 43, output.getvalue())
+        return SimpleNamespace(
+            result=result,
+            wifi=wifi,
+            port=port,
+            writes=writes,
+            relay_reads=relay_reads,
+            wifi_packet=wifi_packet,
+            device_packet=device_packet,
+            output=output.getvalue(),
+        )
+
+    def test_device_only_waits_for_ready_and_never_sends_wifi(self):
+        result = self.run_helper(
+            flags=["--device-only"],
+            stages=[
+                b"probe_ready private_usb_provisioning=1 sensor=disabled uploads=disabled",
+                b"wifi_saved state=loaded",
+                b"NETWORK_READY wifi=1 dhcp=1 dns=1 trusted_https=1 reconnect_test=skipped sensor=disabled uploads=disabled",
+                b"device_ready credential_relay=ram_only sensor=disabled uploads=disabled",
+                b"device_ready credential_relay=ram_only sensor=disabled uploads=disabled",
+                b"DEVICE_PASS identity=kb-demo-01 heartbeats=3 polls=7 online_refresh=1 ongoing=1 uploads=disabled",
+            ],
+        )
+        self.assertEqual(result.result, 0)
+        result.wifi.private_window.assert_not_called()
+        self.assertEqual(result.relay_reads, [4])
+        self.assertEqual(result.writes, [b"KBD1" + b"x" * 43])
+        self.assertFalse(any(result.device_packet))
+        self.assertFalse(result.port.dtr)
+        self.assertFalse(result.port.rts)
+        result.port.close.assert_called_once()
+
+    def test_device_only_timeout_does_not_fetch_or_prompt(self):
+        result = self.run_helper(
+            flags=["--device-only"],
+            stages=[
+                b"wifi_saved state=absent",
+                b"probe_ready private_usb_provisioning=1 sensor=disabled uploads=disabled",
+            ],
+        )
+        self.assertEqual(result.result, 1)
+        self.assertIn("bounded wait expired", result.output)
+        self.assertEqual(result.writes, [])
+        self.assertEqual(result.relay_reads, [])
+        result.wifi.private_window.assert_not_called()
+
+    def test_default_and_save_modes_only_offer_save_when_requested(self):
+        for flags in ([], ["--save-wifi"]):
+            result = self.run_helper(
+                flags=flags,
+                stages=[
+                    b"probe_ready private_usb_provisioning=1 sensor=disabled uploads=disabled",
+                    b"wifi_config state=accepted saved=0",
+                    b"device_ready credential_relay=ram_only sensor=disabled uploads=mock_only",
+                    b"DEVICE_PASS identity=kb-demo-01 heartbeats=3 polls=7 online_refresh=1 ongoing=1 uploads=mock_only",
+                ],
+            )
+            self.assertEqual(result.result, 0)
+            if flags:
+                result.wifi.private_window.assert_called_once_with(allow_save=True)
+            else:
+                result.wifi.private_window.assert_called_once_with()
+            self.assertEqual(result.writes[0], b"WIFI_SETUP\n")
+            self.assertEqual(result.writes[1], b"KBW1fixture-private-wifi")
+            self.assertEqual(len(result.writes), 3)
+            self.assertFalse(any(result.wifi_packet))
+            self.assertFalse(any(result.device_packet))
+
+    def test_saved_replacement_requires_ack_before_bearer(self):
+        ready = (
+            b"device_ready credential_relay=ram_only sensor=disabled uploads=mock_only"
+        )
+        result = self.run_helper(
+            flags=["--save-wifi"],
+            save=True,
+            stages=[
+                ready,
+                b"probe_ready private_usb_provisioning=1 sensor=disabled uploads=disabled",
+                ready,
+                b"wifi_saved state=stored",
+                b"wifi_config state=accepted saved=1",
+                ready,
+                b"DEVICE_PASS identity=kb-demo-01 heartbeats=3 polls=7 online_refresh=1 ongoing=1 uploads=mock_only",
+            ],
+        )
+        self.assertEqual(result.result, 0)
+        self.assertEqual(result.relay_reads, [6])
+        self.assertEqual(result.writes[0], b"WIFI_SETUP\n")
+        self.assertEqual(result.writes[1], b"KBS1fixture-private-wifi")
+        failed = self.run_helper(
+            flags=["--save-wifi"],
+            save=True,
+            stages=[
+                b"probe_ready private_usb_provisioning=1 sensor=disabled uploads=disabled",
+                b"wifi_saved state=write_failed",
+                ready,
+            ],
+        )
+        self.assertEqual(failed.result, 1)
+        self.assertEqual(failed.relay_reads, [])
+
+    def test_online_replacement_with_ram_bearer_never_relays_another(self):
+        result = self.run_helper(
+            flags=["--save-wifi"],
+            save=True,
+            stages=[
+                b"probe_ready private_usb_provisioning=1 sensor=disabled uploads=disabled",
+                b"wifi_saved state=stored",
+                b"wifi_config state=accepted saved=1",
+                b"NETWORK_READY wifi=1 dhcp=1 dns=1 trusted_https=1 reconnect_test=skipped sensor=disabled uploads=disabled",
+                b"device_heartbeat number=10 status=200 online=1 last_seen_at=2026-10-18T12:00:01Z",
+                b"device_heartbeat number=11 status=200 online=1 last_seen_at=2026-10-18T12:00:11Z",
+                b"device_heartbeat number=12 status=200 online=1 last_seen_at=2026-10-18T12:00:21Z",
+            ],
+        )
+        self.assertEqual(result.result, 0)
+        self.assertEqual(result.relay_reads, [])
+        self.assertEqual(result.writes, [b"WIFI_SETUP\n", b"KBS1fixture-private-wifi"])
+
+    def test_identity_failure_precedes_private_entry_relay_and_serial(self):
+        for flags in ([], ["--save-wifi"], ["--device-only"]):
+            result = self.run_helper(flags=flags, identity=False)
+            self.assertEqual(result.result, 1)
+            result.wifi.private_window.assert_not_called()
+            result.port.open.assert_not_called()
+            self.assertEqual(result.relay_reads, [])
+            self.assertEqual(result.writes, [])
+
+    def test_cancel_does_not_touch_serial_or_relay(self):
+        result = self.run_helper(flags=["--save-wifi"], cancel=True)
+        self.assertEqual(result.result, 2)
+        result.port.open.assert_not_called()
+        self.assertEqual(result.relay_reads, [])
+
+    def test_network_failure_before_ready_does_not_relay(self):
+        result = self.run_helper(
+            flags=["--device-only"],
+            stages=[
+                b"CONNECTIVITY_FAIL stage=clock sensor=disabled uploads=disabled",
+            ],
+        )
+        self.assertEqual(result.result, 1)
+        self.assertEqual(result.relay_reads, [])
+        self.assertEqual(result.writes, [])
 
 
 if __name__ == "__main__":

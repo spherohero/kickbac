@@ -72,6 +72,13 @@ def safe_line(raw: bytes) -> str | None:
         r"probe_https_error attempt=\d+ tls_code=-?\d+ duration_ms=\d+",
         r"CONNECTIVITY_PASS wifi=1 dhcp=1 dns=1 trusted_https=1 reconnect=1 sensor=disabled uploads=disabled",
         r"NETWORK_READY wifi=1 dhcp=1 dns=1 trusted_https=1 reconnect_test=skipped sensor=disabled uploads=disabled",
+        r"wifi_saved state=(?:absent|loaded|stored|invalid|write_failed)",
+        r"wifi_config state=accepted saved=[01]",
+        r"wifi_connect state=started attempt=\d+ timeout_ms=30000",
+        r"wifi_connect state=waiting wait_ms=\d+",
+        r"wifi_connect state=joined attempt=\d+",
+        r"wifi_link state=lost acquisition=invalidated",
+        r"device_network state=lost credential=ram_retained pending=[01]",
         r"device_retry stage=(?:heartbeat|poll) status=-?\d+ number=[1-3] wait_ms=(?:2000|4000|8000) acquisition=invalidated",
         r"device_recovered stage=(?:heartbeat|poll) retries=[1-3] acquisition=requires_fresh_session",
         r"CONNECTIVITY_FAIL stage=[a-z_]+ sensor=disabled uploads=disabled",
@@ -90,13 +97,28 @@ def safe_line(raw: bytes) -> str | None:
     return text if any(re.fullmatch(pattern, text) for pattern in patterns) else None
 
 
+def parse_args(argv=None):
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--port", required=True)
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--save-wifi",
+        action="store_true",
+        help="Offer an unchecked opt-in to replace the single saved Wi-Fi network.",
+    )
+    mode.add_argument(
+        "--device-only",
+        action="store_true",
+        help="Skip Wi-Fi entry; relay only the existing RAM-only bearer after device_ready.",
+    )
+    return parser.parse_args(argv)
+
+
 def main() -> int:
     import serial
     from provision_wifi import private_window
 
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--port", required=True)
-    args = parser.parse_args()
+    args = parse_args()
     from serial.tools import list_ports
 
     matches = [p for p in list_ports.comports() if p.device == args.port]
@@ -107,15 +129,20 @@ def main() -> int:
     ) != (0x303A, 0x1001, "80:B5:4E:F1:B7:30"):
         print("DEVICE_NOT_VERIFIED: attached target identity mismatch; nothing sent.")
         return 1
-    print(
-        "Private Wi-Fi entry opens locally; existing device bearer is relayed automatically.",
-        flush=True,
-    )
-    wifi_packet = private_window()
-    if wifi_packet is None:
-        print("DEVICE_CANCELLED: no credentials sent.")
-        return 2
+    wifi_packet = bytearray()
+    if not args.device_only:
+        print(
+            "Private Wi-Fi entry opens locally; existing device bearer is relayed automatically.",
+            flush=True,
+        )
+        wifi_packet = (
+            private_window(allow_save=True) if args.save_wifi else private_window()
+        )
+        if wifi_packet is None:
+            print("DEVICE_CANCELLED: no credentials sent.")
+            return 2
     device_packet = bytearray()
+    save_requested = bytes(wifi_packet[:4]) == b"KBS1"
     lines: list[str] = []
     port = serial.Serial()
     port.port = args.port
@@ -124,11 +151,15 @@ def main() -> int:
     port.dtr = False
     port.rts = False
     try:
-        # Verify availability/format/hash privately before touching the board.
-        device_packet = relay_frame()
         port.open()
+        if not args.device_only:
+            port.write(b"WIFI_SETUP\n")
+            port.flush()
         deadline = time.monotonic() + 240
         wifi_sent = False
+        wifi_confirmed = args.device_only
+        network_confirmed = False
+        online_heartbeats = 0
         device_sent = False
         while time.monotonic() < deadline:
             line = safe_line(port.readline())
@@ -136,17 +167,47 @@ def main() -> int:
                 continue
             print(line, flush=True)
             lines.append(line)
-            if line.startswith("probe_ready ") and not wifi_sent:
+            if wifi_sent and line == "wifi_saved state=write_failed":
+                print(
+                    "DEVICE_NOT_VERIFIED: saved Wi-Fi write failed; no bearer forwarded."
+                )
+                return 1
+            if wifi_sent and line.startswith("wifi_config state=accepted saved="):
+                wifi_confirmed = not save_requested or line.endswith("saved=1")
+                if not wifi_confirmed:
+                    print(
+                        "DEVICE_NOT_VERIFIED: requested Wi-Fi save not confirmed; no bearer forwarded."
+                    )
+                    return 1
+            if wifi_confirmed and line.startswith("NETWORK_READY "):
+                network_confirmed = True
+            if (
+                wifi_sent
+                and wifi_confirmed
+                and network_confirmed
+                and line.startswith("device_heartbeat ")
+            ):
+                online_heartbeats += 1
+                if online_heartbeats >= 3:
+                    return 0
+            if (
+                line.startswith("probe_ready ")
+                and not wifi_sent
+                and not args.device_only
+            ):
                 port.write(wifi_packet)
                 port.flush()
                 wifi_packet[:] = b"\0" * len(wifi_packet)
                 wifi_sent = True
-            elif line.startswith("device_ready ") and not device_sent:
+            elif (
+                line.startswith("device_ready ") and not device_sent and wifi_confirmed
+            ):
+                device_packet = relay_frame()
                 port.write(device_packet)
                 port.flush()
                 device_packet[:] = b"\0" * len(device_packet)
                 device_sent = True
-            elif line.startswith("DEVICE_PASS "):
+            elif line.startswith("DEVICE_PASS ") and device_sent:
                 return 0
             elif line.startswith(("CONNECTIVITY_FAIL ", "DEVICE_FAIL ")):
                 return 1

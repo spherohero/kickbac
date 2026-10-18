@@ -17,7 +17,7 @@ struct DeviceConnectionView: View {
             Form {
                 if !flow.hasActiveSession {
                     Section {
-                        TextField("Device link or ID", text: $input)
+                        TextField("Device link or ID", text: $input, prompt: Text("kb-demo-01"))
                             .textInputAutocapitalization(.never).autocorrectionDisabled()
                             .accessibilityIdentifier("deviceTarget")
                         Button("Find device", action: findDevice)
@@ -41,7 +41,9 @@ struct DeviceConnectionView: View {
                             }
                         }
                         if flow.hasActiveSession {
-                            Text(flow.test?.status == .sampling ? "The device is sampling." : "Waiting for the device.")
+                            Text(flow.test?.status == .sampling
+                                 ? "Sensor acquisition in progress — breath not validated."
+                                 : "Armed for your account. The operator must start the sample separately over USB.")
                             if flow.test?.status == .armed {
                                 Button("Cancel test", role: .destructive) {
                                     Task { await flow.cancel { try await session.cancelSession($0) } }
@@ -53,7 +55,7 @@ struct DeviceConnectionView: View {
                         } else if !session.isSignedIn {
                             Button("Sign in to continue", action: onSignIn).disabled(session.isBusy)
                         } else if flow.device != nil {
-                            Button("Start test") { showsConfirmation = true }
+                            Button("Arm test") { showsConfirmation = true }
                         }
                         if flow.isBusy { ProgressView("Connecting") }
                     } header: { Text(flow.hasActiveSession ? "Current test" : "Confirm device") }
@@ -74,9 +76,9 @@ struct DeviceConnectionView: View {
             .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
             .disabled(flow.isBusy)
             .confirmationDialog("Start a test on \(flow.targetID ?? "this device")?", isPresented: $showsConfirmation, titleVisibility: .visible) {
-                Button("Start test") { Task { await flow.arm { try await session.armDevice($0) } } }
+                Button("Arm test") { Task { await flow.arm { try await session.armDevice($0) } } }
             } message: {
-                Text("This reserves the device for your account for up to 60 seconds. Only start when you're ready to use it.")
+                Text("This reserves the device for your account for up to 60 seconds. Arming alone does not measure: the operator starts the timed sensor sample separately over USB. Breath is not validated.")
             }
             .sheet(isPresented: $showsScanner) {
                 NavigationStack {

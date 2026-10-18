@@ -16,6 +16,37 @@ git rev-parse origin/main origin/liam/ios-profile-handoff
 
 Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his branch. If main has not been integrated, read these shared docs directly from `origin/main`; do not reset, stash automatically, overwrite local edits or merge blindly. Documentation publication cannot prove an already-running remote agent has read it. Liam/his agent should report the main and client SHAs read when next giving a substantive integration update; no repeated acknowledgment pings or new user-run native tests are requested.
 
+### Actual-app phone login troubleshooting
+
+- Owner/branch/base: backend Bot, `docs/phone-login-troubleshooting`, based on
+  `176f0620ee0e453ab31a76125b4908fab1cada90`. The publishing PR/commit records
+  the exact reviewed documentation head and merge status; no runtime deployment.
+- What/why: [PHONE_LOGIN.md](PHONE_LOGIN.md#run-the-actual-iphone-app-and-diagnose-login)
+  now starts with actual Xcode/iPhone startup, installed-build checks and
+  separate send/exchange/Keychain/API/profile troubleshooting. An Auth0 identity
+  and an application profile are not the same checkpoint; no SQLite signup users
+  table is expected. No private account records or diagnostic payloads are
+  published in these docs.
+- **NON-BREAKING / no app implementation action.** Existing paths, auth, audience,
+  fields, states, units and examples are unchanged. Preserve both required profile
+  PUT fields (`{"display_name":"Example","profile_picture":null}` clears a photo),
+  the API **access token**, exact audience `https://kickbac-api`, and Auth0 phone
+  ownership. No new backend OTP route or provider reprovisioning.
+- Reviewed client input: `liam/ios-profile-handoff@170ad17a08f43232e8ca2ea3650999261b6e080b`,
+  its README/review handoff, native AuthSession and SessionCredentialsStorage.
+  The current source already includes the empty-Keychain deletion fix; an older
+  installed app can still lack it. This is source inspection, not a reproduced
+  current login failure, full client review, Xcode build or native acceptance.
+- Verification: public HTTPS health readback and authorized read-only aggregate
+  production DB inspection, without credentials/phone/images/row dumps; Markdown
+  links and paths/config/source assertions checked. Local isolated checks:
+  `cd backend && uv run --locked pytest -q tests/test_phone_identity.py tests/test_auth.py tests/test_profiles.py`
+  returned **62 passed**; signed fixtures are not native acceptance. No SMS, account creation,
+  session arming, profile write, provider setting or live data was changed.
+  Follow-up remains Liam-owned: report installed build, failing stage, sanitized
+  code/status and UTC time using the guide's non-secret template. Do not infer
+  the cause or reassign completed integration from an older review.
+
 ### Documentation synchronization change
 
 - Owner/branch: backend Bot, `docs/liam-agent-sync`, based on `307aa694098ee3922e9e7454ef58f4dccbac9b51`. The publishing PR provides this change's exact head and merge state; do not infer merge or deployment from a branch name.

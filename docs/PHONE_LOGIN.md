@@ -1,5 +1,103 @@
 # Phone-first signup/login — Auth0 + Twilio
 
+## Run the actual iPhone app and diagnose login
+
+This is the operational entry point, not a request to recreate Auth0/Twilio setup.
+Liam owns Xcode/device execution and his active app branch. Source checked for
+this guide: `liam/ios-profile-handoff@170ad17a08f43232e8ca2ea3650999261b6e080b`.
+Refresh that ref before diagnosing a different installed build; its
+`ios/README.md` and `ios/BACKEND_REVIEW_HANDOFF.md` are the client-owned details.
+This source check is not a reproduced native login or a full client review.
+
+### Build / install / start
+
+1. In the existing Mac checkout, run `git status --short --branch`, `git fetch
+   origin --prune`, and `git rev-parse HEAD origin/liam/ios-profile-handoff`.
+   Do not discard edits or switch Liam's active worktree automatically. His
+   newer phone/device/profile work is on that published branch, not necessarily
+   the older app currently on main. A pushed source fix does not update an
+   already-installed iPhone app: rebuild/reinstall the intended revision.
+2. Open `ios/KickBAC.xcodeproj` in Xcode, resolve Swift packages, select the
+   KickBAC scheme and intended iPhone, and use the owner's valid signing team.
+   Follow the current client README for platform/toolchain requirements; if
+   Xcode specifically reports missing Metal Toolchain, its documented command
+   is `xcodebuild -downloadComponent MetalToolchain`. Do not change bundle IDs,
+   entitlements or callback settings merely to suppress a build error.
+3. Confirm the public values in `ios/KickBAC/Auth0.plist` against the table below.
+   The phone uses the already-hosted `https://api.kickbac.vodka`; no laptop API,
+   database initialization, device provisioning, new paid service or client
+   secret is needed. Phone `localhost` is not the deployed backend.
+4. Open the native phone screen, enter the real phone privately with its country
+   code (`+` and canonical E.164 digits), and deliberately request a code once.
+   Enter the Auth0-generated six-digit SMS code as a string, retaining leading
+   zeroes. The configured expiry is 180 seconds; the current app has a 30-second
+   same-number resend cooldown. Do not use an Auth0 Dashboard provider-test code
+   to log in: that tests delivery, not Auth0 authentication.
+5. On a new account, finish the current app's name/photo onboarding and await
+   successful server save. Its current UI requires a captured photo; it has no
+   Skip photo action. Allow camera access through the normal iOS prompt/settings.
+   Existing profiles should restore. Keep this separate from initial OTP success.
+
+The installable Personal Team build uses QR/manual device selection; NFC Tag
+Reading/background Universal Links are not prerequisites for phone login. Sensor
+assembly and firmware uploads are not prerequisites either. Do not use a local
+simulator identity or a backend auth bypass to make a native login appear valid.
+
+### What “account created” actually proves
+
+These are independent checkpoints, not one database write:
+
+| Checkpoint | Evidence | What it does not establish |
+| --- | --- | --- |
+| SMS request/delivery | Auth0 send outcome and delivery-provider evidence | Code accepted, Keychain save, API access or profile save |
+| Auth0 SMS identity / successful token exchange | Authorized Auth0 record/login event for the actual subject | Current native credentials stored or application profile saved |
+| Native secure sign-in | SDK claims validation and successful Keychain storage in that build | API acceptance or completed name/photo onboarding |
+| API access | `GET /v1/me` accepts the API access token | A profile row; this route does not create one |
+| Application profile | Successful `PUT /v1/me/profile`, then restored GET by the same subject | Full relogin/account-isolation/native acceptance or phone ownership inferred from a name |
+
+Phone identity belongs to Auth0. Production SQLite has `profiles`, sessions,
+measurements and game results, **not a phone/signup users table**. `GET /v1/me`
+and profile GET do not create a profile. An absent profile can simply mean
+onboarding is unfinished; a saved profile means a profile write reached the API.
+A mutable display name is not sufficient to prove which person's phone/subject
+owns that row. An operator must correlate the already-validated opaque subject
+privately, not guess by name or dump phone/image/token data into chat or Git.
+
+### Troubleshoot the exact failing stage
+
+| App symptom / stage | Owner and next diagnostic |
+| --- | --- |
+| No SMS / “Couldn't send your code” | Check the private phone input/country and whether Auth0 accepted `/passwordless/start`. Operator correlates Auth0 persisted delivery-function events with Twilio status/error codes for the reported UTC time. No automatic resend loop or paid setup redo. |
+| “SMS sign-in isn't enabled” / “isn't configured” | Liam reports the sanitized Auth0 error code and build SHA. Operator checks the existing Native SMS connection and Passwordless OTP grant without replacing unrelated settings. These were configured already; a screenshot of this message alone does not prove missing configuration. |
+| Incorrect/expired code or “Couldn't verify your code” | Confirm the code belongs to that app's current phone challenge, preserve leading zeroes, and check the `/oauth/token` error/claims-validation stage. Use deliberate resend after cooldown, never send codes in chat. Auth0 errors are not the kickBAC API error envelope. |
+| “Couldn't save your sign-in securely” / numeric Keychain status | This happens after successful Auth0 exchange/claims validation in the current source, not at SMS delivery. Verify the installed build includes `SessionCredentialsStorage`'s missing-item deletion fix. Only `errSecItemNotFound` during deletion is ignored; actual storage errors must still fail. Do not weaken token validation or wipe another account's data as a workaround. |
+| API 401 / “Please sign in again” | Check that the API receives the **access token**, for audience exactly `https://kickbac-api` and the configured issuer, not the ID token/OTP/phone/device bearer. Liam handles expired credentials with a fresh deliberate sign-in. Do not log token contents or send them to another origin. |
+| API 503 / offline / “Can't reach kickBAC” | Check public health and transport separately. A temporary JWKS/provider failure is not an absent account and not proof the OTP was wrong. Do not fabricate a blank profile or clear stored history to hide it. |
+| Name/photo save failure | Diagnose the profile PUT separately: both fields required, explicit picture null means removal, JPEG/PNG/body limits apply. Preserve pending input. Existing profile/history should not be deleted or detached by retries. |
+
+No current failure cause is diagnosed merely by publishing this table. Correlate
+the actual installed revision, stage, sanitized error/status and UTC time first.
+Provider configuration, a DB row, a fixture pass and an actual iPhone run are
+separate evidence levels.
+
+### Safe report-back (no secrets)
+
+```text
+Installed app commit/build:
+Device or simulator / iOS version:
+UTC time of deliberate attempt:
+Stage: build | send | receive | exchange/claims | Keychain | API | profile
+Exact UI error (redact phone/code/name/photo):
+HTTP status / Auth0 error code / numeric Keychain status, if available:
+SMS received: yes / no / unknown (never include the code)
+Profile save completed: yes / no / not reached:
+```
+
+Liam/his agent keeps native acceptance ownership; this guide does not reassign
+those tests to Nicholas. The operator investigates only the requested account/
+time window with read-only, allowlisted diagnostics. Never paste credentials,
+OTPs, phone numbers, raw provider responses, private subjects or profile images.
+
 ## Current configuration and evidence
 
 Phone number + SMS OTP is the primary signup/login factor, **not SMS MFA**.
@@ -108,7 +206,14 @@ exact source/settings and saved flow binding after deployment. No sender purchas
 or repeated compliance setup is needed. No dashboard/host changes were made by
 this source-publication task.
 
-## Local checks and outstanding acceptance
+## Historical phone-publication checks and outstanding acceptance
+
+The counts below describe the original phone-source checkpoint, not the latest
+combined backend suite. Later release/CI evidence is in
+[BACKEND_RELEASE_VERIFICATION.md](BACKEND_RELEASE_VERIFICATION.md) and
+[the current Liam handoff](LIAM_BACKEND_HANDOFF.md). The phone guide and UI error
+mapping above do not claim a new native login execution.
+
 
 Run from repository root (explicit Windows Node path):
 

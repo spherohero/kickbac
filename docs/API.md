@@ -1,9 +1,9 @@
 # kickBAC API contract — v0
 
-Status: initial implementation contract, not a deployed URL. Display name **kickBAC**. REST JSON uses snake_case, opaque UUID session/measurement IDs, a provisioned device slug, and ISO 8601 UTC timestamps (`Z` or `+00:00`). Users are opaque verified Auth0 `sub` strings, not client-chosen IDs. No certified BAC or safe-to-drive interpretation is provided.
+Status: **LIVE at https://api.kickbac.vodka**,17 operations, explicitly migrated schema4. Profiles, generic private game results/stats and per-person reading history are published and deployed. See [release verification](BACKEND_RELEASE_VERIFICATION.md), [client handoff](LIAM_BACKEND_HANDOFF.md), [games/points](GAMES.md) and [reading history](READING_HISTORY.md). Profile source is published in merged [PR #3](https://github.com/spherohero/kickbac/pull/3); see `PROFILE_VERIFICATION.md` for the earlier deployment evidence. Display name **kickBAC**. REST JSON uses snake_case, opaque UUID session/measurement/result IDs, a provisioned device slug, and ISO 8601 UTC timestamps (`Z` or `+00:00`). Users are opaque verified Auth0 `sub` strings, not client-chosen IDs. No certified BAC or safe-to-drive interpretation is provided.
 
 ## Authentication
-User routes require `Authorization: Bearer <Auth0 API access token>` (not an ID token). RS256 signature, issuer, audience, expiry and subject must be validated. `/v1/me` returns the verified subject. Auth0 Native app uses Authorization Code + PKCE through Auth0.swift; native client ID/domain/audience/bundle/callback values must be coordinated with Liam. There is no backend password/login endpoint.
+User routes require `Authorization: Bearer <Auth0 API access token>` (not an ID token). RS256 signature, issuer, audience, expiry and subject must be validated. `/v1/me` returns only the verified subject. The Native app's SMS connection and Passwordless OTP grant are enabled for Liam's reported embedded Auth0 phone/code flow; hosted Authorization Code + PKCE remains supported. Native client ID/domain/audience/bundle/callback values must be coordinated with Liam. There is no kickBAC password/OTP endpoint or native client secret.
 
 Device routes use `Authorization: Bearer <per-device credential>`, issued through a backend-only provisioning command, stored hashed in the database. Device identity derives from that credential. Never put it in NFC, QR, iOS, Git or logs. Device routes do not reveal the associated user's identity.
 
@@ -11,12 +11,19 @@ No demo auth endpoint exists. Local simulator identities and measurements must b
 
 Initial Auth0 audience: `https://kickbac-api` (no trailing slash). This is a logical API identifier, not the deployed base URL. For Nicholas's account setup steps and the public-only report-back template, see [SETUP.md](SETUP.md).
 
+Approved primary login is **phone number + SMS OTP through Auth0/Twilio, not SMS MFA**. Provider configuration, earlier team delivery and separate Post Login feedback binding are verified; actual native token/API acceptance, feedback execution and newly unlisted-recipient delivery are not. See [PHONE_LOGIN.md](PHONE_LOGIN.md) for the embedded OTP requests and client handoff. Hosted PKCE remains supported with `connection=sms` and the same audience. The backend still receives only an API access token, never a raw phone number or OTP, and does not require an email claim or a particular subject prefix. `/v1/me` and all ownership rules are unchanged. Separate SMS/database subjects are separate users; matching contact claims do not link accounts or history.
+
 ## Endpoint summary
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
 | GET | `/health` | public | database/server readiness |
 | GET | `/d/{device_id}` | public | resolve NFC/QR unit ID; no arming or private data |
 | GET | `/v1/me` | user | identity |
+| GET | `/v1/me/profile` | user | load own display name/picture or null fields for new user |
+| PUT | `/v1/me/profile` | user | atomically save own display name/picture |
+| POST | `/v1/me/game-results` | user | persist completed client-reported game, award10 participation points once |
+| GET | `/v1/me/game-results` | user | own paginated game ledger, optional game_id filter |
+| GET | `/v1/me/stats` | user | profile-wide points/games/wins and per-game aggregates |
 | GET | `/v1/devices/{device_id}` | user | current derived availability and online state |
 | POST | `/v1/devices/{device_id}/sessions` | user | arm known unit; empty JSON `{}` |
 | GET | `/v1/sessions/{session_id}` | owning user | session and optional result |
@@ -27,7 +34,7 @@ Initial Auth0 audience: `https://kickbac-api` (no trailing slash). This is a log
 | POST | `/v1/device/sessions/{session_id}/sampling` | device | report valid breath sampling start; `{}` |
 | POST | `/v1/device/measurements` | device | idempotent sample upload |
 
-Normal server must be configured with Auth0 and an initialized persistent DB. `/docs` and `/openapi.json` document the implemented schema; keep examples in this document synchronized. The simulator starts an isolated loopback instance. Public hosting, universal links, actual NFC writing and SwiftUI login are separate integration steps, not already configured features.
+Normal server must be configured with Auth0 and an explicitly migrated persistent DB (schema4 for games; profile-era schema3 requires an explicit backed-up upgrade). `/docs` and `/openapi.json` document the implemented schema; keep examples in this document synchronized. The simulator starts an isolated loopback instance. Trusted public HTTPS is verified; real native access-token/history acceptance, universal links and NFC writing are separate integration steps. See [PROFILES.md](PROFILES.md) for complete onboarding fields, image limits, save/retry/removal semantics and client handoff. Phone stays in the Auth0 SMS identity; profile writes never accept a client-supplied owner or verified phone.
 
 ## Lifecycle and concurrency
 Session status is one of `ARMED`, `SAMPLING`, `COMPLETE`, `CANCELLED`, `EXPIRED`. Creation sets `ARMED` with 60-second server-owned expiry. Device state is `AVAILABLE`, `ARMED` or `SAMPLING`, derived from an active unexpired session. `online` is separately derived from a heartbeat within the last 30 seconds; heartbeat does not extend an arming session. An offline device may be armed; app should show online state and timeout honestly.
@@ -48,7 +55,7 @@ Authorization: Bearer <access_token>
 ```
 
 ### Resolve NFC/QR
-The NFC sticker and QR contain the same planned public HTTPS URL, `https://api.kickbac.vodka/d/kb-demo-01`. This host is NOT yet a configured deployment. GET does not arm, log in, or consume a session. Initial response is JSON; Liam must handle the device path and preserve its ID across login before explicitly calling arm. Universal links/associated domains are not configured yet.
+The NFC sticker and QR use the same public HTTPS URL, `https://api.kickbac.vodka/d/kb-demo-01`. This resolver is deployed and returns JSON; universal links/associated domains are not configured. GET does not arm, log in, or consume a session. Liam must handle the device path and preserve its ID across login before explicitly calling arm.
 ```http
 GET /d/kb-demo-01
 ```

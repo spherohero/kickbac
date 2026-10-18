@@ -15,8 +15,8 @@ breakout still needs checked supply/protection parts before ADC enablement.
 
 ## Continuity and scope
 
-Work in `firmware/esp32-core` in `kickbac-firmware/`, based on inspected
-`origin/main` at `8b222c1`. Preserve the separate dirty `kickbac/` checkout on
+Work in `firmware/esp32-core` in `kickbac-firmware/`, originally based on
+`8b222c1` and now integrated with current main's schema4 backend. Preserve the separate dirty `kickbac/` checkout on
 `backend/phone-otp`. Commit reviewed owned work and publish this feature branch
 regularly; merge through the reviewed/tested integration gate when ready, not
 through direct development on main. Nicholas delegates ready-merge decisions. Read the
@@ -169,8 +169,11 @@ see `../docs/DEVICE_CONNECTIVITY.md`. This is not sampling, real-user arming or
 measurement-upload acceptance. Earlier Wi-Fi evidence is in
 `../docs/WIFI_CONNECTIVITY.md`. PC-side resolver/OpenAPI checks
 also passed; the live schema still requires integer breath duration. Deployment
-handoff remains in the original checkout. Shared main advanced concurrently;
-this firmware worktree was not auto-merged and its backend snapshot is older.
+handoff is now published in `../docs/BACKEND_RELEASE_VERIFICATION.md` and
+`../docs/LIAM_BACKEND_HANDOFF.md`. Current main's backend/API/deployment/iOS
+content is preserved unchanged by this firmware increment. Combined integration
+passed338backend/deployment tests,78Action fixtures and the simulator; these
+fixture results remain distinct from physical firmware acceptance above.
 
 Preserve `docs/API.md`: device bearer credential; heartbeat `{}` independently
 of session polling; server-owned exclusive 60-second sessions; no selected user

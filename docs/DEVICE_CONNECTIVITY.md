@@ -154,6 +154,14 @@ pass when run from `backend/`; an initial repository-root invocation failed only
 because its subprocesses could not import `kickbac`. No backend edit was needed.
 Publish progress on the focused `firmware/esp32-core` remote branch; Nicholas
 delegates main merges when integration, review and verification establish readiness,
-never direct development on main or an unchecked merge. Firmware started at `8b222c1`; main advanced further
-concurrently (including profiles/games). Inspect fresh Git state and reconcile
-separately before merge readiness; never deploy this older backend snapshot.
+never direct development on main or an unchecked merge. Firmware started at
+`8b222c1`; current main `f109e55` was subsequently integrated without modifying
+its backend/API/deployment/iOS content. Only README/decision-log conflict areas
+needed combining, preserving both main's backend handoff and firmware evidence.
+The combined tree passed338backend/deployment tests,78mockedAction fixtures,
+backend/firmware lint/format, actual loopback-HTTP simulator with restart and all
+three firmware cross-builds. Host core/parser/adapter tests also pass. No new
+physical reflash was needed for documentation/base-only integration; the board's
+already-tested firmware source is unchanged. GitHub-hosted CI is not claimed:
+the saved OAuth credential still lacks workflow-publication scope, as documented
+in the backend handoff. Final independent full-diff review gates main merge.

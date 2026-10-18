@@ -1,48 +1,36 @@
-# Cloudflare DNS setup — registrar delegation still pending
+# Cloudflare DNS — current verified configuration
 
-## Completed and independently read back
-- Added `kickbac.vodka` to Nicholas's existing Cloudflare account as a full zone.
-- Verified plan **Free Website**, price **$0**; no domain transfer or paid subscription.
-- Created `A api.kickbac.vodka -> 144.202.38.243`, TTL **300 seconds**, **DNS-only** (`proxied=false`).
-- Reviewed Cloudflare's scan and imported the existing parking entries without changing their targets: apex A records `207.207.210.107` and `207.207.210.229`, plus `*.kickbac.vodka` and `www.kickbac.vodka` CNAMEs to `pixie.porkbun.com`. Final API readback enumerated five records and its pagination metadata agreed.
-- Queried BOTH assigned authoritative nameservers directly with nslookup; both returned `144.202.38.243` for the API name.
-- Public apex DS lookup had no records; Cloudflare DNSSEC is disabled. No DNSSEC changes were made. If enabling later, coordinate Cloudflare signing and registrar DS only after delegation is active.
+## Current state
 
-This preserves the records observed by the public checks/Cloudflare scan; a quick scan is not a guarantee of discovering every possible custom record. No mail records were observed in the public apex MX/TXT checks. If separate custom services exist, compare their required records before switching nameservers.
-
-## Required registrar action
-
-Cloudflare assigned exactly:
+Public delegation to Cloudflare is verified. A fresh query through `1.1.1.1` during backend publication returned:
 
 ```text
-aaden.ns.cloudflare.com
-ali.ns.cloudflare.com
+kickbac.vodka NS aaden.ns.cloudflare.com
+kickbac.vodka NS ali.ns.cloudflare.com
+api.kickbac.vodka A 144.202.38.243
 ```
 
-Nicholas reports the registrar nameservers have been updated. The follow-up checks still find Porkbun in registry RDAP, a direct parent-delegation query to `a.nic.vodka`, and public resolvers `1.1.1.1` and `8.8.8.8`. Public API lookups still return Porkbun parking. Cloudflare remains **pending** after an explicitly triggered activation check and readback. This is not yet a verified migration; check the saved registrar nameserver list and its final confirmation. The staged Cloudflare record still returns the correct origin IP when querying the assigned servers directly.
+**No further registrar nameserver change is pending.** The registrar remains Porkbun; the two NS values are registrar delegation, not ordinary records to add inside the zone.
 
-At [Porkbun Domain Management](https://porkbun.com/):
-1. Find `kickbac.vodka` and open **Details**.
-2. Under **Nameservers**, click the edit icon.
-3. Replace the old Porkbun entries with ONLY the two Cloudflare names above, one per line.
-4. Save Nameservers and confirm/Submit if prompted.
-5. Confirm the saved list contains only those two names; report its public values if verification still shows the old delegation. Do not send credentials or an unredacted account screenshot.
+The live API is **https://api.kickbac.vodka**, with trusted origin HTTPS through Caddy. Health and OpenAPI were independently verified publicly. Do not follow older notes telling you to recreate the zone, repeat a nameserver switch, or treat the public API as a parking page.
 
-Do not add these as ordinary NS records in the Cloudflare zone; they must replace the domain's nameservers at its REGISTRAR. The registrar remains Porkbun. The connector can manage Cloudflare but cannot change a Porkbun registration; local browser automation could not access the locked Chrome profile, and no browser was closed.
+## Records and boundaries
 
-After the change, verify the public NS delegation, Cloudflare Active status, public API A resolution and then actual trusted HTTPS. Nameserver propagation can take time; API creation or a direct nameserver query is not proof of global delegation. Do not claim migration complete until public/readback checks pass.
+- Cloudflare **Free Website** plan was selected/read back; no paid DNS subscription/domain transfer was created.
+- API record: `A api.kickbac.vodka -> 144.202.38.243`, TTL300, **DNS-only** (`proxied=false`) at creation/readback.
+- Existing unrelated parking records were preserved: apex A `207.207.210.107` and `207.207.210.229`; wildcard and www CNAMEs to `pixie.porkbun.com`. Do not repurpose them without inspecting the user's current services.
+- No Cloudflare Access login, browser challenge, API caching rule or CORS workaround was added. Auth0 audience remains `https://kickbac-api`, not the public hostname.
+- DNSSEC was disabled with no parent DS observed at the migration checkpoint. Recheck signing/delegation before any later DNSSEC change.
+- Public delegation/A resolution and trusted HTTPS are verified separately from Cloudflare's dashboard zone status; a historical API `pending` label was not freshly read back as `Active`. That does not justify repeating the working registrar migration.
 
-## Application behavior and pending deployment
+## Hosting and native links
 
-**NON-BREAKING iOS impact:** API origin remains `https://api.kickbac.vodka`, Auth0 audience remains `https://kickbac-api`, no endpoints/JSON/states changed. No Cloudflare Access login, browser challenge, API cache rule or proxy behavior was added. DNS-only is intentional while setting up/verifying origin HTTPS. Consider Cloudflare proxy plus Full (strict) only after a valid origin certificate is confirmed; never use Flexible TLS to hide a missing origin certificate.
+See [OPERATIONS.md](OPERATIONS.md) for the existing Ubuntu VM, private loopback API, Caddy, persistent SQLite and online snapshots. Preserve SSH access when reviewing host/cloud firewall policy; don't expose port8000 or the database. No new VM is required.
 
-User reports VM `144.202.38.243` at approximately **$28/month**, SSH key selected, **no Vultr firewall attached**. Exact host OS/plan, SSH authentication and origin configuration have not been independently inspected. TCP22 was reachable; TCP80/443 timed out during preflight. No app/server deployment or HTTPS certificate was created. Attach/review the host/cloud firewall before exposing the API; keep8000/database ports private.
+`https://api.kickbac.vodka/d/kb-demo-01` is a public **JSON resolver**, not a configured iOS Universal Link. Device resolution, Auth0's custom-scheme callback, native NFC/QR app launch and authenticated arming are distinct flows. Liam owns the client-side link handling.
 
-Auth0 callback/logout URLs are reported saved. A fresh public prompt=none authorization request now returns302 `login_required`, not Callback URL mismatch, to the URI-equivalent app callback. The redirect lowercases the case-insensitive scheme but preserves `/ios/com.liam.KickBAC/callback`; the supplied identifier remains exactly `com.liam.KickBAC`. This is a public configuration check, not successful user login or token issuance. Logout behavior is not independently tested.
+## Sources
 
-Internal verifiable resource handles and readback snapshot are preserved in the workspace `.project/CLOUDFLARE_DNS.json`, not in credentials/chat.
-
-## References
 - https://developers.cloudflare.com/dns/zone-setups/full-setup/setup/
 - https://developers.cloudflare.com/dns/manage-dns-records/how-to/create-dns-records/
 - https://kb.porkbun.com/article/22-how-to-change-your-nameservers

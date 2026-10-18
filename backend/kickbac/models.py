@@ -1,3 +1,4 @@
+import unicodedata
 from datetime import UTC, datetime
 from typing import Annotated, Literal
 from uuid import UUID
@@ -8,6 +9,7 @@ from pydantic import (
     ConfigDict,
     Field,
     StrictInt,
+    StrictStr,
     field_validator,
 )
 
@@ -27,6 +29,51 @@ class ErrorEnvelope(BaseModel):
 
 class MeResponse(BaseModel):
     user_id: str
+
+
+MAX_PICTURE_BYTES = 512 * 1024
+MAX_PICTURE_BASE64 = 4 * ((MAX_PICTURE_BYTES + 2) // 3)
+
+
+class ProfilePicture(Empty):
+    content_type: Literal["image/jpeg", "image/png"]
+    data_base64: Annotated[StrictStr, Field(max_length=MAX_PICTURE_BASE64)]
+
+    @field_validator("data_base64", mode="before")
+    @classmethod
+    def bound_encoded_length(cls, value):
+        if isinstance(value, str) and len(value) > MAX_PICTURE_BASE64:
+            from .errors import fail
+
+            fail(413, "payload_too_large")
+        return value
+
+
+class ProfilePictureResponse(BaseModel):
+    content_type: Literal["image/jpeg"]
+    data_base64: str
+
+
+class ProfileResponse(BaseModel):
+    user_id: str
+    display_name: str | None
+    profile_picture: ProfilePictureResponse | None
+    created_at: str | None
+    updated_at: str | None
+
+
+class ProfilePut(Empty):
+    display_name: Annotated[StrictStr, Field(min_length=1, max_length=80)]
+    profile_picture: ProfilePicture | None
+
+    @field_validator("display_name", mode="before")
+    @classmethod
+    def trim_name(cls, value):
+        if not isinstance(value, str):
+            raise ValueError("Expected display name")
+        if any(unicodedata.category(char) in ("Cc", "Cs") for char in value):
+            raise ValueError("Invalid display name")
+        return value.strip()
 
 
 class ResolveResponse(BaseModel):

@@ -2,24 +2,31 @@
 
 Connected breathalyzer **prototype**: authenticated phone user explicitly arms a
 known device, which uploads one raw sample into a short-lived, private session.
-Public HTTPS backend health and contract are now verified from this PC at
-https://api.kickbac.vodka; see `../kickbac/docs/LIVE_BACKEND_STATUS.md` for the
-separate local deployment handoff. This does not establish native/hardware
-acceptance, and this is not a certified BAC instrument.
+The backend is deployed at **https://api.kickbac.vodka** with trusted HTTPS.
+Native-client and sensor acceptance are separate; this is not a certified BAC
+instrument. Private display-name/picture profiles are deployed; see
+[verification](docs/PROFILE_VERIFICATION.md) and [client contract](docs/PROFILES.md).
 
 ## Layout and contract
 
 - `backend/`: Python/FastAPI, versioned SQLite migrations, tests and simulator.
-- [`docs/API.md`](docs/API.md): frozen v0 paths, bodies, errors and lifecycle.
+- [`docs/API.md`](docs/API.md): paths, bodies, errors and lifecycle.
+- [`docs/PROFILES.md`](docs/PROFILES.md): private display-name/picture onboarding; phone identity remains with Auth0.
+- [`docs/GAMES.md`](docs/GAMES.md): live generic private game results, server-assigned participation points and profile-wide stats; schema4.
+- [`docs/READING_HISTORY.md`](docs/READING_HISTORY.md): every accepted test persists privately by the same account as its profile; unavailable BAC is null, not zero.
+- [`docs/LIAM_BACKEND_HANDOFF.md`](docs/LIAM_BACKEND_HANDOFF.md): published client catch-up; real native acceptance remains Liam-owned.
+- [`docs/BACKEND_RELEASE_VERIFICATION.md`](docs/BACKEND_RELEASE_VERIFICATION.md): actual tests/deployment/source provenance and remaining limits.
 - [`docs/SETUP.md`](docs/SETUP.md): Auth0 account/Native app and hosting checklist.
-- [`docs/CLOUDFLARE_DNS.md`](docs/CLOUDFLARE_DNS.md): verified Cloudflare records and the pending registrar nameserver step.
-- `ios/`: Liam's separately owned SwiftUI client; the starter is in [PR #1](https://github.com/spherohero/kickbac/pull/1), not this backend change.
+- [`docs/PHONE_LOGIN.md`](docs/PHONE_LOGIN.md): configured primary SMS OTP flow, versioned Auth0 Actions and remaining native acceptance; no repeat provider setup needed.
+- [`docs/CLOUDFLARE_DNS.md`](docs/CLOUDFLARE_DNS.md): DNS setup history; public delegation and HTTPS now verified.
+- `ios/`: Liam's separately owned SwiftUI client. Current native auth/profile work is concurrent/unpublished and was not edited here; he needs to integrate the additive profile save/load calls.
 - [`firmware/README.md`](firmware/README.md): XIAO USB/Wi-Fi diagnostic targets build; actual Wi-Fi/DHCP/DNS/trusted HTTPS and one software reconnect pass. Host-tested MQ core remains separate; sensor wiring/readings and device-authenticated uploads are unverified.
 - [`docs/WIFI_CONNECTIVITY.md`](docs/WIFI_CONNECTIVITY.md): real board trace, private RAM-only Wi-Fi provisioning, trusted health check and reproducible commands; no sensor/upload claims.
 - [`docs/DEVICE_CONNECTIVITY.md`](docs/DEVICE_CONNECTIVITY.md): actual device-bearer heartbeat/poll passed; independent live readback proves persisted ongoing heartbeat after helper exit. No API/iOS or measurement changes.
 - [`docs/HARDWARE_BRINGUP.md`](docs/HARDWARE_BRINGUP.md): photo-confirmed Flying Fish-style MQ breakout (not bare sensor), actual header orientation, USB evidence, and conditional power/protection design awaiting actual parts/meter checks.
 - [`docs/AUSTIN_PERFBOARD_GUIDE.md`](docs/AUSTIN_PERFBOARD_GUIDE.md): shareable assembly/net guide, component-side perfboard concept, full-scale divider test, power sequencing and Austin's measurement handoff. Actual parts and electrical sign-off remain required before ADC connection.
 - [`docs/FIRMWARE_DURATION_PROPOSAL.md`](docs/FIRMWARE_DURATION_PROPOSAL.md): UNAPPROVED manual/timed acquisition proposal; current required breath duration is not fabricated or silently reinterpreted. The pressure sensor is confirmed unavailable.
+
 
 ## Local setup
 
@@ -46,12 +53,13 @@ Environment:
 | `AUTH0_DOMAIN` | Actual tenant DNS name only, e.g. `dev-EXAMPLE.us.auth0.com`; no scheme, port, path or trailing slash. |
 | `AUTH0_AUDIENCE` | Exact custom API identifier, coordinated as `https://kickbac-api` (no trailing slash). A logical identifier, **not a backend host**. |
 
-`init-db` explicitly applies migrations 001 and 002, preserving existing devices;
+`init-db` explicitly applies migrations001–004, preserving existing device/session/history/profile rows;
 re-running it is safe. Normal startup never initializes or upgrades a database
-and fails closed without schema 2 and Auth0 configuration. Back up the SQLite
+and fails closed without schema4 and Auth0 configuration. Back up the SQLite
 file before upgrades. Do not put SQLite on an ephemeral container filesystem or
 run multiple replicas: use **one API instance with a persistent local disk**.
-No hosted database, backups or Vultr deployment are configured by this code.
+The existing Vultr host uses persistent local SQLite and online daily snapshots;
+these operational resources are not automatically created by running this code.
 
 ### Provision a device (operator only)
 
@@ -79,7 +87,7 @@ uv run uvicorn kickbac.app:app --host 127.0.0.1 --port 8000 --workers 1
 ```
 
 Visit `http://127.0.0.1:8000/health` for readiness and `/docs` for OpenAPI.
-User requests require an Auth0 **API access token** from Native PKCE login,
+User requests require an Auth0 **API access token** from supported Native embedded SMS OTP or hosted PKCE login,
 RS256-signed with the configured issuer/audience, expiry and nonblank subject.
 ID tokens and explicit machine-to-machine tokens are not accepted as users.
 Public Auth0 signing keys are cached from the fixed HTTPS tenant JWKS URL; no

@@ -1,96 +1,87 @@
-# Account setup and safe report-back
+# kickBAC setup and integration handoff
 
-This checklist is for Nicholas. It does not claim any account or deployment is configured. The backend/API contract is `API.md`; Liam owns SwiftUI. Do not send client secrets, passwords, bearer/refresh/device tokens, recovery codes, private SSH keys, or unredacted credential screenshots in chat.
+Liam owns SwiftUI. Never send passwords, client secrets, OTPs, bearer/refresh/device
+tokens, recovery codes, private SSH keys or unredacted credential screenshots in
+chat. This is the existing setup, not a request to recreate accounts or resources.
 
-## Primary login decision and provider gate
+## Auth0 public configuration
 
-Nicholas approved phone number + SMS OTP as the primary signup/login method, **not MFA**, for team-only demo testing. Follow [PHONE_LOGIN.md](PHONE_LOGIN.md) before changing connections. The authenticated Auth0 tenant currently reports **No Valid Phone Provider Configured**; no Twilio account/sender is ready yet. Current new Twilio trials restrict custom SMS bodies, so verifying team recipients alone does not make the Auth0 integration ready. Do not purchase an account upgrade/sender or disable fallback access without the specific cost/approval and real delivery checks.
+| Item | Value |
+| --- | --- |
+| Tenant | `dev-c87oxm4dkbyatvrn.us.auth0.com` |
+| API audience | `https://kickbac-api` — exactly, no trailing slash |
+| API signing | RS256; backend validates issuer, audience, expiry and subject using public JWKS |
+| Native application | kickBAC iOS |
+| Public client ID | `5gJK2T71UkL0fbVj9pbzzEzKeMWZoYlC` |
+| Bundle ID / URL scheme | `com.liam.KickBAC` |
+| Callback/logout target | `com.liam.KickBAC://dev-c87oxm4dkbyatvrn.us.auth0.com/ios/com.liam.KickBAC/callback` |
+| API base | `https://api.kickbac.vodka` |
 
-## Initial Auth0 public configuration
+Audience is an immutable logical identifier, **not** the deployed host. Native
+clients use no client secret. Preserve callback spelling/case and Liam's existing
+URL handling; callback URLs and NFC/QR device URLs are different things.
 
-Nicholas supplied domain `dev-c87oxm4dkbyatvrn.us.auth0.com`, audience `https://kickbac-api`, Native client ID `5gJK2T71UkL0fbVj9pbzzEzKeMWZoYlC`, and reported RS256 plus enabled Native API access/login connection. Public OIDC discovery and RS256 RSA JWKS were independently fetched successfully. This does not verify API registration, application grants or a real user login. Liam's bundle ID is `com.liam.KickBAC`. The exact supplied callback/logout URL is `com.liam.KickBAC://dev-c87oxm4dkbyatvrn.us.auth0.com/ios/com.liam.KickBAC/callback`. Nicholas reports both callback/logout allowlists saved. A fresh public prompt=none request now returns302 login_required to the URI-equivalent callback, with no Callback URL mismatch. The redirect canonicalizes only the scheme to lowercase; the case-sensitive bundle path is preserved. Logout behavior and actual user login remain unverified. Preserve spelling/case; do not silently normalize the bundle or callback. Planned API host is `https://api.kickbac.vodka`, not yet deployed. Backend configuration is saved in git-ignored `backend/.env`; the Native client ID is for Liam, not a backend secret.
+## Phone login is configured; native acceptance remains
 
-## 1. Auth0 tenant and API — do this first
+See [PHONE_LOGIN.md](PHONE_LOGIN.md) for authoritative phone settings and requests.
+The `sms` connection is enabled for the Native app: six-digit OTP, 180 seconds,
+signups allowed, domain promotion OFF. Passwordless OTP grant is enabled alongside
+preserved Authorization Code/Refresh Token grants. Existing fallback connections
+and custom prompts are preserved; no Identifier First reset is required for the
+embedded flow Liam reports using.
 
-1. Open https://manage.auth0.com/ and sign up/sign in yourself. Use a free development tenant in the US region; accept a generated unique tenant name if necessary. No paid custom domain is needed. Record the tenant Domain, e.g. `dev-EXAMPLE.us.auth0.com`, without `https://` or a trailing slash.
-2. Go to **Applications -> APIs -> Create API**. Create a CUSTOM API, not the existing Auth0 Management API:
-   - Name: `kickBAC API`
-   - Identifier (audience): `https://kickbac-api` — exactly, no trailing slash. This is an immutable logical identifier, NOT a real/public backend host; Auth0 does not call it.
-   - JWT profile: `Auth0` if the selector appears.
-   - Signing algorithm: `RS256`.
-3. Under this API's **Settings -> Application Access Policy**, use **Per-app authorization** for **User-Delegated Access**, and **No apps allowed** for **Client Access**. We are not using Auth0 machine-to-machine tokens for users or ESP32 devices. Save. The explicit Native app grant is configured below.
-4. Under API Settings, enable **RBAC** if present, as recommended by Auth0 for native apps/custom APIs. There are no custom admin roles or fine-grained permission requirements in v0: backend ownership checks still restrict every session/history read. Do not invent new scopes/roles for this milestone. Leave token profile/signing algorithm as above.
+Embedded flow: Auth0 `/passwordless/start` then `/oauth/token` with passwordless
+OTP grant, realm `sms`, exact API audience and `openid profile`. Hosted PKCE with
+`connection=sms` also remains available. iOS sends the resulting **API access token**,
+not an ID token/OTP/phone number, to `GET /v1/me` and other private API routes.
+No new custom permissions or M2M client grants are required for this milestone.
+A zero-of-zero permissions display is not proof of failed user-delegated access.
 
-If the dashboard labels differ or an option is unavailable, report the exact labels/status rather than switching to a different grant/signing algorithm. Never use a test machine-to-machine access token as proof a real user login works.
+Custom/Text provider -> Twilio Verify delivers Auth0's codes; Auth0 owns validation.
+Full/PAYG account, individual PRIMARY approval, earlier dashboard delivery/human
+receipt, exact delivery source and separate Post Login feedback deployment/binding
+were verified. These are **not pending setup**. Real native token/API/history and
+feedback runtime acceptance remain with Liam. Do not require normal users to be
+manually allowlisted or claim untested general-recipient delivery.
 
-## 2. Auth0 Native app — coordinate with Liam
+No phone values or provider secrets belong in the backend/iOS. Phone remains in
+Auth0. Live display name/picture persistence uses separately owned GET/PUT
+`/v1/me/profile`; consult integrated API docs/live OpenAPI, not this branch's older
+schema, for the profile contract. Never auto-link subjects by phone/email.
 
-1. **Applications -> Applications -> Create Application**:
-   - Name: `kickBAC iOS`
-   - Type: **Native** (not Single Page, Regular Web or Machine to Machine).
-2. Record its **Domain** and **Client ID**. These are public configuration and safe to report. Do not copy its Client Secret.
-3. Confirm **Token Endpoint Authentication Method = None**. A Native app is a public client using Authorization Code + PKCE; it must not embed a client secret.
-4. Go back to **kickBAC API -> Application Access**. Find `kickBAC iOS`, select **Edit**, and grant **User-Delegated Access**. Select **Always grant all permissions** if that is the available grant option; no custom API permissions currently exist. Do not grant Client Access. The hosted PKCE request must explicitly select `connection=sms`, OIDC scopes `openid profile` and audience `https://kickbac-api`; email is not required for phone-only users. SDK credentials management remains Liam's responsibility.
-5. After Twilio delivery is configured and tested, enable the SMS connection for the Native app and use it as primary, following `PHONE_LOGIN.md`. Preserve existing database fallback until actual phone login/API acceptance succeeds. Do not turn on SMS MFA as a substitute. No Google/Apple provider setup is required for milestone one. Test-account passwords and OTPs must remain private.
-6. Ask Liam for the app target's exact **Bundle Identifier** from Xcode. Do not guess or change his bundle ID. For the simplest custom-URL-scheme callback, add the following to BOTH **Allowed Callback URLs** and **Allowed Logout URLs**, replacing the placeholders with the actual values:
+## Backend and hosting
 
-   ```text
-   {BUNDLE_ID}://{AUTH0_DOMAIN}/ios/{BUNDLE_ID}/callback
-   ```
+Use README for local `uv sync --locked`, environment export, explicit DB migration,
+private device provisioning and single-worker startup. Backend needs
+`AUTH0_DOMAIN`, exact `AUTH0_AUDIENCE`, and persistent `KICKBAC_DB_PATH`; no Auth0
+client secret, management token or Twilio secret is required. Normal startup has
+no fixture/login fallback. Local simulator is explicitly simulated OIDC/sensor,
+not a native login service or measured BAC.
 
-   Save. Liam registers the matching URL scheme in Xcode and uses the appropriate Auth0.swift SDK configuration. Preserve his existing callback setup if he already has one; coordinate instead of replacing it. Universal-link callbacks require additional Apple/associated-domain setup and are not a prerequisite for this first auth demo. Auth0 callback URLs and NFC/QR device links are different things.
-7. Do not add a backend client secret or management token: the backend validates signed access tokens using public JWKS. Refresh-token/offline-access options are not needed to prove initial login; coordinate them with Liam if requested by his SDK/configuration.
+The existing Vultr service at `https://api.kickbac.vodka` has verified public trusted
+HTTPS. Cloudflare DNS delegation/TLS are no longer pending. No new VM, domain,
+paid add-on or billing change is authorized by these instructions. Deployment and
+profile branches own host artifacts, schema upgrades and operational evidence;
+this phone branch does not publish their source. One API worker and persistent
+SQLite remain required. Never expose device credentials in app/NFC/QR.
 
-## 3. Vultr — inspect before creating anything billable
+## Remaining acceptance
 
-Nicholas reports the VM already created at144.202.38.243, displayed price approximately$28/month, SSH key selected, no Vultr firewall attached. Do not create another VM. Exact plan/OS and SSH authentication remain unverified. Cloudflare Free DNS is staged; registrar nameserver delegation is pending. See CLOUDFLARE_DNS.md for the two exact registrar nameservers and current DNS/HTTPS status; do not share root credentials.
+Liam verifies Xcode/device build, real first signup/relogin, correct API token,
+`/v1/me`, private history/session ownership, relogin/restart persistence, invalid/
+expired/resend code behavior, secure storage and callback/logout behavior for any
+hosted path used. Actual Post Login feedback runtime and new unlisted-recipient
+delivery remain unverified. Physical NFC/QR app routing, firmware and calibrated
+sensor behavior remain separate; public JSON resolution does not itself launch
+the app. Do not substitute local fixtures for these checks.
 
-Report one of:
-- No VM yet: available credit confirmed, preferred US region, and acceptable advertised monthly VM price limit. We will choose one small persistent-disk instance and confirm before spending/provisioning.
-- Existing VM: public IP, OS/version, region, advertised monthly price, and whether SSH key login is already configured. Do not send root passwords or private keys. Do not repurpose a VM running other projects without inspection/isolation.
-
-Registered domain is kickbac.vodka; API origin remains https://api.kickbac.vodka. Cloudflare DNS setup is documented in CLOUDFLARE_DNS.md. DNS staging is not a deployed HTTPS service; neither Cloudflare DNS nor a laptop loopback URL proves physical-iPhone reachability.
-
-## iOS starter PR integration check
-
-Liam corrected the audience in `ios/KickBAC/Auth0.plist` and `ios/README.md` to **`https://kickbac-api` without a trailing slash** in `c5939d5`. [PR #1](https://github.com/spherohero/kickbac/pull/1) was re-reviewed and merged at `8b222c1`; the actual merge tree and iOS source were read back and checked. No teammate source was rewritten. His separate navigation branch still needs to incorporate that correction before login integration.
-
-The starter's bundle ID, custom URL scheme and tenant match the handoff. It does not yet include Auth0.swift or implement login. Liam must explicitly request the correct API audience during Native PKCE login and send the resulting **access token**, not the ID token, as `Authorization: Bearer <access_token>` to `GET /v1/me`; a successful response is `{"user_id":"auth0|example-subject"}`. A plist value alone does not implement that request. Credentials stay in the SDK's secure credential store; no backend client secret or device credential belongs in the app.
-
-The project currently targets iOS 27.0. This Windows host has no Xcode, and the PR has no build checks, so parsed plist/JSON resources and reviewed source are **not** a successful iOS build or physical-phone login test. Liam must verify his Xcode/demo-device target and build/run the app. His separate `ios` navigation branch is not part of the starter PR and must not be merged implicitly.
-
-## Copy-paste report-back template
-
-The following fields are public configuration/status; omit unavailable fields instead of guessing.
-
-```text
-Auth0 tenant domain:
-Auth0 API audience: https://kickbac-api
-API signing algorithm: RS256
-Native app name: kickBAC iOS
-Native app Client ID:
-Native app user-delegated API access granted: yes/no
-Enabled login connection:
-Liam's exact iOS bundle ID: com.liam.KickBAC
-Callback + logout URLs saved: [yes/no/pending bundle ID]
-Any dashboard option that differs / error text:
-
-Vultr credits visible: yes/no
-Existing VM: none / public IP
-VM OS/version + region (if existing):
-Advertised monthly VM price / acceptable price limit:
-SSH key login configured: yes/no/not yet
-Existing usable domain: none / domain
-```
-
-Do NOT paste Client Secret, access/refresh/device tokens, passwords, recovery codes, billing details, or private SSH keys. If a secret is needed later, use a masked local prompt, local private configuration or the browser's credential vault—not chat.
-
-## What happens after reporting back
-
-We can verify public OIDC discovery/JWKS against the reported domain and match issuer/audience configuration; that alone is not a login test. Actual Auth0 user login must be verified through Liam's native app or an explicitly approved PKCE test client, with secrets kept local. We will separately verify a trusted HTTPS API, auth/ownership, NFC/QR routing and the simulator/device flow from a physical iPhone. Local fixture signatures and simulated sensor values never count as those external integrations being complete.
+Report only public configuration/status and sanitized error codes. Never paste
+codes, tokens or private phone numbers. No additional funds, auto-recharge,
+optional custom Verify buckets or fallback removal are authorized.
 
 ## Official references
-- Register API / audience semantics: https://auth0.com/docs/get-started/auth0-overview/set-up-apis
-- Application access policies: https://auth0.com/docs/get-started/apis/api-access-policies-for-applications
-- Auth0.swift callback and public-client setup: https://auth0.com/docs/libraries/auth0-swift
-- SwiftUI quickstart: https://auth0.com/docs/quickstart/native/ios-swift
+
+- https://auth0.com/docs/get-started/auth0-overview/set-up-apis
+- https://auth0.com/docs/get-started/apis/api-access-policies-for-applications
+- https://auth0.com/docs/libraries/auth0-swift
+- https://auth0.com/docs/authenticate/passwordless/authentication-methods/sms-otp

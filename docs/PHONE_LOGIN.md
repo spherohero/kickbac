@@ -1,117 +1,151 @@
 # Phone-first signup/login — Auth0 + Twilio
 
-## Decision and actual status
+## Current configuration and evidence
 
-Nicholas approved **phone number + SMS one-time code as the primary signup/login method, NOT SMS MFA**. Team members are the demo testers; judges are not expected to install the app. Use Auth0-hosted Universal Login with Native Authorization Code + PKCE. Liam owns the SwiftUI client.
+Phone number + SMS OTP is the primary signup/login factor, **not SMS MFA**.
+Liam owns SwiftUI and native acceptance. His reported embedded OTP implementation
+is supported; no hosted-only rewrite is required. No iOS or production API source,
+migration or dependency changes are included in this phone branch.
 
-**Not live yet.** An authenticated inspection of the correct tenant found the `sms` configuration explicitly reporting **No Valid Phone Provider Configured**. Nicholas does not yet have a Twilio account and is creating one. No provider credentials, billable sender, SMS send, or working phone login have been configured or verified. Existing login connections were not disabled.
-
-The tenant uses New Universal Login. Changing its Authentication Profile to Identifier First displays a confirmation that **custom prompts will be reset**. That confirmation was cancelled; no login-profile change is claimed saved. Review/preserve any custom prompts before confirming the eventual profile change.
-
-The existing backend already accepts correctly signed SMS-user API tokens as opaque subjects; no new SMS-sending backend, Twilio SDK dependency, phone-number table, route, migration or credential environment variable is needed. `backend/tests/test_phone_identity.py` verifies that existing compatibility using **local signed fixtures, not real Auth0/SMS**.
-
-## What a verified recipient means
-
-A normal mobile number is suitable, but that does not automatically make it a verified recipient in a Twilio trial account. Twilio must verify control of the number through its own verification flow. This is a **trial testing allowlist**, not an additional kickBAC authentication factor. The number used when signing up is automatically verified; other team numbers must be added and verified individually in the trial Console. Current trial docs allow up to five recipients and restrict destination geography.
-
-**Recipient verification is different from sender verification.** The Twilio-owned number or Messaging Service sending your messages must also satisfy provider/carrier requirements. For example, purchased US/Canada toll-free numbers cannot send SMS there until verification is approved; US long-code sending has A2P registration requirements. Do not use a tester's personal number as the Twilio `From` sender.
-
-## Important new-trial limitation
-
-Current Twilio trial documentation restricts SMS API message bodies to predefined template names and does not allow custom bodies. Auth0's normal Twilio integration sends its own generated OTP in the body, so a new trial is **not sufficient merely because team recipients are verified**. Confirm account capabilities; upgrading may be required, and upgrading alone does not waive sender approval.
-
-Do not purchase numbers, upgrade billing or promise immediate US delivery without checking the specific cost and sender requirements first. A Twilio Verify trial demonstration is **not** an Auth0-generated-code integration: do not silently replace Auth0 OTP validation with a second verification system.
-
-## Nicholas: account setup and safe report-back
-
-1. Create an account at https://www.twilio.com/try-twilio . Verify your email and personal phone number privately. Select SMS/authentication as the use case and use your actual country/details; do not invent a business or sender approval.
-2. Reach the Console. In the SMS trial flow, verify additional team recipient numbers using each person's device. Do not share numbers or verification codes in chat.
-3. Stop before upgrading or buying a number. Inspect whether custom SMS content is permitted and what sender/compliance steps and charges are required. Report the status/quote below. Free units do not automatically mean this integration is free or deliverable immediately.
-4. After a sending-capable account/sender is agreed, configure its credentials directly in Auth0's **Branding -> Phone Provider**. Never put the Twilio Auth Token in Git, iOS, screenshots, shell arguments, chat or the kickBAC backend `.env`.
-
-```text
-Twilio account created: yes/no
-Account: trial/upgraded
-Signup country:
-Additional team recipients verified: yes/no/not applicable
-Custom SMS body supported: yes/no/unknown
-SMS sender or Messaging Service ready: yes/no
-Sender verification/registration: approved/pending/not started/not applicable
-Required upgrade/deposit/monthly/registration quote, if shown:
-Any error or dashboard option that differs:
-```
-
-No Account SID, Auth Token, private phone number, password or OTP is needed in this report.
-
-## Operator: configure and verify Auth0 after the provider is ready
-
-1. Inspect the existing tenant/apps/connections first. Work only in `dev-c87oxm4dkbyatvrn`, and select the Native `kickBAC iOS` app with public client ID `5gJK2T71UkL0fbVj9pbzzEzKeMWZoYlC`. Preserve unrelated apps and existing fallback access.
-2. **Branding -> Phone Provider**: select Twilio, delivery method **Text** only, and the approved From sender or Messaging Service. Enter credentials privately and save. Read back the provider/delivery/sender configuration without exposing the Auth Token.
-3. Use the provider's **Try** flow with a team phone entered privately. Check actual receipt and provider/Auth0 delivery logs. A successful provider SMS is not yet an end-to-end signup/login.
-4. **Authentication -> Passwordless -> SMS -> Settings**: connection `sms`, OTP length **6**, expiry **180 seconds**, **Disable Sign Ups OFF**, **Promote Connection to Domain Level OFF**. These are the observed default targets, not a completed deployment claim. Keep broad/domain-level access disabled.
-5. Enable the connection for **kickBAC iOS only**, not the Default App or machine-to-machine test application. Save, reopen the exact connection and verify its settings/app assignment.
-6. Review/preserve custom prompt text. Set **Authentication Profile -> Identifier First** (not the Enterprise biometrics option). Auth0 warns that changing this resets custom prompts; do not confirm blind or overwrite teammate customization. Reopen the profile and read it back after saving. Do not equate clicking Save or dismissing a confirmation with persisted settings.
-7. Liam's hosted authorization request explicitly selects `connection=sms`. Do not enable an embedded Passwordless OTP grant merely for this hosted PKCE flow. Keep the existing fallback until actual phone login/API acceptance succeeds; never modify tenant MFA settings as a substitute for primary passwordless login.
-8. Apply destination restrictions, appropriate rate/abuse controls and spending safeguards supported by the actual account. A budget alert is not automatically a hard spending cap.
-
-## Liam / iOS handoff
-
-**NON-BREAKING API; coordinated primary-login UX/identity change.** No SwiftUI source is changed by this backend branch. The app currently contains only a starter; Liam still needs to integrate Auth0.swift and secure credential storage.
-
-| Item | Exact value / behavior |
+| Setting | Verified value |
 | --- | --- |
 | Auth0 domain | `dev-c87oxm4dkbyatvrn.us.auth0.com` |
 | Native client ID | `5gJK2T71UkL0fbVj9pbzzEzKeMWZoYlC` |
-| Connection | `sms` |
-| Audience | `https://kickbac-api` — no trailing slash |
-| Initial scopes | `openid profile`; do not require an email claim for phone-only users |
-| Flow | Hosted Universal Login, Authorization Code + PKCE; SDK manages state/nonce/PKCE |
-| Bundle ID / URL scheme | `com.liam.KickBAC` |
-| Callback/logout target | `com.liam.KickBAC://dev-c87oxm4dkbyatvrn.us.auth0.com/ios/com.liam.KickBAC/callback` |
-| Backend authentication | API **access token**, not the OTP, ID token or phone number |
-| Future API base URL | `https://api.kickbac.vodka` — hosting/HTTPS remains separately unverified |
+| API audience | `https://kickbac-api` — no trailing slash; logical identifier, not host |
+| API origin | `https://api.kickbac.vodka` — public trusted HTTPS verified separately |
+| Connection / realm | `sms`, enabled for kickBAC iOS only |
+| OTP settings | Six digits, 180-second expiry, signups allowed, domain promotion OFF |
+| Native grants | Passwordless OTP enabled; Authorization Code and Refresh Token preserved; Client Credentials OFF |
+| Initial scopes | `openid profile`; no email requirement |
+| Native client secret | None; never embed one in iOS |
 
-The existing identity route is unchanged:
+The Custom/Text provider's exact source was saved/deployed and read back. The
+separate **kickBAC Verify success feedback** Post Login Action is deployed, its
+three secret names verified, and its Login flow binding saved/read back as live
+(audit event `2026-10-17T23:17:31.922Z`). Real feedback execution after a real SMS
+login is **not verified**.
 
-```http
-GET /v1/me
-Authorization: Bearer <API_ACCESS_TOKEN>
+Twilio is Full/PAYG with independently verified individual PRIMARY compliance
+approval. Earlier team dashboard tests produced two DELIVERED/error-0 attempts
+and human receipt. No new unlisted-recipient delivery test is claimed after
+approval. Normal signup must not require manually adding each user in Twilio;
+country, carrier and anti-abuse policies still apply. Auth0 showed one SMS account
+with a stored phone and one recorded login, without extracting phone values.
+That observation is not native access-token/API/history acceptance.
+
+No additional funds, auto-recharge, purchased sender, Photon work or optional
+custom rate-limit provisioning is authorized. No hard spending cap is claimed.
+Existing fallback connections, custom prompts and MFA are preserved.
+
+## Liam / iOS handoff — NON-BREAKING API
+
+Embedded requests go to the Auth0 domain, **not** the kickBAC API:
+
+1. `POST /passwordless/start`: public `client_id`, `connection: "sms"`, privately
+   entered canonical E.164 `phone_number`, and `send: "code"`.
+2. `POST /oauth/token`: `grant_type: "http://auth0.com/oauth/grant-type/passwordless/otp"`,
+   the same public `client_id`, `realm: "sms"`, private phone as `username`, private
+   `otp`, exact `audience: "https://kickbac-api"`, and `scope: "openid profile"`.
+3. Securely store credentials; send the **API access token** as
+   `Authorization: Bearer <API_ACCESS_TOKEN>` to the API. The OTP, phone number,
+   ID token and device credential are not user API bearer tokens.
+
+Hosted Authorization Code + PKCE remains available with `connection=sms` and the
+same audience/scopes. Do not reset Identifier First/custom prompts merely for
+embedded login. Existing bundle/URL scheme is `com.liam.KickBAC`; preserve the
+callback/logout target exactly:
+
+```text
+com.liam.KickBAC://dev-c87oxm4dkbyatvrn.us.auth0.com/ios/com.liam.KickBAC/callback
 ```
 
-Example response (illustrative subject, not a real login result):
+The unchanged `GET /v1/me` uses the bearer access token and returns, illustratively:
 
 ```json
 {"user_id":"sms|example-opaque-subject"}
 ```
 
-Treat `user_id` as an opaque value, not a phone number or a required `auth0|`/`sms|` prefix. Separate SMS and database identities do not automatically share history, even when phone claims match. Do not auto-link accounts by email/phone or discard a previous user's results. Repeated real sign-in to the same SMS account must return the same subject/history.
+Treat the entire subject as opaque; do not parse a phone or require a prefix.
+SMS/database accounts do not automatically share history when contact claims
+match. No automatic linking by phone/email is implemented. Phone stays in Auth0.
+Display name/picture use the separately implemented live `GET`/`PUT /v1/me/profile`;
+its source/schema belongs to the profile branch, not this branch. Use integrated
+`docs/API.md`/live OpenAPI for that contract.
 
-The separate `origin/ios` navigation branch predates the audience correction and still had `https://kickbac-api/` when inspected. Liam should incorporate current main before integrating login; do not overwrite or merge his navigation work implicitly.
+## Versioned Actions and operator configuration
 
-## Acceptance gates
+`backend/auth0/twilio-verify.cjs` exports two dependency-free handlers. Deploy each
+to its corresponding Auth0 trigger, **not** the API server. Target: Auth0 Node 22.
 
-- Real first SMS signup and later login on a team phone; no password or email prerequisite.
-- Correct API access-token audience/issuer/signature, `/v1/me` subject and user-private session/history.
-- Same user's history after logout/login and app restart; another subject cannot read it.
-- Invalid/expired code, resend/old-code invalidation, failure/retry and rate-limit behavior.
-- Actual delivery logs/phone receipt; no fake fallback or hardcoded code/token.
-- Primary login works without turning SMS into an MFA requirement.
-- Native Xcode/device build and callback/credential-store behavior verified by Liam.
+- **Custom Phone Provider / Text:** `onExecuteCustomPhoneProvider` sends real
+  `otp_verify` notifications with Auth0's exact six-digit `CustomCode`, preserving
+  leading zeroes, through the existing custom-code-enabled Twilio Verify Service.
+  Auth0 alone generates/compares the login OTP and issues identity/tokens.
+- **Dashboard `provider_test`:** connectivity only; omits `CustomCode`, letting
+  Verify generate a test code. That code cannot authenticate an Auth0 user.
+- Other notification types/channels are explicitly dropped. Do not enable phone
+  MFA/recovery/enrollment without implementing and testing their delivery needs.
+- **Post Login:** `onExecutePostLogin` reports `Status=approved` only for verified
+  SMS users, skipping refresh transactions. Phone-address feedback concerns the
+  latest pending provider attempt, not an exactly correlated login transaction.
+  Failed/expired feedback produces a fixed warning and never grants/denies login.
+  No Twilio VerificationCheck authenticates users.
 
-Local compatibility tests do not satisfy these real-provider/native gates.
+Both Actions require privately configured secret **names** `TWILIO_ACCOUNT_SID`,
+`TWILIO_AUTH_TOKEN`, `TWILIO_VERIFY_SID`. Values never belong in Git, iOS, API runtime
+configuration, screenshots or chat. Operator-only ignored Twilio configuration
+is not loaded by kickBAC; do not print it or source it as shell code. No SDK needed.
 
-## Local verification on the phone-login branch
+Requests use a fixed HTTPS provider origin, reject redirects, have an eight-second
+timeout and no automatic retry. Delivery errors expose only fixed stage names
+and allowlisted numeric HTTP/provider codes, never phone/code/credential values,
+provider bodies or original exceptions. Preserve those numeric diagnostics when
+troubleshooting; a pending delivery response still is not successful login.
 
-`backend/tests/test_phone_identity.py` adds six compatibility checks for the existing API: a signed SMS subject with no email claim, exact-audience enforcement, rejection of a bare OTP/phone number as a bearer credential, isolation from other SMS/database subjects even when contact claims match, and persisted private history after a fresh app restart. These fixtures do not send messages or authenticate against live Auth0.
+For authorized future changes, inspect the existing tenant first; preserve
+fallback/grants/unrelated Actions, configure secrets privately, and read back
+exact source/settings and saved flow binding after deployment. No sender purchase
+or repeated compliance setup is needed. No dashboard/host changes were made by
+this source-publication task.
 
-Fresh full-branch execution: **107 tests passed**, Ruff lint passed, **31 files** passed formatting, byte compilation passed, and the real-HTTP simulator returned `SIMULATOR_OK`, `COMPLETE`, one measurement, zero duplicates, foreign-owner `404` and restart `ok`. Production API code, migrations and dependency pins are unchanged.
+## Local checks and outstanding acceptance
+
+Run from repository root (explicit Windows Node path):
+
+```bash
+"C:/Program Files/nodejs/node.exe" --test backend/auth0/test-twilio-verify.cjs
+cd backend
+uv run --python 3.12 pytest -q
+uv run --python 3.12 ruff check .
+uv run --python 3.12 ruff format --check .
+uv run --python 3.12 python -m compileall -q kickbac
+uv run --python 3.12 python -m kickbac.simulator
+```
+
+Verified: **78 Action fixtures**, **107 backend tests**, Ruff lint, **31-file**
+format check, CJS syntax and Python compilation. Six phone-identity cases cover
+no-email SMS identity, both incorrect audiences, bare OTP/phone rejection, and
+subject-isolated history surviving restart. Real-HTTP simulator: `SIMULATOR_OK`,
+`COMPLETE`, one measurement, zero duplicates, foreign-owner 404, restart `ok`.
+Local Node is 24.18.1; earlier hosted Node 22 no-SMS checks established configuration
+and connectivity, not real login or feedback execution.
+
+Liam still verifies real signup/relogin, correct access-token audience/issuer,
+`/v1/me`, private history after logout/app restart, cross-user denial, invalid/
+expired and resend/old-code behavior, secure storage and actual device build.
+Feedback runtime, general-recipient delivery, physical NFC/QR routing and real
+Auth0-owner-to-device measurement acceptance remain distinct outstanding checks.
+Fixtures never substitute for live acceptance; do not add auth bypasses or fake
+login endpoints. Firmware bring-up may proceed independently; sensor validation
+and native acceptance are separate from provider configuration.
 
 ## References
 
-- https://auth0.com/docs/authenticate/passwordless/passwordless-with-universal-login
 - https://auth0.com/docs/authenticate/passwordless/authentication-methods/sms-otp
-- https://auth0.com/docs/customize/phone-messages/configure-phone-messaging-providers/configure-twilio-as-a-phone-messaging-provider
+- https://auth0.com/docs/authenticate/passwordless/passwordless-with-universal-login
 - https://auth0.com/docs/authenticate/passwordless/best-practices
-- https://www.twilio.com/docs/usage/trials
-- https://www.twilio.com/docs/usage/trials/try-out-sms
-- https://www.twilio.com/docs/messaging/compliance/toll-free/console-onboarding
+- https://auth0.com/docs/customize/phone-messages/configure-phone-messaging-providers/configure-a-custom-phone-provider/configure-a-custom-phone-provider-with-twilio-verify
+- https://www.twilio.com/docs/verify/api/customization-options
+- https://www.twilio.com/docs/verify/api/verification
+- https://www.twilio.com/docs/trust-hub/profiles/primary-compliance-profiles
+- https://www.twilio.com/en-us/verify/pricing

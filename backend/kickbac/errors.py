@@ -13,6 +13,7 @@ def is_party_private(path):
             "/v1/me/parties",
             "/v1/party-games",
             "/v1/me/game-history",
+            "/v1/me/check-ins",
         )
     )
 

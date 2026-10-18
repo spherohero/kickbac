@@ -67,6 +67,9 @@ def create_app(settings=None, verifier=None, clock=None):
 
     app.include_router(parties_router)
     app.include_router(party_games_router)
+    from .party_check_ins import router as check_ins_router
+
+    app.include_router(check_ins_router)
     return app
 
 

@@ -11,11 +11,26 @@ terminal replay after leave/close and new server restart, plus streaming bounds.
 Ruff lint,71-file formatting, compile, original `SIMULATOR_OK` and immutable old
 17-operation/23-schema compatibility checks passed.
 
-Final independent NFC and cross-feature reviews and exact-head GitHub CI are
-pending. No native tag scan, live Auth0 acceptance, physical sensing, target-host
-isolated test or production upgrade is claimed. Production remains the deployed
-schema4/17-operation runtime below. Upgrades require verified backup/copy testing
-for both005+006; source/merge does not automatically deploy.
+Both independent final reviews APPROVED the unchanged runtime at2f04074:
+SPEC PASS, QUALITY/security PASS and cross-feature integration PASS, no actionable
+blockers. Integration reviewer ran528 tests plus20 scratch-only real-HTTP race
+probes (check-in versus close/rebind, upload versus cancel/leave, result versus
+game close); parent repeated528 tests and all local gates after review.
+
+Published5a8d8e0 differs from the reviewed runtime only in documentation. Exact
+[push CI](https://github.com/spherohero/kickbac/actions/runs/39105274853) and
+[PR CI](https://github.com/spherohero/kickbac/actions/runs/39105277114) passed on
+that head. Logs read back521 backend/deployment tests plus7 party HTTP checks
+per Python version,2 actual C++ decoder checks,78 non-sending Node22 Action
+fixtures, Ruff/compile and `SIMULATOR_OK`. Final docs-only head CI/merge readback
+are still required before calling the PR merged.
+
+No native tag scan, live Auth0 acceptance, physical sensing, target-host isolated
+test or production upgrade is claimed. Fresh public readback after reviews:
+health200,17 operations, no check-in routes. Production remains the deployed
+schema4 runtime below. Upgrades require verified backup/copy testing for both
+005+006; source/merge does not automatically deploy. Older checkpoints below
+describe their own historical state, not missing implementation now.
 
 ## Earlier party/profile foundation checkpoint — historical, not production
 

@@ -1,6 +1,6 @@
 # NFC-first party check-in — implementation direction
 
-**Status: implemented locally and exercised over real HTTP; final independent review/CI pending; NOT deployed.** Nicholas confirmed host NFC linking, then player tap BEFORE measurement to reserve that person's next test and show accepted app status/result. Draft [PR #26](https://github.com/spherohero/kickbac/pull/26) publishes this source; the final PR head and merge state are authoritative, not an older checkpoint. Current local API has33 operations/schema6; production remains17/schema4. Native NFC/Universal Link delivery and physical sensor acquisition are separate, unverified gates. The [party contract](PARTIES.md) and this immutable session context preserve all existing public operation/schema shapes.
+**Status: implemented, exercised over real HTTP, independently approved and CI verified; NOT deployed.** Nicholas confirmed host NFC linking, then player tap BEFORE measurement to reserve that person's next test and show accepted app status/result. [PR #26](https://github.com/spherohero/kickbac/pull/26) publishes this source; its exact final head/check/merge state is authoritative. The reviewed runtime at2f04074 is unchanged in5a8d8e0; later edits record documentation evidence only. Source API has33 operations/schema6; public production readback remains17/schema4 without check-in routes. Native NFC/Universal Link delivery and physical sensor acquisition are separate, unverified gates. The [party contract](PARTIES.md) and this immutable session context preserve all existing public operation/schema shapes.
 
 ## What to write to each sticker
 
@@ -16,15 +16,15 @@ The sticker is passive identification. It has no electrical connection to the ES
 
 ## Three separate user intentions
 
-1. **Host setup:** create party → select “Link breathalyzer” → scan device URL → authenticated, explicit host confirmation → server validates assignment permission and atomically binds current device. Existing proposal: `PUT /v1/parties/{party_id}/device` with `{"device_id":"kb-demo-01"}`. Public device IDs are not ownership proof; keep backend operator approval for the demo units, not a secret on the tag. Busy/conflicting units cannot be stolen.
-2. **Membership:** a player may join the currently assigned party using the device locator (or host code). Existing proposal: `POST /v1/parties/join` with `{"device_id":"kb-demo-01"}`. Joining never arms.
+1. **Host setup:** create party → select “Link breathalyzer” → scan device URL → authenticated, explicit host confirmation → server validates assignment permission and atomically binds current device. Implemented source: `PUT /v1/parties/{party_id}/device` with `{"device_id":"kb-demo-01"}`. Public device IDs are not ownership proof; keep backend operator approval for the demo units, not a secret on the tag. Busy/conflicting units cannot be stolen.
+2. **Membership:** a player may join the currently assigned party using the device locator (or host code). Implemented source: `POST /v1/parties/join` with `{"device_id":"kb-demo-01"}`. Joining never arms.
 3. **Player check-in:** signed-in player deliberately chooses “Start my test” (or enters that scan mode), scans the same URL, and confirms the intended party/game/device. Server creates exactly one exclusive next-test session for the token subject, with party/game association snapshotted in the same transaction. The phone can show whose turn it is and a countdown; the board can acknowledge readiness without receiving a user identity.
 
 A plain background scan does not select one of these intentions securely. Preserve target through login, then require the intended authenticated action. A tag is clonable/public identification, not proof of physical presence or proof of who supplies the sample.
 
 ## === LIAM / iOS IMPACT ===
 
-**Proposed additive / NON-BREAKING to existing routes and payloads.** Native NFC/link handling and party check-in consumers are new client work owned by Liam. Keep his existing auth/profile/history/device consumers intact. The parent notified Nicholas before writing this proposal; no app source is edited here.
+**Implemented additive / NON-BREAKING to existing routes and payloads.** Native NFC/link handling and party check-in consumers remain new client work owned by Liam. Keep his existing auth/profile/history/device consumers intact. The parent notified Nicholas before implementation and again before merge; no app source is edited here. Client adoption still waits for verified API release availability.
 
 ### Frozen check-in contract — approved for test-first implementation, not live
 
@@ -144,9 +144,13 @@ Parent integration at `2f04074` passed528 tests on each of Python3.11 and3.12,
 including signed-fixture real-loopback HTTP reservation→unchanged device poll→
 simulator upload→owned party/game/reading history→fresh-server restart and terminal
 check-in replay. Seven HTTP cases include streamed32KiB limits. Ruff lint,
-71-file formatting, compile and original simulator passed. Independent final
-spec/security/integration review and new exact-head CI are pending; no native
-NFC, Auth0 delivery, physical sensor or deployment acceptance is inferred.
+71-file formatting, compile and original simulator passed. Both independent final
+spec/security/integration reviews approved; one separately ran528 tests and20
+scratch-only real-HTTP race probes. Parent repeated528 tests and local gates after
+review. Exact5a8d8e0 push/PR CI passed on Python3.11/3.12, actual firmware decoder
+and non-sending Auth0 fixtures; see [release evidence](BACKEND_RELEASE_VERIFICATION.md).
+Final documentation-only head checks and merge readback remain publication gates.
+No native NFC, Auth0 delivery, physical sensor or deployment acceptance is inferred.
 
 Reproduce from `backend/` with `PYTHONPATH` unset:
 

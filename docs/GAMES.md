@@ -4,15 +4,15 @@ Status: **LIVE at https://api.kickbac.vodka**, published and merged in [PR #7](h
 
 ## Local party/context additions — not deployed
 
-The combined source in draft [PR #26](https://github.com/spherohero/kickbac/pull/26)
+The reviewed source in [PR #26](https://github.com/spherohero/kickbac/pull/26)
 adds host-controlled parties/device assignment/game instances, one own completion
 per instance, explicit owned measurement links, and `GET /v1/me/game-history`.
 Read [PARTIES.md](PARTIES.md) for the exact contract. Generic live routes and their
 five-field requests/responses below stay unchanged; party results share the same
 immutable ledger and fixed 10-point award. Rich history returns explicit null
 context for legacy rows, not guessed party/placement/BAC. All accepted readings
-remain in ordinary private history. These source additions are under independent
-review, not production availability, shared gameplay, anti-cheat, a public
+remain in ordinary private history. These source additions passed independent
+review and CI; this is not production availability, shared gameplay, anti-cheat, a public
 leaderboard or native acceptance. Backend ARM-time context is now implemented
 locally through [NFC check-ins](NFC_CHECK_IN.md); a check-in-linked reading cannot
 be attached to another party/game or promoted from party-only into game context.

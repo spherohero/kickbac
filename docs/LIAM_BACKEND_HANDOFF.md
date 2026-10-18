@@ -2,7 +2,18 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
-### NFC check-ins implemented — final review/CI pending, not deployed
+### NFC check-ins — independent reviews passed; ready for verified merge, not deployed
+
+This is the current checkpoint; older implementation/proposal entries below are
+historical and do not override it. Runtime reviewed at
+`2f0407483bc5f2b539de79495a171d86c0571b67` is unchanged in published
+`5a8d8e0f7753e7471b30607aa9b6ba9418c07d20`; the intervening changes are docs only.
+Both independent final reviews approved SPEC and QUALITY/security/integration
+with no actionable blockers. The integration reviewer ran528 tests and20
+scratch-only actual-HTTP race probes; parent repeated528 tests/lint/71-file
+formatting/compile/simulator after receiving the reviews. The final PR head,
+check status and merge commit are authoritative for publication/merge, never
+evidence of production availability.
 
 - Backend integration branch `backend/party-profile-completion`; publishing branch
   `backend/party-profile-contract`, [PR #26](https://github.com/spherohero/kickbac/pull/26),
@@ -26,8 +37,12 @@ This replaces the older local/unpublished-profile handoff. **Backend profile, ph
   real-loopback reservation→device poll→upload→private party/game/history→restart
   acceptance and seven HTTP/streaming cases. Ruff lint/71-file formatting, compile,
   original simulator and unchanged old17-operation/23-schema compatibility passed.
-  Final independent NFC/cross-feature review and exact new-head GitHub CI remain
-  pending. Earlier party foundation CI at66d23e1 was green, not this runtime's CI.
+  Both independent final reviews passed. Exact5a8d8e0
+  [push CI](https://github.com/spherohero/kickbac/actions/runs/39105274853) and
+  [PR CI](https://github.com/spherohero/kickbac/actions/runs/39105277114) passed:
+  each Python version ran521 backend/deployment tests plus7 party HTTP checks;
+  decoder job passed2 checks and Node22 passed78 non-sending Auth0 fixtures.
+  Final documentation-only head CI and actual merge readback remain the merge gates.
 - Refreshed client source: `liam/party-setup@4d34436` is now published (no open PR
   observed), adding a local Party UI preview. Its owner handoff still contains
   historical “local/uncommitted” wording; Git confirms publication, not native

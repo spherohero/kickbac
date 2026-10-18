@@ -21,7 +21,8 @@ never silently change firmware metadata or treat tag possession as host approval
 
 The original tasks1–9 are implemented and their independent scoped reviews
 passed. Task10's real HTTP/restart/streaming/compatibility checks pass locally;
-exact final-head CI, final review and merge are still gates. Additional
+both final independent reviews and exact5a8d8e0 push/PR CI passed with no blockers.
+Final docs-only head CI and merge readback remain publication gates. Additional
 NFC-first scope is frozen and implemented in migration006/schema6 with atomic
 check-in POST/private GET and exact party/game result fencing; see
 `docs/NFC_CHECK_IN.md`. Parent combined execution at2f04074 returned528 tests on

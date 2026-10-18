@@ -1,8 +1,8 @@
-# Parties and richer private profile history — local implementation under review
+# Parties and richer private profile history — reviewed backend source
 
-**Status: implemented locally, under independent review; NOT deployed.** Owner:
+**Status: implemented, locally exercised, independently approved; NOT deployed.** Owner:
 backend Bot, integration branch `backend/party-profile-completion`, publishing
-branch `backend/party-profile-contract` in [draft PR #26](https://github.com/spherohero/kickbac/pull/26),
+branch `backend/party-profile-contract` in [PR #26](https://github.com/spherohero/kickbac/pull/26),
 based on main `dd19b404210517b1b0c8b8f8a1809ba988bb250d`. The combined local
 application currently exposes33 operations on schema6. Its real-loopback
 party→join→game→check-in reservation→simulator upload→completion→private
@@ -68,7 +68,7 @@ Authorization: Bearer <API_ACCESS_TOKEN>
 {"device_id":"kb-demo-01"}
 ```
 
-The server transaction joins whichever OPEN party currently owns the assignment. Unknown/unassigned/closed targets are 404; no stale cached party ID or code is trusted. Joining does not select an upload owner, arm a unit, extend a test, expose sensor data or communicate credentials to hardware. A later deliberate arm continues to use `POST /v1/devices/{device_id}/sessions` with `{}`.
+The server transaction joins whichever OPEN party currently owns the assignment. Unknown/unassigned/closed targets are 404; no stale cached party ID or code is trusted. Joining does not select an upload owner, arm a unit, extend a test, expose sensor data or communicate credentials to hardware. For party-aware arming use the explicit [check-in POST](NFC_CHECK_IN.md#frozen-check-in-contract--approved-for-test-first-implementation-not-live), not a legacy ordinary arm with no party/game context. `POST /v1/devices/{device_id}/sessions` with `{}` remains available and unchanged for ordinary tests.
 
 ## Party game instances and completed results
 

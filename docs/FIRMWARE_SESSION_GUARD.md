@@ -2,6 +2,15 @@
 
 ## Scope and exact patch
 
+**MERGED, not flashed:** [PR #28](https://github.com/spherohero/kickbac/pull/28),
+reviewed head `11b5e38d40eb0868096a6dc1830bd3660b5fb6b2`, merged as
+`706d5bb27ab2aa00b620375b27b7a93adaf6addf`. Exact remote head, merge parents and
+complete reviewed-tree equality were verified. Exact merged-main
+[firmware CI](https://github.com/spherohero/kickbac/actions/runs/39107522328) and
+[backend/decoder CI](https://github.com/spherohero/kickbac/actions/runs/39107522329)
+passed. This docs-only closeout is on `docs/firmware-session-closeout`, based on
+that merge; its publishing PR records its own state. No runtime change or flash.
+
 Firmware owner, branch `firmware/session-ownership-guard`, based on
 `86adb12b4c1f669aafb1ee5ee1726f6da87454bb`. The publishing PR/commits are the
 source of exact head and publication status. This checkpoint is NOT a flash,

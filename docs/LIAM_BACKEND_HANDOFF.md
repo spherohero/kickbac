@@ -4,9 +4,17 @@ This replaces the older local/unpublished-profile handoff. **Backend profile, ph
 
 ### Firmware session ownership guard — not flashed; no client change
 
+- **MERGED / not flashed:** [PR #28](https://github.com/spherohero/kickbac/pull/28),
+  exact reviewed head `11b5e38d40eb0868096a6dc1830bd3660b5fb6b2`, merge
+  `706d5bb27ab2aa00b620375b27b7a93adaf6addf`; remote parents/tree equality verified.
+  Exact merged-main [firmware CI](https://github.com/spherohero/kickbac/actions/runs/39107522328)
+  and [backend/decoder CI](https://github.com/spherohero/kickbac/actions/runs/39107522329)
+  passed. Docs closeout owner firmware Bot, `docs/firmware-session-closeout`, base
+  that merge; its publishing PR records its own state. Runtime is unchanged by
+  the closeout. No deployment, flash or physical/native acceptance.
 - Owner: firmware Bot, `firmware/session-ownership-guard`, base
-  `86adb12b4c1f669aafb1ee5ee1726f6da87454bb`. Publishing PR/commits record exact
-  head/state; no merge, deployment, flash or physical/native acceptance implied.
+  `86adb12b4c1f669aafb1ee5ee1726f6da87454bb`. Exact reviewed head and verified
+  merge/CI are recorded above; no deployment, flash or physical/native acceptance.
 - **NON-BREAKING; no Liam action.** Exact retained server UUID/expiry, stale/lost/
   expired-session acquisition fencing and transport-neutral immutable pending
   bytes are documented in [FIRMWARE_SESSION_GUARD.md](FIRMWARE_SESSION_GUARD.md).

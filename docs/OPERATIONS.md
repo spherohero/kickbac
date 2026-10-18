@@ -15,7 +15,7 @@ This update uses a **release-local hashed venv** at `/opt/kickbac/current/venv`,
 
 SQLite snapshots include private profile image BLOBs. Profile requests are bounded and sanitized before persistence; do not dump those rows. **Rollback is not a blind symlink swap:** pre-profile code only accepts schema2, while live is now3. Preserve current data/profile rows, validate the target schema/runtime and coordinate any explicit downgrade/restore; no silent data loss or automatic snapshot restore. Profile/native acceptance and real Auth0 token checks remain Liam-owned.
 
-**Production release gate:** this branch's base backend still requires schema2. Do not deploy its backend over live schema3 by itself. Integrate the reviewed profile backend/migration before packaging a production release, and test candidate schema3 compatibility. Recorded live checks above are parent-provided checkpoints, not a fresh host inspection by publishing these artifacts.
+**Production release gate:** this branch now includes the reviewed published profile backend and migration003 from current main, requiring schema3. Parent ran196 combined backend/deployment tests successfully; the backup fixture restores the complete current migration set, not a hardcoded schema2 subset. Package only reviewed committed code with its matching lockfile and migrations; check actual live schema before activation. Recorded live checks above are executed parent checkpoints, not a fresh host inspection by publishing these artifacts.
 
 ## Current layout and decisions
 
@@ -252,7 +252,9 @@ uv run --locked python -m kickbac.simulator
 
 Tests restore a temporary online WAL snapshot, verify schema version/rows and
 integrity, exercise exact-name retention and failure cleanup. They use this
-checkout's schema2 backend; profile/schema3 migration acceptance is separate.
+checkout's complete current migration set (schema3 at this checkpoint), including
+an explicit restored-schema startup check. Production-copy migration acceptance
+remains separate from temporary backup fixtures.
 Static runtime guardrails assert release-local venv and no startup migration.
 Static artifact
 checks do **not** replace Ubuntu `systemd-analyze verify`, Caddy validation,

@@ -41,9 +41,6 @@ struct HomeView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack {
-                Text("Home")
-                    .font(.system(.title2, design: .rounded, weight: .semibold))
-                    .accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 8)
                 Button(deviceFlow.hasActiveSession ? "View test" : "Connect") {
                     exitDemo()

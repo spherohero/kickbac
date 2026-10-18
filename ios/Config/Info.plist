@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDisplayName</key>
-	<string>kickBAC</string>
+	<string>KickBAC</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Take a profile photo or scan a kickBAC device QR code.</string>
+	<string>Take a profile photo or scan a KickBAC device QR code.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>LCMogi-A.otf</string>
@@ -17,7 +17,7 @@
 		<key>UIColorName</key>
 		<string>SplashBackground</string>
 		<key>UIImageName</key>
-		<string>SplashWordmark</string>
+		<string>KickBACWordmark</string>
 		<key>UIImageRespectsSafeAreaInsets</key>
 		<true/>
 	</dict>

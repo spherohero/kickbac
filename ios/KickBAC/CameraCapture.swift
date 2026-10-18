@@ -17,41 +17,12 @@ struct CameraCapture: View {
                 .multilineTextAlignment(.center)
                 .accessibilityAddTraits(.isHeader)
 
-            ZStack {
-                Color(white: colorScheme == .dark ? 0.1 : 0.95)
-
-                if camera.previewSource != nil || camera.photo != nil {
-                    CameraPreview(source: camera.previewSource, image: camera.photo)
-                } else {
-                    cameraPlaceholder
-                }
+            GeometryReader { geometry in
+                let side = min(geometry.size.width, geometry.size.height)
+                preview
+                    .frame(width: side, height: side)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .clipShape(.rect(cornerRadius: 36))
-            .onGeometryChange(for: CGSize.self) { $0.size } action: { previewSize = $0 }
-            .overlay(alignment: .bottom) {
-                if let error = camera.error {
-                    Text(error)
-                        .font(.callout)
-                        .multilineTextAlignment(.center)
-                        .padding(16)
-                        .background(Color(.systemBackground), in: .rect(cornerRadius: 20))
-                        .padding(16)
-                }
-            }
-            .overlay {
-                if !camera.isReady && camera.photo == nil {
-                    Button(action: camera.requestAccess) {
-                        Color.clear
-                            .contentShape(.rect(cornerRadius: 36))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Allow camera access")
-                    .accessibilityHint(camera.needsSettings ? "Opens camera permission settings." : "Starts your camera.")
-                    .accessibilityIdentifier("cameraPermissionButton")
-                }
-            }
-            .accessibilityIdentifier("profileCameraPreview")
         }
         .padding(.horizontal, 24)
         .padding(.top, 32)
@@ -61,6 +32,43 @@ struct CameraCapture: View {
             camera.setActive(isActive && scenePhase == .active, owner: previewOwner)
         }
         .onDisappear { camera.setActive(false, owner: previewOwner) }
+    }
+
+    private var preview: some View {
+        ZStack {
+            Color(white: colorScheme == .dark ? 0.1 : 0.95)
+
+            if camera.previewSource != nil || camera.photo != nil {
+                CameraPreview(source: camera.previewSource, image: camera.photo)
+            } else {
+                cameraPlaceholder
+            }
+        }
+        .clipShape(.rect(cornerRadius: 36))
+        .onGeometryChange(for: CGSize.self) { $0.size } action: { previewSize = $0 }
+        .overlay(alignment: .bottom) {
+            if let error = camera.error {
+                Text(error)
+                    .font(.callout)
+                    .multilineTextAlignment(.center)
+                    .padding(16)
+                    .background(Color(.systemBackground), in: .rect(cornerRadius: 20))
+                    .padding(16)
+            }
+        }
+        .overlay {
+            if !camera.isReady && camera.photo == nil {
+                Button(action: camera.requestAccess) {
+                    Color.clear
+                        .contentShape(.rect(cornerRadius: 36))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Allow camera access")
+                .accessibilityHint(camera.needsSettings ? "Opens camera permission settings." : "Starts your camera.")
+                .accessibilityIdentifier("cameraPermissionButton")
+            }
+        }
+        .accessibilityIdentifier("profileCameraPreview")
     }
 
     private var cameraPlaceholder: some View {
@@ -359,7 +367,7 @@ private struct CameraPreview: UIViewRepresentable {
         view.photoView.image = image
         view.photoView.isHidden = image == nil
         view.accessibilityLabel = image == nil ? "Front camera preview" : "Your photo"
-        view.accessibilityHint = "Center your face in the clear area."
+        view.accessibilityHint = "Center your face in the square."
     }
 
     static func dismantleUIView(_ view: CameraPreviewView, coordinator: ()) {
@@ -371,10 +379,6 @@ private final class CameraPreviewView: UIView {
     override class var layerClass: AnyClass { AVCaptureVideoPreviewLayer.self }
     private var previewLayer: AVCaptureVideoPreviewLayer { layer as! AVCaptureVideoPreviewLayer }
     let photoView = UIImageView()
-    private let blurView = UIVisualEffectView(effect: nil)
-    private let blurMaskView = UIImageView()
-    private let dimmingLayer = CAShapeLayer()
-    private var blurAnimator: UIViewPropertyAnimator?
     private var rotationCoordinator: AVCaptureDevice.RotationCoordinator?
     private var rotationObservation: NSKeyValueObservation?
     private var boundSource: CameraPreviewSource?
@@ -387,18 +391,6 @@ private final class CameraPreviewView: UIView {
         photoView.contentMode = .scaleAspectFill
         photoView.clipsToBounds = true
         addSubview(photoView)
-        addSubview(blurView)
-        blurView.isUserInteractionEnabled = false
-        dimmingLayer.fillRule = .evenOdd
-        dimmingLayer.fillColor = UIColor.black.withAlphaComponent(0.12).cgColor
-        layer.addSublayer(dimmingLayer)
-        let animator = UIViewPropertyAnimator(duration: 1, curve: .linear) { [blurView] in
-            blurView.effect = UIBlurEffect(style: .systemUltraThinMaterialLight)
-        }
-        animator.startAnimation()
-        animator.pauseAnimation()
-        animator.fractionComplete = 0.08
-        blurAnimator = animator
         bind(source)
     }
 
@@ -428,8 +420,6 @@ private final class CameraPreviewView: UIView {
     required init?(coder: NSCoder) { nil }
 
     func disconnect() {
-        blurAnimator?.stopAnimation(true)
-        blurAnimator = nil
         rotationObservation = nil
         rotationCoordinator = nil
         boundSource = nil
@@ -439,43 +429,17 @@ private final class CameraPreviewView: UIView {
     override func layoutSubviews() {
         super.layoutSubviews()
         photoView.frame = bounds
-        guard !bounds.isEmpty, blurView.frame != bounds else { return }
-        blurView.frame = bounds
-        let path = UIBezierPath(roundedRect: bounds, cornerRadius: 36)
-        let face = CameraFraming.faceRect(in: bounds.size)
-        path.append(UIBezierPath(roundedRect: face, cornerRadius: face.width * 0.12))
-        path.usesEvenOddFillRule = true
-        // A bitmap mask preserves the transparent hole when UIKit copies the effect's mask.
-        blurMaskView.image = UIGraphicsImageRenderer(size: bounds.size).image { _ in
-            UIColor.black.setFill()
-            path.fill()
-        }
-        blurMaskView.frame = blurView.bounds
-        blurView.mask = blurMaskView
-        CATransaction.begin()
-        CATransaction.setDisableActions(true)
-        dimmingLayer.frame = bounds
-        dimmingLayer.path = path.cgPath
-        CATransaction.commit()
     }
 }
 
 private enum CameraFraming {
-    static func faceRect(in viewport: CGSize) -> CGRect {
-        let side = min(viewport.width, viewport.height) * 0.82
-        return CGRect(x: (viewport.width - side) / 2,
-                      y: viewport.height * 0.44 - side / 2,
-                      width: side, height: side)
-    }
-
     static func sourceRect(imageSize: CGSize, viewport: CGSize) -> CGRect {
         let scale = max(viewport.width / imageSize.width, viewport.height / imageSize.height)
-        let face = faceRect(in: viewport)
         let offset = CGPoint(x: (viewport.width - imageSize.width * scale) / 2,
                              y: (viewport.height - imageSize.height * scale) / 2)
-        return CGRect(x: (face.minX - offset.x) / scale,
-                      y: (face.minY - offset.y) / scale,
-                      width: face.width / scale, height: face.height / scale)
+        return CGRect(x: -offset.x / scale,
+                      y: -offset.y / scale,
+                      width: viewport.width / scale, height: viewport.height / scale)
     }
 
     static func crop(_ image: UIImage, viewport: CGSize) -> UIImage {

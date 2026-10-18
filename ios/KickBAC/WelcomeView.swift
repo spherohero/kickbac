@@ -21,11 +21,11 @@ struct WelcomeView: View {
                 Color(red: 0.105, green: 0.107, blue: 0.115)
 
                 VStack(spacing: 0) {
-                    Image("SplashWordmark")
+                    Image("KickBACWordmark")
                         .resizable().scaledToFit()
                         .frame(width: 144)
                         .padding(.top, geometry.safeAreaInsets.top + max(96, geometry.size.height * 0.13))
-                        .accessibilityLabel("kickBAC")
+                        .accessibilityLabel("KickBAC")
                         .opacity(isExpanding ? 0 : 1)
 
                     Spacer(minLength: 32)

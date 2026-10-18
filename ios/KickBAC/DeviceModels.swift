@@ -21,7 +21,7 @@ nonisolated enum DeviceTarget {
 
     enum TargetError: LocalizedError {
         case invalid
-        var errorDescription: String? { "Enter a kickBAC device ID or its official device link." }
+        var errorDescription: String? { "Enter a KickBAC device ID or its official device link." }
     }
 }
 

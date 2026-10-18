@@ -177,6 +177,26 @@ struct AuthIntegrationChecks {
             preconditionFailure("Accepted a profile for a different subject")
         } catch KickBACAPI.APIError.invalidResponse { }
         precondition(session.isSignedIn)
+        AuthStub.payload = Data(#"{"items":[{"result_id":"game-a","user_id":"sms|opaque-profile-owner","game_id":"trivia","score":8,"outcome":"win","data":{},"awarded_points":10,"created_at":"2026-10-18T03:00:05Z"}],"limit":50,"offset":50,"has_more":false}"#.utf8)
+        let games = try await session.gameResults(offset: 50)
+        precondition(games.items.first?.awardedPoints == 10 && games.items.first?.score == 8)
+        let gameRequest = AuthStub.requests.last!
+        precondition(gameRequest.url?.path == "/v1/me/game-results" && gameRequest.httpMethod == "GET")
+        precondition(gameRequest.value(forHTTPHeaderField: "Authorization") == "Bearer PRIVATE-READINGS-TEST")
+        let gameQuery = URLComponents(url: gameRequest.url!, resolvingAgainstBaseURL: false)!.queryItems!
+        precondition(gameQuery.contains(URLQueryItem(name: "offset", value: "50")))
+        AuthStub.payload = Data(#"{"items":[{"result_id":"own","user_id":"sms|opaque-profile-owner","game_id":"trivia","score":8,"outcome":"win","awarded_points":10,"created_at":"2026-10-18T03:00:05Z"},{"result_id":"foreign","user_id":"different-owner","game_id":"trivia","score":8,"outcome":"win","awarded_points":10,"created_at":"2026-10-18T03:00:05Z"}],"limit":50,"offset":0,"has_more":false}"#.utf8)
+        do {
+            _ = try await session.gameResults()
+            preconditionFailure("Accepted a mixed-owner game history page")
+        } catch KickBACAPI.APIError.invalidResponse { }
+        AuthStub.status = 503
+        do {
+            _ = try await session.gameResults()
+            preconditionFailure("Accepted unavailable game history")
+        } catch { }
+        precondition(session.isSignedIn)
+        AuthStub.status = 200
         AuthStub.payload = Data(#"{"user_id":"sms|opaque-profile-owner","total_points":10,"games_played":1,"wins":1,"per_game":[]}"#.utf8)
         await session.loadStats()
         precondition(session.stats?.totalPoints == 10 && session.statsMessage == nil)

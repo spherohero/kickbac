@@ -49,6 +49,53 @@ struct MeasurementPage: Decodable {
     }
 }
 
+nonisolated struct GameResultPage: Decodable, Sendable {
+    let items: [APIGameResult]
+    let limit: Int
+    let offset: Int
+    let hasMore: Bool
+    enum CodingKeys: String, CodingKey {
+        case items, limit, offset
+        case hasMore = "has_more"
+    }
+}
+
+nonisolated struct APIGameResult: Decodable, Identifiable, Sendable {
+    enum Outcome: String, Decodable, Sendable {
+        case win, loss, draw, completed
+        var title: String {
+            switch self {
+            case .win: "Won"
+            case .loss: "Lost"
+            case .draw: "Draw"
+            case .completed: "Completed"
+            }
+        }
+    }
+    let id: String
+    let userID: String
+    let gameID: String
+    let score: Int
+    let outcome: Outcome
+    let awardedPoints: Int
+    let createdAt: String
+
+    var gameTitle: String {
+        gameID.replacingOccurrences(of: "_", with: " ").replacingOccurrences(of: "-", with: " ").capitalized
+    }
+
+    var recordedDate: Date? {
+        (try? Date(createdAt, strategy: .iso8601)) ??
+            (try? Date(createdAt, strategy: Date.ISO8601FormatStyle(includingFractionalSeconds: true)))
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case score, outcome
+        case id = "result_id", userID = "user_id", gameID = "game_id"
+        case awardedPoints = "awarded_points", createdAt = "created_at"
+    }
+}
+
 nonisolated struct APIMeasurement: Decodable, Identifiable, Sendable {
     struct Raw: Decodable, Sendable {
         let sensor: String
@@ -148,6 +195,14 @@ struct KickBACAPI {
         try await get("v1/me/stats", accessToken: accessToken)
     }
 
+    func gameResults(accessToken: String, limit: Int = 50, offset: Int = 0) async throws -> GameResultPage {
+        guard (1...100).contains(limit), offset >= 0 else { throw APIError.invalidRequest }
+        return try await get("v1/me/game-results", query: [
+            URLQueryItem(name: "limit", value: String(limit)),
+            URLQueryItem(name: "offset", value: String(offset))
+        ], accessToken: accessToken)
+    }
+
     func saveProfile(name: String, photoData: Data?, accessToken: String) async throws -> APIProfile {
         guard photoData.map({ $0.count <= 524_288 }) ?? true else { throw APIError.http(413) }
         let picture = photoData.map { APIProfilePicture(contentType: "image/jpeg", data: $0) }
@@ -211,7 +266,7 @@ struct KickBACAPI {
             switch status {
             case 413: return "That photo is too large. Try taking another photo."
             case 422: return "Check your name and photo, then try again."
-            default: return "Can't reach kickBAC right now. Your changes haven't been saved. Try again."
+            default: return "Can't reach KickBAC right now. Your changes haven't been saved. Try again."
             }
         }
     }

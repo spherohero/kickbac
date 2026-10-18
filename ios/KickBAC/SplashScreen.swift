@@ -6,9 +6,9 @@ struct SplashScreen: View {
             Color("SplashBackground")
                 .ignoresSafeArea()
 
-            Image("SplashWordmark")
+            Image("KickBACWordmark")
                 .fixedSize()
-                .accessibilityLabel("Kick back")
+                .accessibilityLabel("KickBAC")
         }
         .preferredColorScheme(.dark)
     }

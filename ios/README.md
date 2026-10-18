@@ -6,6 +6,8 @@ Open `KickBAC.xcodeproj` in Xcode. Resolve Swift packages when prompted.
 
 Home uses a plain dark background. The Welcome star uses a bundled Metal shader, and the white onboarding pages stay plain. If Xcode reports a missing Metal Toolchain, install Apple's compiler once with `xcodebuild -downloadComponent MetalToolchain`.
 
+All user-facing app names use `KickBAC`. The iOS launch configuration, Welcome, and splash view share `KickBACWordmark`. Its 1x/2x/3x PNGs come from the Mogi vector source in `Branding/KickBACWordmark.pdf`; regenerate with `DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer xcrun swift ios/Branding/generate-wordmark.swift` from the repository root. Run `python3 ios/checks/BrandingChecks.py` to check naming and launch asset wiring. These checks do not verify iOS's cached launch rendering.
+
 ## Auth0 handoff
 
 | Setting | Value |
@@ -67,6 +69,8 @@ Birthday remains local to the existing age step. Phone identity remains in Auth0
 
 Onboarding requires a captured photo; there is no camera skip action. Denied camera permission opens iOS Settings. Camera activity is owned by each preview and revision-ordered on the session actor, so late disposal or cancellation cannot stop a newer preview. The native preview rebinds changed sources. Check live image/capture/retake on the iPhone; lifecycle checks do not verify actual image rendering.
 
+Camera preview uses `AVCaptureVideoPreviewLayer` directly and fills the largest centered square that fits below the title, within the page margins. The saved crop matches the entire preview, with no outer dimming or inset guide. Keep backdrop blur out of this clipped hierarchy: [UIKit does not support masks on a visual effect view's ancestors](https://developer.apple.com/documentation/uikit/uivisualeffectview). The preview has no custom pixel-buffer conversion or stride handling.
+
 ```sh
 swiftc ios/KickBAC/CameraActivity.swift ios/checks/CameraActivityChecks.swift -o /tmp/kickbac-camera-checks
 /tmp/kickbac-camera-checks
@@ -74,13 +78,24 @@ swiftc ios/KickBAC/CameraActivity.swift ios/checks/CameraActivityChecks.swift -o
 
 ## Me and profiles
 
-Me uses a softly rounded square photo, an editable name, saved-reading count, last check-in, and private reading history. Profile photos use the existing camera and square crop. Name/photo load from `GET /v1/me/profile` after login and session restoration, and save together with `PUT /v1/me/profile` at onboarding completion and profile edits. Both use the SDK API access token. A successful GET with null name starts profile onboarding; an error does not. Returning users skip name/photo setup. Saves await the normalized server response before dismissing, and failed saves retain form/photo input for a deliberate retry. Settings supports editing the profile, opening iOS camera permissions, refreshing the account, and signing out.
+Me uses a softly rounded square photo, an editable name, saved-reading count, last check-in, and private reading history. Profile photos use the existing camera and square crop. Name/photo load from `GET /v1/me/profile` after login and session restoration, and save together with `PUT /v1/me/profile` at onboarding completion and profile edits. Both use the SDK API access token. A successful GET with null name starts profile onboarding; an error does not. Returning users skip name/photo setup. Saves await the normalized server response before dismissing, and failed saves retain form/photo input for a deliberate retry. Profile editing opens from Me. Settings contains camera permissions, Sign out, Delete account, and version. Account deletion currently shows an unavailable message; backend requirements are in [ACCOUNT_DELETION_HANDOFF.md](ACCOUNT_DELETION_HANDOFF.md).
 
-PUT always includes `display_name` and `profile_picture`, including an explicit JSON null when no photo is selected. Name validation matches 1–80 Unicode code points after trimming, without control characters. Selected images are downsampled off the main thread, oriented, flattened onto white, and encoded as JPEG at no more than 512px per edge and 512 KiB. Name-only edits resend the current server picture without re-encoding; Remove photo sends null only when Save changes is pressed.
+PUT always includes `display_name` and `profile_picture`, including an explicit JSON null when no photo is selected. Name validation matches 1–80 Unicode code points after trimming, without control characters. Selected images are downsampled off the main thread, oriented, flattened onto white, and encoded as JPEG at no more than 512px per edge and 512 KiB. Name-only edits resend the current server picture without re-encoding. The editor allows taking or retaking a photo and has no Remove photo action; the existing API still accepts explicit null when no picture exists.
 
 The per-subject local cache is retained for offline display and old local-only profiles become drafts when the server confirms a first-time account. They are never uploaded automatically. Account switches/logout clear the displayed profile; stale network responses cannot update another account. A cache-write failure after a successful server save is reported separately from a failed server save.
 
 History includes loading, empty, retry, and pagination states. Test readings are labeled, missing BAC estimates stay distinct from raw sensor counts, and Home's demo readings never enter this history. Me loads Games played, Wins and Points from `/v1/me/stats`; failures remain unavailable rather than becoming zero. Party gameplay is still separate work; this client does not fabricate game completions or rewards.
+
+Games played, Wins, and Points all open Recent games. It reads `GET /v1/me/game-results` with the API access token and shows actual game, outcome, score, awarded points, and completion date. Refresh/pagination preserve loaded results on transient errors and isolate them by authenticated subject. Party names/groups and linked breathalyzer check-ins are not in the current contract; those associations show unavailable. [RECENT_GAMES_HANDOFF.md](RECENT_GAMES_HANDOFF.md) records the requirements for Nicholas. The page does not submit game results.
+
+Run the recent-game decoding, pagination, retry and account-isolation checks:
+
+```sh
+DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/KickBACAPI.swift ios/KickBAC/RecentGamesStore.swift ios/checks/RecentGamesChecks.swift -o /tmp/kickbac-recent-games-checks
+/tmp/kickbac-recent-games-checks
+```
+
+The authentication integration checks also cover the game-history access-token request, query parameters, mixed-owner response rejection, and temporary failures. Fixtures do not establish live game-history, party, or linked-check-in acceptance.
 
 Run the local storage and timestamp checks alongside the authentication checks above:
 

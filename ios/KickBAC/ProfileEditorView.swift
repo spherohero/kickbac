@@ -58,10 +58,6 @@ struct ProfileEditorView: View {
                             .padding(.horizontal, 8)
                         }
                         .buttonStyle(.glass).buttonBorderShape(.capsule).controlSize(.large)
-                        if photoData != nil {
-                            Button("Remove photo", role: .destructive) { photoData = nil }
-                                .frame(minHeight: 44)
-                        }
                     }
                     VStack(alignment: .leading, spacing: 16) {
                         Text("What should we call you?")
@@ -73,8 +69,10 @@ struct ProfileEditorView: View {
                             .accessibilityLabel("Name")
                             .onSubmit { isEditingName = false }
                             .padding(20).background(.white.opacity(0.06), in: .rect(cornerRadius: 20))
-                        Text(!name.isEmpty && !PartyProfile.isValidName(name) ? "Use 1–80 characters, without control characters." : "This is the name your party will see.")
-                            .font(.system(.footnote, design: .rounded)).foregroundStyle(.secondary)
+                        if !name.isEmpty && !PartyProfile.isValidName(name) {
+                            Text("Use 1–80 characters, without control characters.")
+                                .font(.system(.footnote, design: .rounded)).foregroundStyle(.secondary)
+                        }
                     }
                 }
                 .frame(maxWidth: 480).padding(24).frame(maxWidth: .infinity)

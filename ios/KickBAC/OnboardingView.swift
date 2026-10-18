@@ -52,10 +52,9 @@ struct OnboardingView: View {
 
         var detail: String {
             switch self {
-            case .welcome, .birthday, .complete: ""
+            case .welcome, .birthday, .name, .complete: ""
             case .phone: "Enter your phone number to continue."
             case .code: "Enter the six-digit code."
-            case .name: "This is the name your party will see."
             case .photo: "Take a fresh photo for your party profile."
             }
         }
@@ -463,11 +462,12 @@ struct OnboardingView: View {
     }
 
     private func footer(for page: Step) -> some View {
-        VStack(spacing: 16) {
-            if page == .birthday || [.phone, .code, .name].contains(page) {
-                Text(page == .birthday ? "You must be 21 or older to continue." : error ??
-                     (page == .name && !name.isEmpty && !PartyProfile.isValidName(name)
-                      ? "Use 1–80 characters, without control characters." : page.detail))
+        let instruction = page == .birthday ? "You must be 21 or older to continue." : error ??
+            (page == .name && !name.isEmpty && !PartyProfile.isValidName(name)
+             ? "Use 1–80 characters, without control characters." : page.detail)
+        return VStack(spacing: 16) {
+            if !instruction.isEmpty && (page == .birthday || [.phone, .code, .name].contains(page)) {
+                Text(instruction)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)

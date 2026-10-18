@@ -185,6 +185,15 @@ final class AuthSession {
         }
     }
 
+    func gameResults(offset: Int = 0) async throws -> GameResultPage {
+        guard let owner = profileOwner else { throw KickBACAPI.APIError.unauthorized }
+        let page = try await userRequest { api, token in
+            try await api.gameResults(accessToken: token, offset: offset)
+        }
+        guard page.items.allSatisfy({ $0.userID == owner }) else { throw KickBACAPI.APIError.invalidResponse }
+        return page
+    }
+
     private func userRequest<Response>(_ operation: (KickBACAPI, String) async throws -> Response,
                                        owner: (Response) -> String? = { _ in nil }) async throws -> Response {
         guard isSignedIn, let credentialsManager, let api, let profileOwner else { throw KickBACAPI.APIError.unauthorized }
@@ -260,7 +269,7 @@ final class AuthSession {
             return
         } catch {
             guard generation == requestGeneration else { return }
-            apiMessage = "Can't reach kickBAC right now. Your sign-in is saved."
+            apiMessage = "Can't reach KickBAC right now. Your sign-in is saved."
         }
     }
 

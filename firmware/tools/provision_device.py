@@ -75,12 +75,17 @@ def safe_line(raw: bytes) -> str | None:
         r"device_retry stage=(?:heartbeat|poll) status=-?\d+ number=[1-3] wait_ms=(?:2000|4000|8000) acquisition=invalidated",
         r"device_recovered stage=(?:heartbeat|poll) retries=[1-3] acquisition=requires_fresh_session",
         r"CONNECTIVITY_FAIL stage=[a-z_]+ sensor=disabled uploads=disabled",
-        r"device_ready credential_relay=ram_only sensor=disabled uploads=disabled",
+        r"device_ready credential_relay=ram_only sensor=disabled uploads=(?:disabled|mock_only)",
         r"device_auth_negative status=401 rejected=1",
         r"device_heartbeat number=\d+ status=200 online=1 last_seen_at=[0-9T:.+Z-]+",
         r"device_poll number=\d+ status=200 active_state=(?:IDLE|ARMED|SAMPLING) actions=disabled",
-        r"DEVICE_PASS identity=kb-demo-01 heartbeats=\d+ polls=\d+ online_refresh=1 ongoing=1 uploads=disabled",
-        r"DEVICE_FAIL stage=[a-z_]+ status=-?\d+ credential=cleared uploads=disabled",
+        r"DEVICE_PASS identity=kb-demo-01 heartbeats=\d+ polls=\d+ online_refresh=1 ongoing=1 uploads=(?:disabled|mock_only)",
+        r"DEVICE_FAIL stage=[a-z_]+ status=-?\d+ credential=cleared uploads=(?:disabled|mock_only)",
+        r"MOCK_READY source=simulator armed=1 session_id=[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+        r"MOCK_PENDING measurement_id=[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12} session_id=[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12} source=simulator",
+        r"MOCK_ACCEPTED http=(?:200|201) measurement_id=[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12} session_id=[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12} source=simulator",
+        r"MOCK_RETRY number=[1-3] wait_ms=(?:2000|4000|8000) source=simulator",
+        r"MOCK_BLOCKED reason=[a-z_]+ pending=[01]",
     )
     return text if any(re.fullmatch(pattern, text) for pattern in patterns) else None
 

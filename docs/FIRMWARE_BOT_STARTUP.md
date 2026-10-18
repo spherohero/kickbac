@@ -1,5 +1,17 @@
 # kickBAC firmware bot — current startup handoff
 
+## Explicit mock uploader — current source, physical acceptance still gated
+
+Branch `firmware/explicit-mock-uploader`, base `8f60967`. Read
+[the exact operator command and limits](../firmware/MOCK_DEMO.md). New `xiao_device`
+supports one deliberate USB command bound to exact live app-armed UUID, fresh
+server confirmation, frozen UUID/payload and verified200/201 ACK. Raw1200/duration
+2500 are SYNTHETIC with `source:simulator`, unknown acquisition UTC null, BAC null.
+No ADC/sampling/app edits, no upload merely from arming. Full host/Ruff/all3builds,
+isolated real-HTTP201/replay200/actual ACK/history/restart and focused independent
+review pass. Publishing PR/head gives readiness/flash state; do not presume a
+production measurement until actual user arm/USB/ACK/persisted readback.
+
 ## Operational communication restored — current evidence supersedes offline below
 
 Flashed reviewed `firmware/operational-connectivity@49e8d5a4dfc41b193fffdc2cfa9f857d98e900aa`

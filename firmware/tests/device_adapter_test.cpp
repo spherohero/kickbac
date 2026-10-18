@@ -297,6 +297,7 @@ void transient_recovery_cases() {
     std::cout << "PASS: same-endpoint bounded transport/5xx recovery, immediate ticket invalidation, immutable original pending bytes, exhaustion/auth/schema stop (fixtures)\n";
 }
 
+#if !defined(KICKBAC_ADAPTER_LIBRARY)
 int main() {
     device_probe_loop();
     assert(fixture_posts == 0 && fixture_gets == 0);
@@ -344,3 +345,4 @@ int main() {
     retained_session_cases();
     transient_recovery_cases();
 }
+#endif

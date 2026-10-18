@@ -138,7 +138,7 @@ def test_second_insert_failure_rolls_back_session_and_expiry(party_world):
         )
 
 
-@pytest.mark.parametrize("terminal", ["CANCELLED", "EXPIRED"])
+@pytest.mark.parametrize("terminal", ["CANCELLED", "EXPIRED", "COMPLETE"])
 def test_terminal_retry_survives_restart_close_leave_rebind(party_world, terminal):
     c, u, _, now, path, party = party_world
     payload = body()
@@ -149,6 +149,19 @@ def test_terminal_retry_survives_restart_close_leave_rebind(party_world, termina
             c.post(f"/v1/sessions/{sid}/cancel", headers=u["bob"], json={}).status_code
             == 200
         )
+    elif terminal == "COMPLETE":
+        upload = {
+            "measurement_id": str(uuid4()),
+            "session_id": sid,
+            "raw": {"sensor": "mq3", "value": 1200, "unit": "adc_counts"},
+            "breath_duration_ms": 2500,
+            "source": "simulator",
+        }
+        r = c.post(
+            "/v1/device/measurements", headers=party_world[2]["one"], json=upload
+        )
+        assert r.status_code == 201, r.text
+        first = post(party_world, payload).json()
     else:
         now[0] += timedelta(seconds=60)
         assert post(party_world, payload).json()["session"]["status"] == "EXPIRED"

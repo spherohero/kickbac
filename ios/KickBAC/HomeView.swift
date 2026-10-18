@@ -5,6 +5,7 @@ struct HomeView: View {
     let deviceFlow: DeviceSessionStore
     var onConnect: () -> Void = { }
     var onOnboarding: () -> Void = { }
+    var isGameCheckIn = false
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
@@ -40,33 +41,37 @@ struct HomeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Spacer(minLength: 8)
-                Button(deviceFlow.hasActiveSession ? "View test" : "Connect") {
-                    exitDemo()
-                    onConnect()
-                }
-                .buttonStyle(.glass).controlSize(.large)
-                #if DEBUG
-                GlassEffectContainer(spacing: 8) {
-                    HStack(spacing: 8) {
-                        Button("Demo", action: startReading)
-                            .disabled(visiblePhase.isRunning)
-                            .accessibilityLabel("Demo reading").accessibilityIdentifier("homeDemoButton")
-                        Button("Onboarding") {
-                            interruptReading()
-                            onOnboarding()
-                        }
-                        .accessibilityIdentifier("onboardingButton")
+            if !isGameCheckIn {
+                HStack {
+                    Spacer(minLength: 8)
+                    Button(deviceFlow.hasActiveSession ? "View test" : "Connect") {
+                        exitDemo()
+                        onConnect()
                     }
-                    .font(.system(.caption, design: .rounded, weight: .medium))
-                    .buttonStyle(.glass)
-                    .buttonBorderShape(.capsule)
-                    .controlSize(.large)
+                    .buttonStyle(.glass).controlSize(.large)
+                    #if DEBUG
+                    GlassEffectContainer(spacing: 8) {
+                        HStack(spacing: 8) {
+                            Button("Demo", action: startReading)
+                                .disabled(visiblePhase.isRunning)
+                                .accessibilityLabel("Demo reading").accessibilityIdentifier("homeDemoButton")
+                            Button("Onboarding") {
+                                interruptReading()
+                                onOnboarding()
+                            }
+                            .accessibilityIdentifier("onboardingButton")
+                        }
+                        .font(.system(.caption, design: .rounded, weight: .medium))
+                        .buttonStyle(.glass)
+                        .buttonBorderShape(.capsule)
+                        .controlSize(.large)
+                    }
+                    #endif
                 }
-                #endif
+                .frame(minHeight: 44).padding(.horizontal, 24).padding(.top, 12)
+            } else {
+                Color.clear.frame(height: 56).accessibilityHidden(true)
             }
-            .frame(minHeight: 44).padding(.horizontal, 24).padding(.top, 12)
 
             if isShowingDemo {
                 HStack {
@@ -257,6 +262,8 @@ struct HomeView: View {
                     Text("Demo · \(elapsedTime(at: timeline.date), format: .number.precision(.fractionLength(2))) s").monospacedDigit()
                 } else if let measurement = deviceFlow.test?.measurement {
                     Text("\(Double(measurement.breathDurationMS) / 1000, format: .number.precision(.fractionLength(2))) s").monospacedDigit()
+                } else if isGameCheckIn {
+                    Text("— s")
                 } else {
                     Text(deviceFlow.hasActiveSession ? "Waiting for a reading" : "No active test")
                 }
@@ -281,6 +288,7 @@ struct HomeView: View {
     }
 
     private var timerAccessibilityValue: String {
+        if isGameCheckIn && deviceFlow.test?.measurement == nil { return "Breath test duration unavailable" }
         if !isShowingDemo {
             if let measurement = deviceFlow.test?.measurement { return "Recorded breath duration: \(measurement.breathDurationMS) milliseconds" }
             return deviceFlow.hasActiveSession ? "Waiting for a device reading" : "No active test"
@@ -300,6 +308,7 @@ struct HomeView: View {
     }
 
     private var instruction: String {
+        if isGameCheckIn && deviceFlow.test == nil { return "Take your breath test" }
         if !isShowingDemo {
             switch deviceFlow.test?.status {
             case .armed: return "Waiting for device"

@@ -3,12 +3,15 @@ import SwiftUI
 struct PartyView: View {
     let profile: ProfileStore
     let owner: String?
+    let session: AuthSession
     @State private var preview = PartyPreview()
     @State private var sheet: Destination?
+    @State private var showsTrivia = false
+    @State private var opensTriviaAfterSheet = false
     @Environment(\.dynamicTypeSize) private var typeSize
 
     private enum Destination: String, Identifiable {
-        case create, join, code, games, invite
+        case create, join, code, games, invite, triviaInvite
         var id: Self { self }
     }
 
@@ -30,6 +33,7 @@ struct PartyView: View {
                                 .frame(maxWidth: .infinity)
                         }
                         .partyPrimaryAction()
+                        .disabled(preview.ongoingGame != nil)
                         .accessibilityIdentifier("partyChooseGame")
                     }
                     leaderboard
@@ -44,17 +48,50 @@ struct PartyView: View {
         .font(.system(.body, design: .rounded))
         .scrollIndicators(.hidden)
         .background(Color("SplashBackground").ignoresSafeArea())
-        .sheet(item: $sheet) { destination in
+        .sheet(item: $sheet, onDismiss: {
+            if opensTriviaAfterSheet {
+                opensTriviaAfterSheet = false
+                if preview.trivia?.phase == .invitation { sheet = .triviaInvite }
+                else { showsTrivia = preview.trivia != nil }
+            }
+        }) { destination in
             switch destination {
             case .create: PartyEntrySheet(preview: preview, mode: .create)
             case .join: PartyEntrySheet(preview: preview, mode: .tap)
             case .code: PartyEntrySheet(preview: preview, mode: .code)
             case .games: PartyGamePicker(preview: preview)
             case .invite: PartyInviteSheet()
+            case .triviaInvite:
+                if let trivia = preview.trivia {
+                    TriviaInvitationSheet {
+                        if trivia.join() {
+                            opensTriviaAfterSheet = true
+                            sheet = nil
+                        }
+                    } onSkip: {
+                        trivia.skip()
+                        sheet = nil
+                    }
+                }
             }
+        }
+        .fullScreenCover(isPresented: $showsTrivia) {
+            if let trivia = preview.trivia, let room = preview.room {
+                TriviaView(game: trivia, session: session, isHost: room.role == .host,
+                           playerName: currentPlayerName, photoData: currentPlayerPhoto) {
+                    preview.finishTrivia()
+                }
+            }
+        }
+        .onChange(of: preview.trivia?.id) {
+            guard preview.trivia != nil else { return }
+            if sheet == nil { sheet = .triviaInvite }
+            else if sheet == .games { opensTriviaAfterSheet = true }
         }
         .onChange(of: owner) {
             sheet = nil
+            showsTrivia = false
+            opensTriviaAfterSheet = false
             preview.leave()
         }
     }
@@ -142,15 +179,29 @@ struct PartyView: View {
     private func ongoingGame(_ game: PartyGame) -> some View {
         VStack(alignment: .leading, spacing: 16) {
             sectionTitle("Ongoing games")
-            HStack(spacing: 16) {
-                PartyGameIcon(game: game)
-                VStack(alignment: .leading, spacing: 6) {
-                    Text(game.title).font(.system(.title3, design: .rounded, weight: .medium))
-                    Text("Example game in progress").font(.subheadline).foregroundStyle(.secondary)
+            Button {
+                if game == .trivia {
+                    if preview.trivia?.phase == .invitation { sheet = .triviaInvite }
+                    else { showsTrivia = true }
                 }
+            } label: {
+                HStack(spacing: 16) {
+                    PartyGameIcon(game: game)
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text(game.title).font(.system(.title3, design: .rounded, weight: .medium))
+                        Text(game == .trivia ? "Join or return to the game" : "Example game in progress")
+                            .font(.subheadline).foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 0)
+                    if game == .trivia {
+                        Image("ProfileChevron").resizable().scaledToFit().frame(width: 16, height: 16)
+                            .accessibilityHidden(true)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading).padding(20)
+                .background(.white.opacity(0.06), in: .rect(cornerRadius: 24))
             }
-            .frame(maxWidth: .infinity, alignment: .leading).padding(20)
-            .background(.white.opacity(0.06), in: .rect(cornerRadius: 24))
+            .buttonStyle(ProfilePressStyle()).disabled(game != .trivia)
             .accessibilityElement(children: .combine)
         }
     }
@@ -158,12 +209,27 @@ struct PartyView: View {
     private var leaderboard: some View {
         VStack(alignment: .leading, spacing: 20) {
             sectionTitle("Leaderboard")
-            VStack(alignment: .leading, spacing: 8) {
-                Text("No scores yet.").font(.system(.title3, design: .rounded, weight: .medium))
-                Text("Scores will appear here after a game.")
-                    .font(.system(.subheadline, design: .rounded)).foregroundStyle(.secondary)
+            if let trivia = preview.trivia, trivia.phase == .results {
+                Button("View trivia podium") { showsTrivia = true }
+                    .partySecondaryAction()
+                ForEach(trivia.standings(playerName: currentPlayerName)) { row in
+                    HStack {
+                        Text(row.name).font(.headline)
+                        Spacer(minLength: 8)
+                        VStack(alignment: .trailing, spacing: 4) {
+                            Text("\(row.points.formatted()) pts").font(.headline).monospacedDigit()
+                            Text("BAC —").font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            } else {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("No scores yet.").font(.system(.title3, design: .rounded, weight: .medium))
+                    Text("Scores will appear here after a game.")
+                        .font(.system(.subheadline, design: .rounded)).foregroundStyle(.secondary)
+                }
+                .padding(.vertical, 12)
             }
-            .padding(.vertical, 12)
         }
         .accessibilityElement(children: .combine)
     }
@@ -187,6 +253,14 @@ struct PartyView: View {
     private func sectionTitle(_ title: String) -> some View {
         Text(title).font(.system(.title2, design: .rounded, weight: .medium)).accessibilityAddTraits(.isHeader)
     }
+
+    private var currentPlayerName: String {
+        owner != nil && profile.owner == owner && !profile.profile.name.isEmpty ? profile.profile.name : "You"
+    }
+
+    private var currentPlayerPhoto: Data? {
+        owner != nil && profile.owner == owner ? profile.profile.photoData : nil
+    }
 }
 
 private struct PartyEntrySheet: View {
@@ -208,7 +282,13 @@ private struct PartyEntrySheet: View {
                         if !name.isEmpty && !PartyPreview.validName(name) {
                             Text("Use 1–80 characters on one line.").font(.footnote).foregroundStyle(.secondary)
                         }
-                        PartyTapIllustration()
+                        PartyTapIllustration { deviceID in
+                            if preview.create(name: name, deviceID: deviceID) { dismiss() }
+                            else { message = "Enter a party name first." }
+                        }
+                        if let message {
+                            Text(message).foregroundStyle(.secondary).font(.footnote)
+                        }
                         Button("Create party") {
                             if preview.create(name: name) { dismiss() }
                         }
@@ -216,7 +296,10 @@ private struct PartyEntrySheet: View {
                         .disabled(!PartyPreview.validName(name))
                     } else {
                         if mode == .tap {
-                            PartyTapIllustration()
+                            PartyTapIllustration { _ in
+                                preview.previewTap()
+                                dismiss()
+                            }
                         }
                         field("Party code", placeholder: PartyPreview.code, text: $code)
                             .textInputAutocapitalization(.characters).autocorrectionDisabled()
@@ -406,5 +489,5 @@ private extension View {
 }
 
 #Preview("Party") {
-    PartyView(profile: ProfileStore(), owner: nil).preferredColorScheme(.dark)
+    PartyView(profile: ProfileStore(), owner: nil, session: AuthSession(configuration: nil)).preferredColorScheme(.dark)
 }

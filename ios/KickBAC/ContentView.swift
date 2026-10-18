@@ -30,7 +30,7 @@ struct ContentView: View {
             }
 
             Tab("Party", image: "NavParty", value: .party) {
-                PartyView(profile: profile, owner: session.profileOwner)
+                PartyView(profile: profile, owner: session.profileOwner, session: session)
             }
 
             Tab("Me", image: "NavMe", value: .me) {

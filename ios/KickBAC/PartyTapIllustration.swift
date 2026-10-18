@@ -2,6 +2,11 @@ import SwiftUI
 
 struct PartyTapIllustration: View {
     static let instruction = "Tap your phone to the breathalyzer"
+    var onDebugTap: ((String) -> Void)? = nil
+    #if DEBUG
+    @State private var debugTapCount = 0
+    @State private var showsDebugTap = false
+    #endif
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.scenePhase) private var scenePhase
@@ -51,5 +56,30 @@ struct PartyTapIllustration: View {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
         }
+        #if DEBUG
+        .overlay {
+            // Keep the artwork touch-transparent; only this bounded Debug target handles holds.
+            Color.clear
+                .contentShape(.rect)
+                .onLongPressGesture(minimumDuration: 0.7, maximumDistance: 20, perform: simulateTap)
+                .accessibilityHidden(true)
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityAction(named: "Debug: simulate tap on kb-demo-01", simulateTap)
+        .sensoryFeedback(.selection, trigger: debugTapCount)
+        .alert("Debug tap simulated", isPresented: $showsDebugTap) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Tapped kb-demo-01 locally. No hardware was connected.")
+        }
+        #endif
     }
+
+    #if DEBUG
+    private func simulateTap() {
+        debugTapCount += 1
+        if let onDebugTap { onDebugTap("kb-demo-01") }
+        else { showsDebugTap = true }
+    }
+    #endif
 }

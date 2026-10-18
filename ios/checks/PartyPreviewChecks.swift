@@ -38,6 +38,13 @@ struct PartyPreviewChecks {
         assert(preview.create(name: "Friday"))
         assert(preview.room?.role == .host && preview.room?.deviceID == "kb-demo-01")
         assert(PartyGame.allCases.map(\.id) == [.trivia, .pictionary])
+        preview.showExampleGame(.trivia)
+        let activeTrivia = preview.trivia
+        assert(activeTrivia?.phase == .invitation)
+        preview.viewAs(.guest)
+        assert(preview.trivia === activeTrivia)
+        preview.leave()
+        assert(preview.trivia == nil, "Private owner/room teardown clears local trivia")
         print("Party preview checks passed")
     }
 }

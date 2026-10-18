@@ -108,7 +108,7 @@ These checks cover server-confirmed onboarding, cache restoration, Unicode limit
 
 ## Integration status
 
-The Party tab contains a local UI preview: create/link a preview breathalyzer, tap/code join, host game picker, and guest room with ongoing games, an empty leaderboard, and your profile. Use the Settings-style options icon to switch Host/Guest or ongoing/idle states. Entry/create/game pages use the requested product labels without preview banners or development explanations; behavior remains local. Code `KICK26` works only inside this local preview; it cannot invite another phone. No game engine, device association, server membership, or score submission is implemented. See [PARTY_HANDOFF.md](PARTY_HANDOFF.md) for preview checks and the separate live-contract requirements. Debug `--show-party` opens this tab without changing authentication.
+The Party tab contains a local UI preview: create/link a preview breathalyzer, tap/code join, host game picker, and guest room with ongoing games, local trivia standings, and your profile. Use the Settings-style options icon to switch Host/Guest or ongoing/idle states. Entry/create/game pages use the requested product labels without preview banners or development explanations; behavior remains local. Code `KICK26` works only inside this local preview; it cannot invite another phone. No multiplayer game engine, live device association, server membership, or score submission is implemented. See [PARTY_HANDOFF.md](PARTY_HANDOFF.md) for preview checks and the separate live-contract requirements. Debug `--show-party` opens this tab without changing authentication.
 
 The simulator build and local stub/image checks are separate from real acceptance. No unattended SMS is sent and no test bypass is added to production authentication. Complete onboarding on an iPhone, save a real photo, force-quit/relaunch, logout/relogin, test offline retry, and repeat with a second account before calling the live profile flow accepted.
 
@@ -126,3 +126,9 @@ Run the isolated device/session checks:
 swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/DeviceSessionStore.swift ios/KickBAC/KickBACAPI.swift ios/checks/DeviceSessionChecks.swift -o /tmp/kickbac-device-checks
 /tmp/kickbac-device-checks
 ```
+
+## Trivia preview
+
+Trivia starts with a compact logo/Join game/Skip game sheet. Check-in uses the shared tap illustration and Home gauge, followed by the readiness roster. The host starts; ready players rotate through tap-or-swipe wheel turns. The wheel and answer pages stay fixed. A line shows the 20-second deadline; submitting locks the answer until everyone answers or time expires. A separate results page shows the correct answer and each player's round points before the next turn. Six bundled categories/questions and 1000 points per correct answer remain local defaults; no API result or lifetime reward is sent.
+
+In Debug, use Trivia options → Simulate device tap / Simulate completed test to navigate the unfinished hardware boundary. Example players are optional, explicitly named fixtures whose answers/turns are simulated. Release omits these controls. See [TRIVIA_HANDOFF.md](TRIVIA_HANDOFF.md) for reproduction, verification, personal-device requirements and live integration boundaries.

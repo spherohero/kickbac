@@ -1,5 +1,7 @@
 # Party UI preview
 
+Debug tap shortcut: hold the shared phone-to-breathalyzer illustration/caption area for 0.7 seconds to simulate `kb-demo-01`. Create uses the entered valid party name and that fixture device; invalid names remain on the form. Tap to join enters the local guest party. Trivia advances only to the breath screen, without completing a test. Invite people acknowledges the simulated tap without replacing the current room or game. A named VoiceOver Debug action provides the same shortcut. The overlay, gesture, feedback and simulation alert compile only in Debug; Release behavior is unchanged. No NFC session, hardware, live party, private measurement or server result is created.
+
 Owner: Liam. Branch: `liam/ios-profile-handoff`, source base `3a7fa1c351b05d6e38c01be33cd63e2364160328`, integrated backend/docs base `22f06354e85ad04afe522e6d870b5bf3bb206af8`. Prepared as local changes following PR [#22](https://github.com/spherohero/kickbac/pull/22). No new commit, push, merge, or deployment is implied by this document. Nicholas has not been personally messaged.
 
 ## Current behavior
@@ -9,9 +11,9 @@ Liam explicitly chose UI preview first, live parties later. The previously blank
 - Create a named party with instructional phone-to-breathalyzer artwork. Raw device IDs and manual selection are hidden; the local fixture still uses `kb-demo-01` internally, without claiming a live binding.
 - Tap-join illustration or code fallback. Only the documented fixture code `KICK26` is accepted. This is not a real invitation or a proposed production code format.
 - Host-only game picker with stacked colored Trivia and Pictionary cards, inspired by the supplied Games reference while preserving KickBAC's existing visual style.
-- Game details and an explicitly illustrative ongoing-game state. No game engine, session, completion, or points are created.
+- Game details, an ongoing-game state, and the local Trivia flow documented in [TRIVIA_HANDOFF.md](TRIVIA_HANDOFF.md). Trivia has join/skip, Debug-only simulated check-in, rotating player wheel turns, locked answers, round results, local points and a podium; no multiplayer session or server result is created.
 - Guest room with ongoing games, leaderboard, and people; idle room omits ongoing games.
-- Empty leaderboard and only the current user's profile. Private account-wide totals are not reused as party scores. There are no fabricated players, results, readings, ranks, or rewards.
+- The current user’s profile and local Trivia standings after a game. Private account-wide totals are not reused as party scores. The optional Debug example roster is explicitly fictional; no simulated BAC, real participants, private results or lifetime rewards are invented.
 
 Use the circular Settings-style options icon to switch Host/Guest under Preview as, show an ongoing example, return to idle, or exit. At Liam's request, entry/create/people/game selection/details omit the preview banner and development explanations; actions say Create party, Start a game, and Start game. These wording changes do not implement live behavior. State lives only in memory and clears when the authenticated owner changes. Sign-in is not bypassed; preview entry requires no sign-in because it has no shared/private server effects. Own name/photo appear only when the loaded profile matches the current authenticated owner.
 
@@ -34,7 +36,7 @@ Current signing excludes NFC Tag Reading because the Personal Team does not supp
 Focused state checks:
 
 ```sh
-DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/KickBACAPI.swift ios/KickBAC/PartyPreview.swift ios/checks/PartyPreviewChecks.swift -o /tmp/kickbac-party-checks
+DEVELOPER_DIR=/Applications/Xcode-beta.app/Contents/Developer xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/KickBACAPI.swift ios/KickBAC/TriviaPreview.swift ios/KickBAC/PartyPreview.swift ios/checks/PartyPreviewChecks.swift -o /tmp/kickbac-party-checks
 /tmp/kickbac-party-checks
 ```
 
@@ -73,3 +75,7 @@ Latest card-stack correction: removed Questions & answers / Drawing & guessing a
 Latest card-artwork/depth correction: interpreted the requested outline removal as the colored rounded-square backing behind each game illustration. Removed only that background path and unused gradient from the iOS SVGs, preserving all paper/pencil/question outlines and the final accent placement. Game-card artwork moves 8 points up and right; ongoing-game rows keep their placement. Card backgrounds gain a soft black shadow at 16% opacity, radius 8, y 3. The approved 56-point overlap and existing behavior remain unchanged. Figma masters were not modified.
 
 Latest row-icon and stack-shadow correction: ongoing-game rows and profile Recent games now share the approved Trivia/Pictionary artwork on a rounded-square background filled from the same exact card color. Card/detail artwork stays transparent. Recent games maps known game IDs to the shared icons and retains a neutral approved generic icon for other game IDs. The front Pictionary card has explicit drawing priority; its shadow now casts upward (black 26%, radius 4, y −4) onto Trivia to reveal the overlap seam. This supersedes the previous downward shadow. No API or state changes.
+
+Trivia follow-up: Start game now opens the join/skip → tap/check-in → ready → host category wheel → question/reveal → podium preview. The shared room retains and reopens its trivia state; owner/room teardown clears it. Game points are local, nullable BAC stays unavailable, and explicit Debug controls cannot be confused with live sensor/native acceptance. See [TRIVIA_HANDOFF.md](TRIVIA_HANDOFF.md) for the full sequence, privacy boundary, backend requirements, and standalone checks. This supersedes earlier statements that no local game logic exists; no shared game engine or live party contract is implemented.
+
+Latest trivia revision: compact logo/Join game/Skip game sheet; HomeView-based breath page; avatar/name/readiness roster without BAC; flat primary controls; gesture-driven wheel with rotating center star; fixed wheel/answer pages; line countdown; delayed all-answered/deadline reveal; separate per-player round awards; rotating spinner. Hardware simulation is now in the Debug options menu, never a main-page preview action. Personal breathalyzers are a requested live capability, not implemented by removing the party-device copy. This supersedes the host-only wheel and inline reveal described above. See the updated trivia handoff.

@@ -2,7 +2,7 @@ import Foundation
 import Observation
 
 // Deliberately local and ephemeral. Never arm a device, submit a result, or cache membership here.
-@Observable
+@MainActor @Observable
 final class PartyPreview {
     enum Role: String, CaseIterable, Identifiable {
         case host = "Host", guest = "Guest"
@@ -18,6 +18,7 @@ final class PartyPreview {
     static let code = "KICK26"
     private(set) var room: Room?
     private(set) var ongoingGame: PartyGame?
+    private(set) var trivia: TriviaPreview?
 
     static func validName(_ name: String) -> Bool {
         let name = name.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -31,6 +32,7 @@ final class PartyPreview {
         guard Self.validName(name), DeviceTarget.isValidID(deviceID) else { return false }
         room = Room(name: name.trimmingCharacters(in: .whitespacesAndNewlines), deviceID: deviceID, role: .host)
         ongoingGame = nil
+        trivia = nil
         return true
     }
 
@@ -44,14 +46,24 @@ final class PartyPreview {
     func previewTap() {
         room = Room(name: "Party", deviceID: "kb-demo-01", role: .guest)
         ongoingGame = nil
+        trivia = nil
     }
 
     func viewAs(_ role: Role) { room?.role = role }
-    func showExampleGame(_ game: PartyGame?) { ongoingGame = room == nil ? nil : game }
+    func showExampleGame(_ game: PartyGame?) {
+        ongoingGame = room == nil ? nil : game
+        trivia = ongoingGame == .trivia ? TriviaPreview() : nil
+    }
+
+    func finishTrivia() {
+        guard trivia?.phase == .results else { return }
+        ongoingGame = nil
+    }
 
     func leave() {
         room = nil
         ongoingGame = nil
+        trivia = nil
     }
 }
 

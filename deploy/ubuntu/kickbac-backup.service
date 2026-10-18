@@ -1,0 +1,29 @@
+[Unit]
+Description=Verified online kickBAC SQLite backup
+After=kickbac.service
+
+[Service]
+Type=oneshot
+User=kickbac
+Group=kickbac
+ExecStart=/usr/bin/python3 /opt/kickbac/current/deploy/ubuntu/backup_sqlite.py --source /var/lib/kickbac/kickbac.sqlite3 --destination /var/backups/kickbac
+TimeoutStartSec=120
+StateDirectory=kickbac
+StateDirectoryMode=0700
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+RestrictRealtime=true
+LockPersonality=true
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_UNIX
+# SQLite read-only WAL connections may need writable -shm/-wal sidecars.
+ReadWritePaths=/var/lib/kickbac /var/backups/kickbac

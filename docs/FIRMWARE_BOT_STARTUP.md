@@ -2,6 +2,15 @@
 
 ## One saved Wi-Fi / lifetime recovery — focused firmware change
 
+Physical update: [PR41](https://github.com/spherohero/kickbac/pull/41) runtime
+`9b0ca25` flashed/hashverified; explicit private save confirmed stored/saved1.
+Software reset restored Wi-Fi with NO Wi-Fi frame; bearer-only bootstrap passed.
+Operator hotspot-loss/return test observed attempts/backoff/trusted rejoin and
+authenticated heartbeat resume without reset/re-entry. Post-listener server
+heartbeat advanced10:38:32.407638→10:38:45.315899UTC inside30s; accepted demo remains
+exactly1/COMPLETE. See actual evidence/limits in the guide below. Serial released;
+no physical power-bank/cable cold-cycle or bearer persistence claim.
+
 `firmware/saved-wifi-recovery`, base `22c1215`; see
 [SAVED_WIFI.md](../firmware/SAVED_WIFI.md) for private unchecked opt-in, exact
 commands, single NVS key and tested1..60s jitter/30s association/lifetime retry.

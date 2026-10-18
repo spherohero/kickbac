@@ -67,6 +67,34 @@ Do not reset/power-cycle an unresolved upload; reconcile acceptance/expiry first
 
 ## Verification and limits
 
+Actual verified-target COM3 flash at source `9b0ca25e69ae2ef19a6078ec52dada204fdeea8f`:
+app SHA256 `04c3e3acfe121adeefb06aa9c86cfd1c2baa84c4630dc7ede921930e1ca666fa`,
+all esptool image hashes verified. Private unchecked opt-in was explicitly selected;
+board reported `wifi_saved state=stored`, `wifi_config state=accepted saved=1`,
+then actual trusted HTTPS and authenticated heartbeats. No credentials logged.
+
+After a reconciled controlled SOFTWARE RESET, `--device-only` (no Wi-Fi dialog or
+Wi-Fi frame) observed automatic rejoin/DHCP/DNS/SNTP/trusted health and then privately
+bootstrapped the RAM bearer;3heartbeats/6idle polls/DEVICE_PASS. This establishes
+persistent restore across reset, NOT a physical cable/power-bank cold-cycle claim.
+
+An operator-started local hotspot-off/return test listened only (zero serial writes,
+zero resets) and observed link loss/ticket invalidation, bounded association
+attempts2/3, backoff1123/3062/7932ms, then attempt4 rejoined the same network.
+DNS/SNTP/trusted health200 passed; authenticated heartbeats8 and9 resumed without
+Wi-Fi re-entry or bearer relay. No mock command/upload was sent. Sanitized evidence:
+`firmware/build/saved-wifi-private-save.log`, `saved-wifi-restart-bearer-bootstrap.log`,
+`saved-wifi-hotspot-cycle.log` and its resultJSON. These ignored local traces are
+not fabricated substitutes for future long-duration or power-cycle acceptance.
+
+Independent read-only server checks AFTER the listener closed:
+10:38:36.926389UTC last_seen10:38:32.407638 age4.518751s;
+10:38:57.413956UTC last_seen10:38:45.315899 age12.098057s. Heartbeat advanced inside
+the existing30second online window; production concurrently migrated to schema7.
+Read-only reconciliation10:38:58UTC confirmed the original accepted demo still
+COMPLETE/exactly1device measurement/no active unexpired session. No backend writes
+or new app user/arm/result occurred in this firmware task.
+
 Full host suite and all three pinned cross-builds pass; helper Ruff checks pass.
 Synthetic tests cover saved blob restore/replacement/corruption/scrubbing, opt-in
 versus RAM default, repeated explicit SDK configuration after failure, one SSID,
@@ -75,8 +103,8 @@ jitter, hotspot return, live-ticket invalidation, held pending payload preservat
 negative-auth loss/recovery, auth/schema stop, private acknowledgment and bearer-only
 bootstrap. Independent review identified three edge cases; corrected paths were
 self-reviewed and regression-tested. No second final independent review is claimed.
-Physical save/reboot/outage results must be reported from actual logs, not these
-fixtures. Software reset is not proof of a cable power-cycle or hotspot outage.
+Physical save/software-reset/hotspot-loss results above are separate from host
+fixtures. Long-duration soak and actual cable/power-bank cycle remain unverified.
 
 ## === BACKEND CONTRACT CHANGE ===
 

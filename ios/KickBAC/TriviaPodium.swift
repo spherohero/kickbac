@@ -11,7 +11,6 @@ struct TriviaPodium: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("The podium").font(.system(.largeTitle, design: .rounded, weight: .bold))
                     .accessibilityAddTraits(.isHeader)
-                Text("Good game. Here’s where everyone landed.").foregroundStyle(.secondary)
                 if includesExamples {
                     Text("Example roster · local points only").font(.caption).foregroundStyle(.secondary)
                 }
@@ -72,7 +71,9 @@ struct TriviaPodium: View {
         }
         .frame(maxWidth: .infinity)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(row.map { "\($0.name), rank \(rank($0)), \($0.points) points, BAC unavailable" } ?? "Place \(place), no player")
+        .accessibilityLabel(row.map {
+            "\($0.name), rank \(rank($0)), \($0.points) points, \($0.bac.map { "BAC \($0.formatted(.number.precision(.fractionLength(3))))" } ?? "BAC unavailable")"
+        } ?? "Place \(place), no player")
     }
 
     private func standingRow(_ row: TriviaStanding) -> some View {

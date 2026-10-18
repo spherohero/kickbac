@@ -55,17 +55,14 @@ struct PartyTapIllustration: View {
                 .font(.system(.subheadline, design: .rounded)).foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: .infinity)
-        }
-        #if DEBUG
-        .overlay {
-            // Keep the artwork touch-transparent; only this bounded Debug target handles holds.
-            Color.clear
+                #if DEBUG
+                .frame(minHeight: 44)
                 .contentShape(.rect)
                 .onLongPressGesture(minimumDuration: 0.7, maximumDistance: 20, perform: simulateTap)
-                .accessibilityHidden(true)
+                .accessibilityAction(named: "Debug: simulate tap on kb-demo-01", simulateTap)
+                #endif
         }
-        .accessibilityElement(children: .combine)
-        .accessibilityAction(named: "Debug: simulate tap on kb-demo-01", simulateTap)
+        #if DEBUG
         .sensoryFeedback(.selection, trigger: debugTapCount)
         .alert("Debug tap simulated", isPresented: $showsDebugTap) {
             Button("OK", role: .cancel) { }

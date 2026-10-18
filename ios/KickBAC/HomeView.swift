@@ -6,6 +6,7 @@ struct HomeView: View {
     var onConnect: () -> Void = { }
     var onOnboarding: () -> Void = { }
     var isGameCheckIn = false
+    var onGameCheckInComplete: (Double) -> Void = { _ in }
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
@@ -23,8 +24,9 @@ struct HomeView: View {
 
     private let preparationDuration = 2.0
     private let sampleDuration = 6.0
+    private var showsDemoLabels: Bool { isShowingDemo && !isGameCheckIn }
     private var summary: DailyBACSummary {
-        DailyBACSummary(readings: isShowingDemo ? readings : (session.history?.items.compactMap(\.bacReading) ?? []))
+        DailyBACSummary(readings: isShowingDemo || isGameCheckIn ? readings : (session.history?.items.compactMap(\.bacReading) ?? []))
     }
     private var displayReading: BACReading? { isShowingDemo ? reading : deviceFlow.test?.measurement?.bacReading }
     private var visibleReveal: CGFloat { isShowingDemo ? resultReveal : (displayReading == nil ? 0 : 1) }
@@ -73,7 +75,7 @@ struct HomeView: View {
                 Color.clear.frame(height: 56).accessibilityHidden(true)
             }
 
-            if isShowingDemo {
+            if showsDemoLabels {
                 HStack {
                     Text("Simulated demo · not a measured BAC")
                     Spacer(minLength: 4)
@@ -90,7 +92,7 @@ struct HomeView: View {
                 let gaugeSide = max(0, min(geometry.size.width - 64, 300, geometry.size.height - 220))
                 VStack(spacing: 0) {
                     Spacer(minLength: 8)
-                    metric(isShowingDemo ? "Demo avg BAC" : "Avg BAC", value: summary.average, size: metricSize)
+                    metric(showsDemoLabels ? "Demo avg BAC" : "Avg BAC", value: summary.average, size: metricSize)
                     Spacer(minLength: 14)
 
                     TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !isShowingDemo || visiblePhase != .sampling)) { timeline in
@@ -99,7 +101,7 @@ struct HomeView: View {
                     .frame(width: gaugeSide, height: gaugeSide)
 
                     Spacer(minLength: 14)
-                    metric(isShowingDemo ? "Demo max BAC" : "Max BAC", value: summary.high, size: metricSize * 0.92)
+                    metric(showsDemoLabels ? "Demo max BAC" : "Max BAC", value: summary.high, size: metricSize * 0.92)
                     Spacer(minLength: 20)
                 }
                 .padding(.horizontal, 24)
@@ -110,9 +112,18 @@ struct HomeView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) { readingControls }
         .background(background.ignoresSafeArea())
         .task(id: runID) { await runDemoReading() }
-        .onDisappear { interruptReading() }
+        .task(id: scenePhase) {
+            if isGameCheckIn && scenePhase == .active && phase == .ready { startReading() }
+        }
+        .onDisappear {
+            if isGameCheckIn { exitDemo() }
+            else { interruptReading() }
+        }
         .onChange(of: scenePhase) {
-            if scenePhase != .active { interruptReading() }
+            if scenePhase != .active {
+                if isGameCheckIn { exitDemo() }
+                else { interruptReading() }
+            }
         }
         .onChange(of: session.generation) { exitDemo() }
         .sensoryFeedback(.success, trigger: completionFeedback)
@@ -135,7 +146,7 @@ struct HomeView: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(isShowingDemo ? "Simulated demo. " : "Loaded real readings today. ")\(title)")
+        .accessibilityLabel("\(isGameCheckIn ? "" : isShowingDemo ? "Simulated demo. " : "Loaded real readings today. ")\(title)")
         .accessibilityValue(value.map { $0.formatted(.number.precision(.fractionLength(2))) } ?? "No BAC estimates available")
     }
 
@@ -259,7 +270,11 @@ struct HomeView: View {
                 Image("ReadingClock").resizable().scaledToFit().frame(width: 20, height: 20)
                     .accessibilityHidden(true)
                 if isShowingDemo {
-                    Text("Demo · \(elapsedTime(at: timeline.date), format: .number.precision(.fractionLength(2))) s").monospacedDigit()
+                    if isGameCheckIn {
+                        Text("\(elapsedTime(at: timeline.date), format: .number.precision(.fractionLength(2))) s").monospacedDigit()
+                    } else {
+                        Text("Demo · \(elapsedTime(at: timeline.date), format: .number.precision(.fractionLength(2))) s").monospacedDigit()
+                    }
                 } else if let measurement = deviceFlow.test?.measurement {
                     Text("\(Double(measurement.breathDurationMS) / 1000, format: .number.precision(.fractionLength(2))) s").monospacedDigit()
                 } else if isGameCheckIn {
@@ -288,7 +303,7 @@ struct HomeView: View {
     }
 
     private var timerAccessibilityValue: String {
-        if isGameCheckIn && deviceFlow.test?.measurement == nil { return "Breath test duration unavailable" }
+        if isGameCheckIn && !isShowingDemo && deviceFlow.test?.measurement == nil { return "Breath test duration unavailable" }
         if !isShowingDemo {
             if let measurement = deviceFlow.test?.measurement { return "Recorded breath duration: \(measurement.breathDurationMS) milliseconds" }
             return deviceFlow.hasActiveSession ? "Waiting for a device reading" : "No active test"
@@ -308,7 +323,7 @@ struct HomeView: View {
     }
 
     private var instruction: String {
-        if isGameCheckIn && deviceFlow.test == nil { return "Take your breath test" }
+        if isGameCheckIn && !isShowingDemo && deviceFlow.test == nil { return "Take your breath test" }
         if !isShowingDemo {
             switch deviceFlow.test?.status {
             case .armed: return "Waiting for device"
@@ -320,7 +335,7 @@ struct HomeView: View {
             }
         }
         return switch visiblePhase {
-        case .ready: "Demo reading"
+        case .ready: isGameCheckIn ? "Take your breath test" : "Demo reading"
         case .preparing: "Start blowing"
         case .sampling: "Keep blowing"
         case .stopping: "Stop blowing"
@@ -328,7 +343,8 @@ struct HomeView: View {
         }
     }
 
-    // Debug-only entry point; these readings never enter authenticated history.
+    // Home's Debug action and the local game check-in share this in-memory sequence.
+    // These readings never enter authenticated history; game completion retains only a local fixture.
     private func startReading() {
         guard !phase.isRunning, !deviceFlow.hasActiveSession else { return }
         isShowingDemo = true
@@ -375,6 +391,12 @@ struct HomeView: View {
             try await Task.sleep(for: .milliseconds(240))
             guard runID == currentRun else { return }
             phase = .result
+            if isGameCheckIn {
+                try await Task.sleep(for: .seconds(2))
+                try Task.checkCancellation()
+                guard runID == currentRun, scenePhase == .active else { return }
+                onGameCheckInComplete(completed.value)
+            }
         } catch is CancellationError {
             // Leaving Home discards an incomplete sample.
         } catch {
@@ -411,7 +433,7 @@ struct HomeView: View {
             return instruction
         }
         if phase.showsResult, let reading {
-            return "Simulated demo. \(reading.value.formatted(.number.precision(.fractionLength(2)))) grams per deciliter. \(reading.band.title)."
+            return "\(isGameCheckIn ? "" : "Simulated demo. ")\(reading.value.formatted(.number.precision(.fractionLength(2)))) grams per deciliter. \(reading.band.title)."
         }
         return phase == .sampling ? "Keep blowing. \(Int(progress * 100)) percent complete" : instruction
     }

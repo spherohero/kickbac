@@ -5,7 +5,7 @@ struct TriviaChecks {
     @MainActor
     static func main() {
         let now = Date(timeIntervalSince1970: 1000)
-        let game = joinedGame()
+        let game = joinedGame(bac: 0.08)
         assert(game.begin(isHost: true))
         assert(game.spinnerID == "you")
         assert(!game.spin(playerID: "someone-else", category: .science))
@@ -32,7 +32,8 @@ struct TriviaChecks {
         }
         assert(game.phase == .results && game.totalPoints == 1000)
         let rows = game.standings(playerName: "Liam")
-        assert(rows.count == 1 && rows[0].name == "Liam" && rows[0].bac == nil)
+        assert(rows.count == 1 && rows[0].name == "Liam" && rows[0].bac == 0.08,
+               "The completed local check-in BAC survives every round and reaches the podium")
 
         let shared = joinedGame()
         shared.setExamplePlayers(true)
@@ -75,6 +76,24 @@ struct TriviaChecks {
         assert(!retry.answer(1, now: now.addingTimeInterval(20)))
         assert(retry.revealExpired(now: now.addingTimeInterval(20)))
         assert(retry.totalPoints == 0)
+        let interruptedCheckIn = TriviaPreview()
+        assert(interruptedCheckIn.join() && interruptedCheckIn.previewTap())
+        interruptedCheckIn.skip()
+        assert(!interruptedCheckIn.completePreviewBreath(), "A late local completion cannot ready a player who skipped")
+        assert(interruptedCheckIn.participation == .skipped && interruptedCheckIn.bac == nil)
+        let leaving = joinedGame(bac: 0.04)
+        leaving.skip()
+        assert(leaving.bac == nil && leaving.playerCount == 0 && !leaving.begin(isHost: true))
+        assert(leaving.participantRows(playerName: "Liam").first?.status == .sittingOut)
+        assert(leaving.join() && leaving.previewTap())
+        for invalidBAC in [-0.01, Double.nan, Double.infinity] {
+            assert(!leaving.completePreviewBreath(bac: invalidBAC))
+            assert(leaving.phase == .breath && leaving.bac == nil)
+        }
+        assert(leaving.completePreviewBreath(bac: 0.02))
+        assert(!leaving.completePreviewBreath(bac: 0.09) && leaving.bac == 0.02,
+               "Late or duplicate callbacks cannot replace the accepted check-in")
+        assert(leaving.standings(playerName: "Liam").first?.bac == 0.02)
         assert(Set(TriviaQuestion.bank.map(\.category)) == Set(TriviaCategory.allCases))
         assert(TriviaQuestion.bank.allSatisfy { $0.answers.count == 4 && (0..<4).contains($0.correctIndex) })
         assert(retry.remainingFraction(now: now.addingTimeInterval(-1)) == 1)
@@ -95,15 +114,16 @@ struct TriviaChecks {
     }
 
     @MainActor
-    static func joinedGame() -> TriviaPreview {
+    static func joinedGame(bac: Double? = nil) -> TriviaPreview {
         let game = TriviaPreview()
         assert(game.phase == .invitation && !game.begin(isHost: true))
         game.skip()
         assert(game.join())
         assert(game.participantRows(playerName: "Liam").first?.status == .checkingIn)
         assert(!game.completePreviewBreath())
-        assert(game.previewTap() && game.completePreviewBreath())
-        assert(game.phase == .lobby && game.participation == .joined && game.bac == nil)
+        assert(game.previewTap() && game.completePreviewBreath(bac: bac))
+        assert(game.phase == .lobby && game.participation == .joined && game.bac == bac)
+        assert(!game.completePreviewBreath(), "Local check-in completion is accepted only once")
         assert(game.participantRows(playerName: "Liam").first?.status == .ready)
         assert(!game.begin(isHost: false))
         return game

@@ -8,7 +8,8 @@ final class TriviaPreview: Identifiable {
     enum Participation { case undecided, checkingIn, joined, skipped }
 
     let id = UUID()
-    let bac: Double? = nil
+    // Local check-in fixture only; never a server measurement or a ranking input.
+    private(set) var bac: Double?
     let roundCount = TriviaCategory.allCases.count
     let answerDuration: TimeInterval = 20
     private(set) var phase: Phase = .invitation
@@ -46,6 +47,7 @@ final class TriviaPreview: Identifiable {
     func join() -> Bool {
         guard phase == .invitation || (phase == .lobby && participation == .skipped) else { return false }
         participation = .checkingIn
+        bac = nil
         phase = .tap
         return true
     }
@@ -53,6 +55,7 @@ final class TriviaPreview: Identifiable {
     func skip() {
         guard [.invitation, .tap, .breath, .lobby].contains(phase) else { return }
         participation = .skipped
+        bac = nil
         phase = .lobby
     }
 
@@ -64,8 +67,10 @@ final class TriviaPreview: Identifiable {
     }
 
     @discardableResult
-    func completePreviewBreath() -> Bool {
+    func completePreviewBreath(bac: Double? = nil) -> Bool {
         guard phase == .breath else { return false }
+        if let bac, !bac.isFinite || bac < 0 { return false }
+        self.bac = bac
         participation = .joined
         phase = .lobby
         return true

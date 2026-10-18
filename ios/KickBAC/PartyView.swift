@@ -218,7 +218,8 @@ struct PartyView: View {
                         Spacer(minLength: 8)
                         VStack(alignment: .trailing, spacing: 4) {
                             Text("\(row.points.formatted()) pts").font(.headline).monospacedDigit()
-                            Text("BAC —").font(.caption).foregroundStyle(.secondary)
+                            Text(row.bac.map { "BAC \($0.formatted(.number.precision(.fractionLength(3))))" } ?? "BAC —")
+                                .font(.caption).foregroundStyle(.secondary)
                         }
                     }
                 }
@@ -241,9 +242,9 @@ struct PartyView: View {
                 ProfileAvatar(photoData: owner != nil && profile.owner == owner ? profile.profile.photoData : nil, side: 56)
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 6) {
-                    Text(owner != nil && profile.owner == owner && !profile.profile.name.isEmpty ? profile.profile.name : "You")
+                    Text(owner != nil && profile.owner == owner && !profile.profile.name.isEmpty ? profile.profile.name : "Player")
                         .font(.system(.headline, design: .rounded))
-                    Text("You · \(role.rawValue)").font(.subheadline).foregroundStyle(.secondary)
+                    Text(role.rawValue).font(.subheadline).foregroundStyle(.secondary)
                 }
             }
             .accessibilityElement(children: .combine)

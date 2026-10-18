@@ -90,7 +90,9 @@ struct TriviaView: View {
                 Spacer(minLength: 0)
             }.padding(24)
         case .breath:
-            HomeView(session: session, deviceFlow: checkInDeviceFlow, isGameCheckIn: true)
+            HomeView(session: session, deviceFlow: checkInDeviceFlow, isGameCheckIn: true) { bac in
+                game.completePreviewBreath(bac: bac)
+            }
         case .lobby:
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
@@ -220,13 +222,13 @@ struct TriviaView: View {
     }
 
     private var answerStatus: some View {
-        VStack(spacing: 4) {
-            Text(game.phase == .waiting ? "Answer locked" : game.participation == .skipped ? "Sitting out" : "Choose your answer")
-                .font(.system(.headline, design: .rounded))
-            Text("\(game.answeredCount) of \(game.playerCount) answered")
-                .font(.subheadline).foregroundStyle(.secondary).monospacedDigit()
-        }.lineLimit(1).minimumScaleFactor(0.6)
-            .frame(maxWidth: .infinity).accessibilityElement(children: .combine)
+        let showsStatus = game.phase == .waiting || game.participation == .skipped
+        return Text(game.participation == .skipped ? "Sitting out" : "Answer locked")
+            .font(.system(.headline, design: .rounded))
+            .lineLimit(1).minimumScaleFactor(0.6)
+            .frame(maxWidth: .infinity)
+            .opacity(showsStatus ? 1 : 0)
+            .accessibilityHidden(!showsStatus)
     }
 
     private func countdown(category: TriviaCategory) -> some View {
@@ -255,9 +257,11 @@ struct TriviaView: View {
                 .multilineTextAlignment(.center).lineLimit(3).minimumScaleFactor(0.55)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             .padding(14).frame(maxWidth: .infinity, minHeight: 44, maxHeight: .infinity, alignment: .leading)
-            .foregroundStyle(.white)
-            .background(color.opacity(selected ? 0.23 : 0.08), in: .rect(cornerRadius: 22))
-            .overlay { RoundedRectangle(cornerRadius: 22).strokeBorder(selected ? .white : color.opacity(0.5), lineWidth: selected ? 3 : 1) }
+            .foregroundStyle(.black)
+            .background(color, in: .rect(cornerRadius: 22))
+            .overlay {
+                if selected { RoundedRectangle(cornerRadius: 22).strokeBorder(.black, lineWidth: 3) }
+            }
             .contentShape(.rect(cornerRadius: 22))
         }
         .buttonStyle(ProfilePressStyle())
@@ -275,7 +279,6 @@ struct TriviaView: View {
                     Text("Correct answer").font(.subheadline).foregroundStyle(.secondary)
                     Text(question.answers[question.correctIndex])
                         .font(.system(.title2, design: .rounded, weight: .semibold))
-                    Text(question.explanation).font(.subheadline).foregroundStyle(.secondary)
                 }.accessibilityElement(children: .combine)
             }
             VStack(spacing: 22) {
@@ -303,6 +306,10 @@ struct TriviaView: View {
             Button("Skip game") { game.skip() }.frame(minHeight: 44).padding(.bottom, 12)
         case .lobby:
             VStack(spacing: 8) {
+                Button("Leave game") {
+                    game.skip()
+                    dismiss()
+                }.frame(minHeight: 44)
                 if isHost {
                     primary("Start trivia") { game.begin(isHost: true) }.disabled(game.playerCount == 0)
                 } else {

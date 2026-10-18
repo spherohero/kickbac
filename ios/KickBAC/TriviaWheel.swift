@@ -25,13 +25,20 @@ struct TriviaWheel: View {
                         Circle().fill(Color("SplashBackground")).frame(width: side * 0.22, height: side * 0.22)
                         KickBACStar(progress: 0, size: side * 0.105, isExpanding: false)
                     }.rotationEffect(.degrees(rotation))
-                    WheelPointer().fill(.white).frame(width: 20, height: 22).offset(y: -side * 0.46)
                 }.contentShape(.circle)
             }
             .buttonStyle(ProfilePressStyle()).disabled(!isEnabled)
             .highPriorityGesture(drag(side: side), including: isEnabled ? .all : .none)
             .accessibilityElement(children: .ignore).accessibilityLabel("Spin category wheel")
             .accessibilityHint("Double-tap to choose a category")
+            .frame(width: side, height: side)
+            .overlay(alignment: .top) {
+                WheelPointer().fill(.white)
+                    .overlay { WheelPointer().stroke(Color("SplashBackground"), lineWidth: 2) }
+                    .frame(width: 22, height: 24)
+                    .offset(y: -4)
+                    .allowsHitTesting(false).accessibilityHidden(true)
+            }
         }
     }
 
@@ -65,10 +72,18 @@ struct TriviaWheel: View {
 
 private struct WheelPointer: Shape {
     func path(in rect: CGRect) -> Path {
-        Path { path in
-            path.move(to: CGPoint(x: rect.minX, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
-            path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY))
+        let radius = min(rect.width, rect.height) * 0.14
+        return Path { path in
+            path.move(to: CGPoint(x: rect.minX + radius, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.maxX - radius, y: rect.minY))
+            path.addQuadCurve(to: CGPoint(x: rect.maxX - radius / 2, y: rect.minY + radius),
+                              control: CGPoint(x: rect.maxX, y: rect.minY))
+            path.addLine(to: CGPoint(x: rect.midX + radius / 2, y: rect.maxY - radius))
+            path.addQuadCurve(to: CGPoint(x: rect.midX - radius / 2, y: rect.maxY - radius),
+                              control: CGPoint(x: rect.midX, y: rect.maxY))
+            path.addLine(to: CGPoint(x: rect.minX + radius / 2, y: rect.minY + radius))
+            path.addQuadCurve(to: CGPoint(x: rect.minX + radius, y: rect.minY),
+                              control: CGPoint(x: rect.minX, y: rect.minY))
             path.closeSubpath()
         }
     }

@@ -30,6 +30,14 @@ instrument. Private display-name/picture profiles are deployed; see
 - [`docs/FIRMWARE_DURATION_PROPOSAL.md`](docs/FIRMWARE_DURATION_PROPOSAL.md): UNAPPROVED manual/timed acquisition proposal; current required breath duration is not fabricated or silently reinterpreted. The pressure sensor is confirmed unavailable.
 
 
+## Run the iPhone app / phone login
+
+Start with [actual-app startup and stage-by-stage phone-login troubleshooting](docs/PHONE_LOGIN.md#run-the-actual-iphone-app-and-diagnose-login).
+Use Liam's current client branch/build and the existing public API, not the
+backend setup commands below as an iPhone prerequisite. Auth0 phone identity,
+native Keychain sign-in and saved name/photo profiles are separate checkpoints;
+never send phones, OTPs, tokens or private photos in a troubleshooting message.
+
 ## Local setup
 
 Install [uv](https://docs.astral.sh/uv/) and Python 3.11 or newer. Commands below

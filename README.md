@@ -2,8 +2,10 @@
 
 Connected breathalyzer **prototype**: authenticated phone user explicitly arms a
 known device, which uploads one raw sample into a short-lived, private session.
-The backend is implemented locally; this is **not** a deployed service or a
-certified BAC instrument.
+Public HTTPS backend health and contract are now verified from this PC at
+https://api.kickbac.vodka; see `../kickbac/docs/LIVE_BACKEND_STATUS.md` for the
+separate local deployment handoff. This does not establish native/hardware
+acceptance, and this is not a certified BAC instrument.
 
 ## Layout and contract
 
@@ -12,7 +14,12 @@ certified BAC instrument.
 - [`docs/SETUP.md`](docs/SETUP.md): Auth0 account/Native app and hosting checklist.
 - [`docs/CLOUDFLARE_DNS.md`](docs/CLOUDFLARE_DNS.md): verified Cloudflare records and the pending registrar nameserver step.
 - `ios/`: Liam's separately owned SwiftUI client; the starter is in [PR #1](https://github.com/spherohero/kickbac/pull/1), not this backend change.
-- ESP32 firmware and physical calibration are separate integration work.
+- [`firmware/README.md`](firmware/README.md): XIAO USB/Wi-Fi diagnostic targets build; actual Wi-Fi/DHCP/DNS/trusted HTTPS and one software reconnect pass. Host-tested MQ core remains separate; sensor wiring/readings and device-authenticated uploads are unverified.
+- [`docs/WIFI_CONNECTIVITY.md`](docs/WIFI_CONNECTIVITY.md): real board trace, private RAM-only Wi-Fi provisioning, trusted health check and reproducible commands; no sensor/upload claims.
+- [`docs/DEVICE_CONNECTIVITY.md`](docs/DEVICE_CONNECTIVITY.md): actual device-bearer heartbeat/poll passed; independent live readback proves persisted ongoing heartbeat after helper exit. No API/iOS or measurement changes.
+- [`docs/HARDWARE_BRINGUP.md`](docs/HARDWARE_BRINGUP.md): photo-confirmed Flying Fish-style MQ breakout (not bare sensor), actual header orientation, USB evidence, and conditional power/protection design awaiting actual parts/meter checks.
+- [`docs/AUSTIN_PERFBOARD_GUIDE.md`](docs/AUSTIN_PERFBOARD_GUIDE.md): shareable assembly/net guide, component-side perfboard concept, full-scale divider test, power sequencing and Austin's measurement handoff. Actual parts and electrical sign-off remain required before ADC connection.
+- [`docs/FIRMWARE_DURATION_PROPOSAL.md`](docs/FIRMWARE_DURATION_PROPOSAL.md): UNAPPROVED manual/timed acquisition proposal; current required breath duration is not fabricated or silently reinterpreted. The pressure sensor is confirmed unavailable.
 
 ## Local setup
 

@@ -2,6 +2,16 @@
 
 ## Latest physical checkpoint — no-ADC image flashed, real device auth passed
 
+**Latest state supersedes the earlier pass:** at07:56:14UTC heartbeat was stale
+(57.797157s); following authorized reset/reprovision passed initial trusted health
+but exhausted all three reconnect attempts with HTTPClient/TLS `-1` around7s each.
+Device bearer was not forwarded on that final run. Current board online state is
+NOT restored. Source PR31 merged `97b30a17739ed84cec562dfdfe365c28fa8a5c26`, exact
+merged-main firmware CI passed. Read the latest-state section in the evidence
+below; network root cause unresolved, serial released, ADC remains disabled.
+Public OpenAPI now exposes33operations/manual metadata/schema6-era routes; no
+manual upload/actual-user acquisition acceptance is inferred from its presence.
+
 Read [DEVICE_SESSION_VERIFICATION.md](DEVICE_SESSION_VERIFICATION.md). Nicholas
 authorized exclusive COM3 open/reset/flash/private provisioning. Current flashed
 `xiao_device` runtime is `17ed04ba393f8d5e6124c65d0eb07d926db85d43` on
@@ -9,8 +19,9 @@ authorized exclusive COM3 open/reset/flash/private provisioning. Current flashed
 hashes, two preserved reconnect failures, a stale short-helper readback, subsequent
 9-heartbeat/24-idle-poll continuous physical pass and independent advancing
 persisted heartbeat after helper exit are documented there. No serial owner left.
-Extra bounded reconnect retries are host-tested but were not needed in the pass;
-root cause of earlier intermittent failures remains unknown. No reliability claim.
+Extra bounded reconnect retries were not needed in the pass; a later run
+physically exhausted all three (no recovery).
+Root cause of earlier intermittent failures remains unknown. No reliability claim.
 
 Nicholas declines further electrical measurements/photos; assembly correctness
 remains owner-reported, not independently verified. ADC/sampling/uploads stay

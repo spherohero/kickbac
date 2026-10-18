@@ -2,6 +2,34 @@
 
 ## Result and limits
 
+**LATEST STATE: not currently verified online.** The earlier bounded physical
+pass/readbacks below remain valid evidence, but a later check at
+`2026-10-18T07:56:14.061594+00:00` found heartbeat age57.797157s (last_seen
+`07:55:16.264437+00:00`), outside30seconds. Server schema was now6 rather than4;
+no causal claim about that transition is established. Public health returned200,
+OpenAPI exposed33operations, nullable breath duration, acquisition metadata and
+check-in routes. No manual acquisition was attempted.
+
+An authorized reset/private reprovision on the SAME image then passed initial
+Wi-Fi/DNS/SNTP/trusted health200 but failed all three reconnect attempts2/3/4:
+HTTPClient `-1`, SDK TLS code `-1`, elapsed7001/7002/7002ms. The diagnostic failed
+closed before sending the device bearer. This physically exercises bounded retry
+EXHAUSTION, not recovery. Current image is flashed but current device-auth online
+state is NOT restored. Serial is closed; no additional credential prompt/reset is
+being silently repeated. The remaining network transport fault needs diagnosis.
+Do not report uninterrupted connectivity or an electrical explanation without
+evidence. Final failed trace is `firmware/build/session-guard-continuous-serial.log`.
+
+Publication: [PR #31](https://github.com/spherohero/kickbac/pull/31), reviewed
+runtime `17ed04b`, integrated head `aadca18fe7b3e2f0017cedaefbe2e0aa2e01fcf1`,
+merged as `97b30a17739ed84cec562dfdfe365c28fa8a5c26`. Exact merge parents/remote
+head/complete tree equality verified; merged-main
+[firmware CI](https://github.com/spherohero/kickbac/actions/runs/39109491333) passed.
+Current-main integration preserved backend/iOS/workflow trees byte-for-byte;
+actual updated backend loopback to this decoder passed2tests. This docs-only
+closeout is on `docs/device-session-closeout` based on that merge; its own
+publishing PR records status. No source or flashed-image change in the closeout.
+
 **Physical flash/hash verification and authenticated diagnostic execution passed.**
 The exact registered `kb-demo-01` persisted heartbeat advanced after the PC USB
 helper exited. This is NOT protected ADC, a breath sample, measurement upload,
@@ -79,13 +107,13 @@ relay logic was used with continuous sanitized serial observation. Actual:
   marker. No sampling/action was taken even if a future poll could report ARMED.
 - Helper closed serial. No further monitor was left owning COM3.
 
-Local evidence: `firmware/build/session-guard-continuous-serial.log`,
+Local evidence: `firmware/build/session-guard-continuous-serial-before-release.log`,
 `session-guard-connectivity-pass.log` (earlier short pass) and
 `session-guard-reconnect-upload.log`.
 
-Successful follow-up runs used the FIRST reconnect attempt. Thus the bounded
-extra retries have host-fixture coverage, not a physically exercised recovery
-claim. The intermittent failure's root cause is not established; a soak/AP outage/
+Successful follow-up runs used the FIRST reconnect attempt. Later exhaustion is
+physically established in the latest-state section, not a successful retry
+recovery claim. The intermittent failure's root cause is not established; a soak/AP outage/
 power-cycle reliability test has not passed by implication.
 
 ## Independent server readback AFTER helper exit
@@ -104,7 +132,7 @@ online window. The PC helper was not maintaining heartbeat for the ESP32.
 Both snapshots: schema4, device session count1, measurement count0. This work did
 not arm any session; the pre-existing session's owner/context/status were not
 inspected or inferred. No synthetic production identity or measurement inserted.
-Evidence: `firmware/build/session-guard-server-ongoing.json` (ignored local file).
+Evidence: `firmware/build/session-guard-server-ongoing-initial.json` (ignored local file).
 This is a bounded observation, not a permanent-current-online assertion.
 
 ## Source and host verification
@@ -135,8 +163,9 @@ No SwiftUI/Figma edits and no fabricated duration/BAC/no-trigger zero.
 
 ## Remaining gate
 
-The reviewed no-ADC network/session diagnostic is physically running and its
-bounded after-helper persistence is verified. ADC enablement remains blocked by
+The reviewed no-ADC network/session diagnostic was physically executed and its
+bounded after-helper persistence passed, but latest reconnect attempts fail and
+ongoing device online state is NOT restored. ADC enablement remains blocked by
 unverified protection/power, not by a request to redo completed setup. True manual
 acquisition needs actual protected traces, measured timing/gaps/raw-summary choice,
 exact session fencing and a verified deployed truthful contract before any upload.

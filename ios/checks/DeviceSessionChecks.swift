@@ -71,6 +71,24 @@ struct DeviceSessionChecks {
         afterMissing.switchOwner("sms|owner-a")
         precondition(!afterMissing.hasActiveSession)
 
+        let manual = APIMeasurement(id: "manual", sessionID: "3b0c0a9e-2604-4b78-a487-3fd8fa1d4a4b", deviceID: "kb-demo-01",
+                                    raw: .init(sensor: "mq3", value: 1200, unit: "adc_counts"), breathDurationMS: nil,
+                                    acquisitionMethod: "manual_timed", sampleDurationMS: 5000, source: "device", measuredAt: nil,
+                                    receivedAt: "2026-10-17T23:00:05Z", estimatedBACPercent: nil)
+        let invalid = APIMeasurement(id: "invalid", sessionID: manual.sessionID, deviceID: manual.deviceID,
+                                     raw: manual.raw, breathDurationMS: 5000, acquisitionMethod: "manual_timed", sampleDurationMS: 5000,
+                                     source: "device", measuredAt: nil, receivedAt: manual.receivedAt, estimatedBACPercent: nil)
+        try flow.select("kb-demo-01", baseURL: base)
+        await inspect(flow)
+        await flow.arm { _ in session(.armed) }
+        await flow.poll(fetch: { _ in session(.complete, measurement: invalid) }, onComplete: {
+            preconditionFailure("Invalid acquisition produced a completion")
+        })
+        precondition(flow.hasActiveSession && flow.test?.status == .armed && flow.message != nil)
+        await flow.poll(fetch: { _ in session(.complete, measurement: manual) }, onComplete: { completions += 1 })
+        precondition(!flow.hasActiveSession && flow.test?.measurement?.isManualTimed == true && completions == 3)
+        precondition(flow.test?.measurement?.bacReading == nil)
+
         let real = reading(estimate: 0.04, source: "device")
         let simulated = reading(estimate: 0.08, source: "simulator")
         precondition(real.bacReading?.value == 0.04 && simulated.bacReading == nil)
@@ -93,7 +111,7 @@ struct DeviceSessionChecks {
 
     private static func reading(estimate: Double? = nil, source: String = "device") -> APIMeasurement {
         APIMeasurement(id: "measurement", sessionID: "3b0c0a9e-2604-4b78-a487-3fd8fa1d4a4b", deviceID: "kb-demo-01",
-                       raw: .init(sensor: "mq3", value: 1200, unit: "adc_counts"), breathDurationMS: 2500,
+                       raw: .init(sensor: "mq3", value: 1200, unit: "adc_counts"), breathDurationMS: 2500, acquisitionMethod: nil, sampleDurationMS: nil,
                        source: source, measuredAt: nil, receivedAt: "2026-10-17T23:00:05Z", estimatedBACPercent: estimate)
     }
 }

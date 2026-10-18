@@ -93,7 +93,13 @@ private struct ProfileReadingRow: View {
                 VStack(alignment: .leading, spacing: 8) { dateLabel; sourceLabel }
             }
             VStack(alignment: .leading, spacing: 6) {
-                if let value = reading.estimatedBACPercent, value.isFinite, value >= 0 {
+                if let notice = reading.acquisitionNotice {
+                    Text(notice).font(.system(.footnote, design: .rounded))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                Text(reading.durationText).font(.system(.footnote, design: .rounded))
+                    .foregroundStyle(.secondary)
+                if let value = reading.bacReading?.value {
                     Text(value, format: .number.precision(.fractionLength(3)))
                         .font(.system(.title, design: .rounded, weight: .medium)).monospacedDigit()
                     Text("% BAC · estimated").font(.system(.footnote, design: .rounded))
@@ -124,10 +130,8 @@ private struct ProfileReadingRow: View {
     }
 
     @ViewBuilder private var sourceLabel: some View {
-        if reading.isTestReading {
-            Text("Test reading").font(.system(.caption, design: .rounded, weight: .medium))
-                .foregroundStyle(.secondary).padding(.horizontal, 10).padding(.vertical, 6)
-                .background(.white.opacity(0.06), in: .capsule)
-        }
+        Text(reading.sourceTitle).font(.system(.caption, design: .rounded, weight: .medium))
+            .foregroundStyle(.secondary).padding(.horizontal, 10).padding(.vertical, 6)
+            .background(.white.opacity(0.06), in: .capsule)
     }
 }

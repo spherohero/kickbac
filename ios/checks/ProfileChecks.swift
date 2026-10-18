@@ -169,7 +169,7 @@ struct ProfileChecks {
     private static func reading(measured: String?, received: String) -> APIMeasurement {
         APIMeasurement(id: "reading", sessionID: "session", deviceID: "device",
                        raw: .init(sensor: "mq3", value: 1200, unit: "adc_counts"),
-                       breathDurationMS: 2500, source: "simulator", measuredAt: measured,
+                       breathDurationMS: 2500, acquisitionMethod: nil, sampleDurationMS: nil, source: "simulator", measuredAt: measured,
                        receivedAt: received, estimatedBACPercent: nil)
     }
 }

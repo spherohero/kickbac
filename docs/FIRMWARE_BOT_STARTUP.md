@@ -1,5 +1,20 @@
 # kickBAC firmware bot — current startup handoff
 
+## Latest owner decision — USB-C-only demo
+
+Nicholas has removed battery operation from this demo. Read
+[USB_ONLY_COMMISSIONING.md](USB_ONLY_COMMISSIONING.md) for the current conditional
+single-cable VBUS-to-MQ schematic, keep/remove list, capacitor identification,
+power budget and commissioning report. BAT pads stay unconnected; no battery,
+boost or external charging/balancing parts are needed. USB source/cable and actual
+XIAO VBUS path must be accepted for MCU plus heater load before powering that
+assembly. The two reported 10 kOhm resistors remain; reported two 10 uF ceramics
+and one 100 nF electrolytic are NOT silently relabelled to match the old BOM.
+Markings/ratings, wiring and full-scale divider checks remain unverified. ADC lead
+stays physically OPEN. No new ADC, serial, Wi-Fi, upload or native test is claimed.
+The older separate-supply and battery paragraphs below are historical alternatives,
+not the current positive-rail wiring. No API/iOS change; no client action.
+
 ## Scope and precedence
 
 This is the firmware specialist's startup checkpoint, not a backend implementation brief. Nicholas is creating a Hermes Bots group with a backend/webserver bot and a firmware/ESP32 bot. The firmware bot owns MCU code, safe physical integration, sensor experiments and the device-side API client. Server implementation/hosting belongs to the backend bot; SwiftUI/native acceptance belongs to Liam; mechanical/perfboard work belongs to Austin.
@@ -13,7 +28,7 @@ Read the applicable `AGENTS.md` chain, this document and linked firmware evidenc
 3. Read `firmware/README.md`, `docs/DEVICE_CONNECTIVITY.md`, `docs/WIFI_CONNECTIVITY.md`, `docs/HARDWARE_BRINGUP.md`, `docs/AUSTIN_PERFBOARD_GUIDE.md`, `docs/FIRMWARE_DURATION_PROPOSAL.md`, then the device portions of current `docs/API.md` and their actual models/client code. Load available `swamphacks-planning` references, collaboration, TDD and debugging skills as relevant.
 4. Identify the actual backend bot from the group roster and agree ownership/contract handoff. Ask it for current public contract/reachability or a secure operator-access arrangement only when needed—not for secrets in chat. No need to relearn its server architecture here.
 5. Re-enumerate USB before serial/flash. Coordinate exclusive access; monitor control lines can reset this board. Do not automatically flash or enable ADC as part of orientation.
-6. Nicholas's latest group clarification: components are only placed in isolated-pad perfboard, not soldered or electrically connected. **No boost converter, no pressure sensor, no installed JP1.** Continue backend/firmware communication verification without waiting on construction photos or electrical measurements. When actual powered acquisition is requested, establish the revised MQ heater supply/protection and open ADC connection first; omission of the boost does not identify a replacement power source.
+6. Components are only placed in isolated-pad perfboard in the latest assembly report, not permanently connected. **No boost converter, no pressure sensor, no installed JP1.** Nicholas now selects USB-C-only operation: use the current USB guide above, with battery absent and ADC lead open. Continue software communication verification independently; actual source/path/current and protection sign-off remain gates for powered acquisition.
 
 ## Verified controller and module
 
@@ -48,7 +63,7 @@ No verified perfboard assembly, module heater current, checked supply/divider, p
 
 ## Electrical gate before ADC
 
-**Latest authoritative status:** Nicholas confirms placement-only parts, no soldered/connected assembly, **no boost converter, no air-pressure sensor, no installed JP1**. The MQ heater's intended approved power source and final battery topology are not established by that clarification. Do not infer XIAO 3V3/GPIO/VBUS heater power or silently add a boost. This is an acquisition safety gate, **not a blocker for host/backend communication tests**. Keep any eventual ADC connection physically disconnected until the actual supply/divider is accepted; a removable insulated lead can provide isolation without a JP1 component.
+**Current topology:** USB-C-only by Nicholas's explicit decision; battery operation is dropped. Placement-only assembly, **no boost, pressure sensor or installed JP1** remains the latest construction evidence. [USB-only commissioning](USB_ONLY_COMMISSIONING.md) proposes USB VBUS for the MQ, conditional on verified source/cable/board path and current. It does not authorize an unchecked VBUS load. Never use GPIO/3V3 for the heater. Keep the ADC lead physically disconnected until source/divider sign-off. These physical gates do not block host/backend communication tests.
 
 **Historical group-shared proposal, not the current bill of materials:** `docs/BATTERY_BOOST_COMMISSIONING.md` preserves the earlier LiPo + switched-boost plan and its conditional safety review. It does not establish that a converter is present or authorize that topology. The older USB/external-supply guide below is also conditional; neither is an as-built report.
 

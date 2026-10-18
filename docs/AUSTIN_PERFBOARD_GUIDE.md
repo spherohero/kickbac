@@ -1,5 +1,12 @@
 # kickBAC | Austin's perfboard wiring guide
 
+> **Superseded for current power topology:** Nicholas now chooses **USB-C-only,
+> no battery**. Use [the USB-only schematic and keep/remove/check list](USB_ONLY_COMMISSIONING.md)
+> before wiring. Its single-cable VBUS branch requires source/cable/board-current
+> review; it is not permission to connect an unchecked heater. The original
+> separate-supply nets below are an alternate reference, not the current build.
+> ADC connection remains physically OPEN; capacitor markings remain unverified.
+
 > **Latest group clarification:** parts are only placed in isolated-pad perfboard, not soldered or connected; **no boost converter, no pressure sensor, no installed JP1**. Neither this original design nor the later battery/boost proposal is an as-built report. The final MQ supply is unresolved; do not infer heater power from XIAO GPIO/3V3 or connect AO without checked protection. Software-only backend/firmware communication testing does not require a completed assembly or electrical report.
 
 > **Revision boundary:** This document specifies the original USB-powered XIAO / separate regulated external 5 V supply with JP1. Nicholas's later group attachment proposes **LiPo + switched boost, no installed JP1** on isolated-pad perfboard. Read [the battery/boost commissioning hold and updated checklist](BATTERY_BOOST_COMMISSIONING.md) for that revision; this older guide does not approve it. In the no-JP1 proposal, keep the XIAO ADC connection physically isolated using a removable disconnected lead or socket isolation during tests. Battery/protection, boost bounds, charge/load paths and actual assembly remain unverified.

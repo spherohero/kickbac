@@ -5,12 +5,18 @@ on:
     paths:
       - 'backend/**'
       - 'deploy/**'
+      - 'firmware/include/device_diagnostic.hpp'
+      - 'firmware/src/device_probe.cpp'
+      - 'firmware/platformio.ini'
       - '.github/workflows/backend.yml'
   push:
     branches: [main, 'backend/**', 'fix/**', 'ci/**']
     paths:
       - 'backend/**'
       - 'deploy/**'
+      - 'firmware/include/device_diagnostic.hpp'
+      - 'firmware/src/device_probe.cpp'
+      - 'firmware/platformio.ini'
       - '.github/workflows/backend.yml'
 
 permissions:
@@ -58,6 +64,34 @@ jobs:
         run: uv run python -m compileall -q kickbac ../deploy/ubuntu
       - name: Explicit isolated HTTP demonstration
         run: uv run python -m kickbac.simulator
+
+  firmware-wire:
+    name: Backend HTTP to firmware decoder
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+      - name: Set up uv
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          enable-cache: false
+      - name: Install pinned firmware JSON headers without hardware access
+        run: uv tool run --python 3.11 --with pip --from platformio==6.1.19 platformio pkg install -d firmware -e xiao_device
+      - name: Install locked backend development dependencies
+        working-directory: backend
+        run: uv sync --locked --python 3.12
+      - name: Exercise actual HTTP bytes through current C++ decoder
+        working-directory: backend
+        run: uv run --locked pytest -q integration/test_firmware_wire.py
+      - name: Verify tracked sources unchanged by tests
+        run: git diff --exit-code
 
   auth0-actions:
     name: Auth0 Action fixtures

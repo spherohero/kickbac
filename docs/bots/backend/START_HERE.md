@@ -94,6 +94,8 @@ Run backend subprocess tests from `backend/`; inherited `PYTHONPATH` can silentl
 
 ## 6. Liam's current published progress and remaining work
 
+**Read [the latest shared handoff](../../LIAM_BACKEND_HANDOFF.md#read-first--agent-sync-and-latest-branchchange-checkpoint) first.** The findings/actions in this section are the historical `2cc42da6` checkpoint, not current missing-feature assignments. Liam's newer owner documents describe device/session, stats, Home-data, profile-load and Keychain follow-ups; refresh/read his actual branch before reviewing or assigning work. The old conflicts were not reproduced by the main `307aa69` / client `48f1744` merge-tree dry-run. No current native acceptance or complete new source review is claimed. Every subsequent shared change/merge/cleanup must update the portable Liam handoff in the same PR and report actual merge/deployment state separately.
+
 Read `IOS_REVIEW.md` and refresh his remote tip before assigning work. Reviewed `liam/ios-profile-handoff@2cc42da6b6ae41284b12790d100af10c5a095592`;69 changed iOS-only files. Native auth, server profile save/load/edit/photo removal, subject-specific cache and private paginated history are already wired in source. No blocking auth/profile wire-contract defect or new profile endpoint was identified. Birthday remains local UI, not an extra backend onboarding field.
 
 Remaining client actions, without taking over his app:

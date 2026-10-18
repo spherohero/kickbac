@@ -9,6 +9,7 @@ instrument. Private display-name/picture profiles are deployed; see
 
 ## Layout and contract
 
+- **Liam / iOS agents: read [the latest shared change/branch handoff](docs/LIAM_BACKEND_HANDOFF.md#read-first--agent-sync-and-latest-branchchange-checkpoint) before integration work.** Root `AGENTS.md` requires portable Liam-facing documentation for each shared change/merge/cleanup. Fetch and read `origin/main` even when your active client branch has older docs; no automatic agent synchronization is claimed.
 - `backend/`: Python/FastAPI, versioned SQLite migrations, tests and simulator.
 - [`docs/API.md`](docs/API.md): paths, bodies, errors and lifecycle.
 - [`docs/PROFILES.md`](docs/PROFILES.md): private display-name/picture onboarding; phone identity remains with Auth0.
@@ -19,7 +20,7 @@ instrument. Private display-name/picture profiles are deployed; see
 - [`docs/SETUP.md`](docs/SETUP.md): Auth0 account/Native app and hosting checklist.
 - [`docs/PHONE_LOGIN.md`](docs/PHONE_LOGIN.md): configured primary SMS OTP flow, versioned Auth0 Actions and remaining native acceptance; no repeat provider setup needed.
 - [`docs/CLOUDFLARE_DNS.md`](docs/CLOUDFLARE_DNS.md): DNS setup history; public delegation and HTTPS now verified.
-- `ios/`: Liam's separately owned SwiftUI client. Published `liam/ios-profile-handoff` already contains native auth, profile save/load/editing, account-specific caching and private paginated history in source; it is not yet merged. See [source review and remaining client work](docs/bots/backend/IOS_REVIEW.md). Actual Xcode/iPhone acceptance remains Liam-owned and unverified; no client files were edited here.
+- `ios/`: Liam's separately owned SwiftUI client. His published branch already contains native auth, profiles and private history; newer client progress is recorded in [the current handoff](docs/LIAM_BACKEND_HANDOFF.md). The [older source review](docs/bots/backend/IOS_REVIEW.md) applies only to its recorded SHA, not current merge readiness. Actual Xcode/iPhone acceptance remains Liam-owned; no client files were edited here.
 - [`docs/INTEGRATION_READINESS.md`](docs/INTEGRATION_READINESS.md): cross-team verification checkpoint, remaining merge/physical/native gates and exact backend reproduction commands.
 - [`firmware/README.md`](firmware/README.md): XIAO USB/Wi-Fi diagnostic targets build; actual Wi-Fi/DHCP/DNS/trusted HTTPS and one software reconnect pass. Host-tested MQ core remains separate; sensor wiring/readings and device-authenticated uploads are unverified.
 - [`docs/WIFI_CONNECTIVITY.md`](docs/WIFI_CONNECTIVITY.md): real board trace, private RAM-only Wi-Fi provisioning, trusted health check and reproducible commands; no sensor/upload claims.
@@ -28,6 +29,14 @@ instrument. Private display-name/picture profiles are deployed; see
 - [`docs/AUSTIN_PERFBOARD_GUIDE.md`](docs/AUSTIN_PERFBOARD_GUIDE.md): shareable assembly/net guide, component-side perfboard concept, full-scale divider test, power sequencing and Austin's measurement handoff. Actual parts and electrical sign-off remain required before ADC connection.
 - [`docs/FIRMWARE_DURATION_PROPOSAL.md`](docs/FIRMWARE_DURATION_PROPOSAL.md): UNAPPROVED manual/timed acquisition proposal; current required breath duration is not fabricated or silently reinterpreted. The pressure sensor is confirmed unavailable.
 
+
+## Run the iPhone app / phone login
+
+Start with [actual-app startup and stage-by-stage phone-login troubleshooting](docs/PHONE_LOGIN.md#run-the-actual-iphone-app-and-diagnose-login).
+Use Liam's current client branch/build and the existing public API, not the
+backend setup commands below as an iPhone prerequisite. Auth0 phone identity,
+native Keychain sign-in and saved name/photo profiles are separate checkpoints;
+never send phones, OTPs, tokens or private photos in a troubleshooting message.
 
 ## Local setup
 
@@ -126,6 +135,12 @@ The simulator is self-contained and does not populate your normal database or
 provide a long-running login service for the phone.
 
 ## Tests and checks
+
+For hardware-independent cross-component verification, see
+[backend HTTP → actual C++ firmware decoder checks](docs/FIRMWARE_WIRE_VERIFICATION.md).
+These run before any perfboard wiring or sensor execution; no production API or
+physical device is used.
+
 
 ```bash
 cd backend  # omit if already there

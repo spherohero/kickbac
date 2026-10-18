@@ -13,7 +13,7 @@ Read the applicable `AGENTS.md` chain, this document and linked firmware evidenc
 3. Read `firmware/README.md`, `docs/DEVICE_CONNECTIVITY.md`, `docs/WIFI_CONNECTIVITY.md`, `docs/HARDWARE_BRINGUP.md`, `docs/AUSTIN_PERFBOARD_GUIDE.md`, `docs/FIRMWARE_DURATION_PROPOSAL.md`, then the device portions of current `docs/API.md` and their actual models/client code. Load available `swamphacks-planning` references, collaboration, TDD and debugging skills as relevant.
 4. Identify the actual backend bot from the group roster and agree ownership/contract handoff. Ask it for current public contract/reachability or a secure operator-access arrangement only when needed—not for secrets in chat. No need to relearn its server architecture here.
 5. Re-enumerate USB before serial/flash. Coordinate exclusive access; monitor control lines can reset this board. Do not automatically flash or enable ADC as part of orientation.
-6. Ask one compact hardware question only for missing facts: Austin's actual supply/rating/voltage/current, measured resistor values/tolerance, full-scale divider test and both-side assembly photos. Do not ask Nicholas to identify the already confirmed board/module again unless the physical unit changed.
+6. Nicholas's latest group clarification: components are only placed in isolated-pad perfboard, not soldered or electrically connected. **No boost converter, no pressure sensor, no installed JP1.** Continue backend/firmware communication verification without waiting on construction photos or electrical measurements. When actual powered acquisition is requested, establish the revised MQ heater supply/protection and open ADC connection first; omission of the boost does not identify a replacement power source.
 
 ## Verified controller and module
 
@@ -48,7 +48,9 @@ No verified perfboard assembly, module heater current, checked supply/divider, p
 
 ## Electrical gate before ADC
 
-**New group-shared revision:** Nicholas supplied a LiPo + switched boost / isolated-pad perfboard plan with **no installed JP1**. Read `docs/BATTERY_BOOST_COMMISSIONING.md` before treating the older USB/external-supply sequence below as applicable. Battery/protection identity, boost ratings/output bounds, charge/load behavior, actual assembly photos and all electrical measurements remain unverified. Keep an equivalent removable TP_ADC-to-D0 connection physically open (insulated disconnected lead, or socketed controller with D0 isolated); removing USB alone is not isolation when a battery is attached. Do not permanently solder D0 for initial commissioning. Pressure sensing remains confirmed unavailable. The shared drawing's hole coordinates are not verified against actual parts.
+**Latest authoritative status:** Nicholas confirms placement-only parts, no soldered/connected assembly, **no boost converter, no air-pressure sensor, no installed JP1**. The MQ heater's intended approved power source and final battery topology are not established by that clarification. Do not infer XIAO 3V3/GPIO/VBUS heater power or silently add a boost. This is an acquisition safety gate, **not a blocker for host/backend communication tests**. Keep any eventual ADC connection physically disconnected until the actual supply/divider is accepted; a removable insulated lead can provide isolation without a JP1 component.
+
+**Historical group-shared proposal, not the current bill of materials:** `docs/BATTERY_BOOST_COMMISSIONING.md` preserves the earlier LiPo + switched-boost plan and its conditional safety review. It does not establish that a converter is present or authorize that topology. The older USB/external-supply guide below is also conditional; neither is an as-built report.
 
 Use Austin's original versioned guide as the conditional **USB / external-supply** design, not a claim of construction or battery/boost approval:
 
@@ -104,11 +106,11 @@ Nicholas authorizes focused commits, regular remote pushes and autonomous ready 
 
 ## Next owned sequence
 
-1. Get Austin's missing measurements/photos; review safety and keep JP1 open until accepted.
-2. Build a separately selected protected serial-only ADC diagnostic, test/flash only the identified board, and collect actual traces.
-3. Measure warm-up/idle drift/noise, labeled exhalation disturbances, residual recovery and repeatability; keep simulated and physical files separate.
-4. Compare baseline-relative configurations empirically; do not promise sober detection.
-5. Coordinate truthful acquisition metadata before enabling sampling/upload. Later exercise real session ownership/expiry/idempotency/reconnect and persist/read back the real measurement.
+1. Continue real-loopback backend HTTP / current C++ decoder verification and firmware adapter host regression tests now, independent of unsoldered hardware. Preserve simulator labels and distinguish parser/host evidence from ESP32 networking/native acceptance.
+2. For physical work only: identify the actual revised MQ supply/protection, inspect the eventual unpowered wiring and accept measurements with the ADC lead physically disconnected. Do not request completed solder/measurement evidence as a prerequisite for software-only communication work.
+3. After electrical sign-off, build a separately selected protected serial-only ADC diagnostic, test/flash only the identified board, and collect actual warm-up/idle/noise/drift/recovery traces.
+4. Compare baseline-relative configurations empirically; do not promise sober detection or turn a timeout into zero.
+5. Coordinate truthful acquisition metadata and Nicholas's explicit duration decision before enabling sampling/upload. Later exercise real session ownership/expiry/idempotency/reconnect and persist/read back the real measurement.
 
 ## Portable bot package
 

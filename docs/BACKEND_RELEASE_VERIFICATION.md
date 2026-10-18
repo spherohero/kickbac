@@ -1,4 +1,72 @@
-# Backend release verification — games, profiles and private history
+# Backend release verification — manual acquisition, NFC and private history
+
+## Current live release — schema6 /33 operations
+
+Activated at **2026-10-18T07:55:20.008568+00:00** on the existing authorized host:
+`/opt/kickbac/releases/manual-172e54c-20261018T075004Z`, source
+`172e54c1604356e3e83db2fc0672706829841795`, source tree
+`1b0edbd2874dda01068d45ce5a682f64b4c8bc34`, archived SHA256
+`cf65ad309f75ba9900b3f7314e15fdd59489a5887e51462ff1374312506a1548`.
+This is immutable committed content from [PR #30](https://github.com/spherohero/kickbac/pull/30),
+merged as `c78a0420c12e79dd3ee08d418855fb0c676b55f4`; full source/merge-tree
+equality and remote ancestry were independently verified. Later firmware PR31
+does not change this backend runtime. The older live checkpoints below are historical.
+
+- All88 release manifest entries, release-local locked/hash-required Python3.12
+  runtime, root ownership/private modes and actual process cwd were independently
+  read back before and after activation. Existing env, credentials, service
+  drop-in, Caddy and persistent data paths were preserved.
+- Fresh retained online schema4 snapshot and private on-host005+006 trial passed:
+  all old SQL objects and exact rows/BLOBs/credential hashes preserved.56 isolated
+  Ubuntu tests passed, including manual validation/replay/nested private history,
+  actual party HTTP and complete-schema backup tests; runtime simulator passed.
+- Activation rechecked zero unexpired active sessions, stopped timer/API/backup
+  in order, verified final retained pre-upgrade online backup, applied candidate
+  migrations005+006, and compared every original row/schema before restarting.
+  Live schema6/integrityOK/FK0, all original rows/BLOBs/credentials equal. Final
+  pre-upgrade backup is retained under the release-specific private backup
+  directory; a new integrity-checked schema6 snapshot is in normal backup storage.
+  Old schema4 runtime cannot be blindly restored over6; no automatic downgrade.
+- Atomic current selection, actual new PID/cwd, all88 hashes and active API/Caddy/
+  timer were read back. Trusted external health200/OpenAPI33 exactly matches
+  committed source, including check-ins and nullable manual metadata. Missing-auth
+  check-ins/summary/game-history/profile reject401/no-store; legacy measurement
+  history rejects401 with its unchanged missing cache header. No private records
+  were exposed. No production fixture or real reading was inserted.
+- Post-release aggregate counts:1device,1session,1profile,0measurements,
+  0game-results,0parties,0check-ins. Counts are a dated checkpoint, not identity or
+  current board-online proof. Profile/history were not reset or reassigned.
+- Exact head [backend CI](https://github.com/spherohero/kickbac/actions/runs/39109096438)
+  passed562 backend/deployment +8 HTTP tests on each Python3.11/3.12 interpreter,
+  2 decoder checks,78 non-sending Action fixtures and simulator. Exact
+  [native CI](https://github.com/spherohero/kickbac/actions/runs/39109096444) passed
+  Swift acquisition/exact-session fixtures and unsigned iOS simulator build.
+  Both merged-main runs39109298726/39109298723 passed. Independent backend review
+  approved; client fence finding fixed/re-reviewed. Signing/install/rendering,
+  real Auth0/iPhone NFC and physical acquisition are NOT established by these checks.
+
+Required truthful mode: null breath duration ONLY with `manual_timed` and actual
+measured sample window; legacy wire JSON/replays retained. BAC remains null.
+Firmware physical session-diagnostic evidence is separate in
+[DEVICE_SESSION_VERIFICATION.md](DEVICE_SESSION_VERIFICATION.md); diagnostic
+heartbeats/idle polls are not ADC/measurement acceptance. Its newer reconnect
+exhaustion supersedes any current-online inference from the earlier bounded pass.
+
+Reproduce the focused acceptance from this committed source (isolated DB/HTTP,
+no production credentials or real-user fixtures):
+
+```bash
+cd backend
+unset PYTHONPATH
+uv run --locked --python 3.12 pytest -q tests/test_manual_acquisition.py tests/test_manual_acquisition_regressions.py tests/test_party_contract_compatibility.py integration/test_party_http.py ../deploy/ubuntu/tests/test_backup.py
+uv run --locked --python 3.12 python -m kickbac.simulator
+```
+
+On Windows, set a unique scratch `UV_PROJECT_ENVIRONMENT` and scratch
+`TMPDIR`/`TEMP`/`TMP`; do not mutate a concurrently used venv. Exact target test
+command used a locked private devvenv and the same five test paths above;56passed.
+Runtime uses the release-local production venv, not the test environment.
+For native commands see `.github/workflows/ios-acquisition.yml`; run on macOS.
 
 ## NFC context merged and main CI verified — not a production release
 

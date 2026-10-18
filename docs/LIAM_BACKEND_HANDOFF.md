@@ -2,6 +2,36 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+### Current live acquisition/NFC release — continued client authorization
+
+Nicholas lifted the04:00 cutoff and authorizes continuing necessary iOS work;
+preserve Liam's concurrent work/branches and existing designs. Backend is NOW
+live at `https://api.kickbac.vodka`:33 operations/schema6, release source
+`172e54c1604356e3e83db2fc0672706829841795`, activated07:55:20UTC October18.
+PR30 merged as `c78a042`; exact PR and merged-main backend/native CI passed,
+including actual Swift acquisition/session fixtures and unsigned simulator build.
+Signing/install, native NFC, rendering and real sensor acceptance remain separate.
+Full immutable provenance, backups/old-row preservation and target/public readback:
+[BACKEND_RELEASE_VERIFICATION.md](BACKEND_RELEASE_VERIFICATION.md).
+
+**BREAKING for older required-Int clients:** manual measurements use null breath
+duration, `acquisition_method:"manual_timed"`, actual `sample_duration_ms`1..60000.
+Existing legacy JSON/retries remain exact; paths/identity/session ownership and
+participation points are unchanged. Show "Timed sensor sample — breath not
+validated" and never call the sensor window breath duration or BAC. Canonical
+examples: [FIRMWARE_DURATION_PROPOSAL.md](FIRMWARE_DURATION_PROPOSAL.md).
+
+Original `liam/party-setup@0e5a6e4` is preserved. Combined compatible preview branch
+`ios/manual-acquisition-notice@f9cbce63553712806b8d39760261975e5f817088`
+([draft PR32](https://github.com/spherohero/kickbac/pull/32)) retains Liam's
+Party/Trivia work and integrates current verified main/fences. Its independent
+full-preview review/native CI is separate from the already-green core main and
+must pass before merging; no live-party/gameplay or phone installation claim.
+
+Every lower pending/not-deployed/unapproved statement describes its historical
+checkpoint unless explicitly reconfirmed; do not restart setup or erase evidence.
+No production user creation/grant/arm/measurement was performed by deployment.
+
 ### Physical diagnostic follow-up — reconnect failure investigation
 
 - **New physical result:** [DEVICE_SESSION_VERIFICATION.md](DEVICE_SESSION_VERIFICATION.md)

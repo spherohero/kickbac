@@ -1,12 +1,14 @@
 # kickBAC API contract — v0
 
-Status: **LIVE at https://api.kickbac.vodka**,17 operations, explicitly migrated schema4. Profiles, generic private game results/stats and per-person reading history are published and deployed. See [release verification](BACKEND_RELEASE_VERIFICATION.md), [client handoff](LIAM_BACKEND_HANDOFF.md), [games/points](GAMES.md) and [reading history](READING_HISTORY.md). Profile source is published in merged [PR #3](https://github.com/spherohero/kickbac/pull/3); see `PROFILE_VERIFICATION.md` for the earlier deployment evidence. Display name **kickBAC**. REST JSON uses snake_case, opaque UUID session/measurement/result IDs, a provisioned device slug, and ISO 8601 UTC timestamps (`Z` or `+00:00`). Users are opaque verified Auth0 `sub` strings, not client-chosen IDs. No certified BAC or safe-to-drive interpretation is provided.
+Status: **LIVE at https://api.kickbac.vodka**,33 operations, explicitly migrated schema6. Profiles, generic private game results/stats and per-person reading history are published and deployed. See [release verification](BACKEND_RELEASE_VERIFICATION.md), [client handoff](LIAM_BACKEND_HANDOFF.md), [games/points](GAMES.md) and [reading history](READING_HISTORY.md). Profile source is published in merged [PR #3](https://github.com/spherohero/kickbac/pull/3); see `PROFILE_VERIFICATION.md` for the earlier deployment evidence. Display name **kickBAC**. REST JSON uses snake_case, opaque UUID session/measurement/result IDs, a provisioned device slug, and ISO 8601 UTC timestamps (`Z` or `+00:00`). Users are opaque verified Auth0 `sub` strings, not client-chosen IDs. No certified BAC or safe-to-drive interpretation is provided.
 
-## Manual acquisition candidate — implemented source, not deployed
+## Manual acquisition — deployed, physical acceptance separate
 
 `backend/manual-timed-acquisition` implements the frozen
-[manual acquisition contract](FIRMWARE_DURATION_PROPOSAL.md). Current public
-OpenAPI above remains authoritative until a separately verified release.
+[manual acquisition contract](FIRMWARE_DURATION_PROPOSAL.md), deployed from172e54c
+after reviewed source/CI, retained backup, production-copy migration and target
+acceptance. [Release evidence](BACKEND_RELEASE_VERIFICATION.md) supersedes older
+not-deployed/schema4 checkpoints below. Public OpenAPI is authoritative.
 **BREAKING for older clients:** manual readings use required
 `breath_duration_ms:null`, `acquisition_method:"manual_timed"`, and measured
 strict integer `sample_duration_ms`1..60000. Legacy integer-duration request,
@@ -31,14 +33,12 @@ Approved primary login is **phone number + SMS OTP through Auth0/Twilio, not SMS
 
 ## Private reading summary
 
-**Additive local implementation; not yet deployed.** The combined party/profile
-branch currently has33 operations on schema6; the live17-operation release above
-is unchanged. Party create/join/binding/game/context/history routes are documented
-in [PARTIES.md](PARTIES.md). Atomic ARM-time party/game context is now implemented
-locally through the additional POST/private GET in [NFC_CHECK_IN.md](NFC_CHECK_IN.md),
-not yet deployed or native/physical accepted. Existing17 operations and23 component
-schemas are frozen by an executable compatibility fixture captured from public
-HTTPS OpenAPI.
+**Deployed on schema6/33 operations.** Party create/join/binding/game/context/
+history routes are documented in [PARTIES.md](PARTIES.md). Atomic ARM-time
+party/game context is live through [NFC_CHECK_IN.md](NFC_CHECK_IN.md); native NFC
+and physical acquisition acceptance remain separate. An executable compatibility
+fixture preserves the pre-party17-operation/23-component baseline except the
+explicitly coordinated manual nullable-duration/metadata schema transformation.
 
 `GET /v1/me/reading-summary` uses the existing user API access token, with no
 request body or pagination/filter parameters. Example for an empty account:
@@ -70,9 +70,22 @@ mean unavailable, not a zero-reading account. No other operation shape changes.
 | POST | `/v1/me/game-results` | user | persist completed client-reported game, award10 participation points once |
 | GET | `/v1/me/game-results` | user | own paginated game ledger, optional game_id filter |
 | GET | `/v1/me/stats` | user | profile-wide points/games/wins and per-game aggregates |
-| GET | `/v1/me/reading-summary` | user | exact saved reading count/latest owned measurement; feature source, not deployed |
-| POST | `/v1/parties/{party_id}/check-ins` | party member | atomic next-test reservation with retry-safe party/game context; feature source, not deployed |
-| GET | `/v1/me/check-ins` | user | private persisted check-in/session/result history; feature source, not deployed |
+| GET | `/v1/me/reading-summary` | user | exact saved reading count/latest owned measurement |
+| POST | `/v1/parties/{party_id}/check-ins` | party member | atomic next-test reservation with retry-safe party/game context |
+| GET | `/v1/me/check-ins` | user | private persisted check-in/session/result history |
+| POST | `/v1/parties` | user | create a host-owned party |
+| POST | `/v1/parties/join` | user | join by host code or assigned-device ID |
+| POST | `/v1/parties/{party_id}/leave` | party member | leave under the party lifecycle rules |
+| PUT | `/v1/parties/{party_id}/device` | party host | explicitly bind a registered unit |
+| DELETE | `/v1/parties/{party_id}/device` | party host | explicitly remove the binding |
+| POST | `/v1/parties/{party_id}/close` | party host | close a party under its lifecycle rules |
+| GET | `/v1/parties/{party_id}` | party member | private party snapshot |
+| GET | `/v1/me/parties` | user | own paginated party history |
+| GET | `/v1/me/game-history` | user | own game ledger with exact nullable party/game/measurement context |
+| POST | `/v1/party-games/{game_instance_id}/results` | party member | one retry-safe own client-reported completion |
+| GET | `/v1/parties/{party_id}/games` | party member | party game-instance history |
+| POST | `/v1/parties/{party_id}/games` | party host | create a game instance, not a gameplay engine |
+| POST | `/v1/party-games/{game_instance_id}/close` | party host | close a game instance |
 | GET | `/v1/devices/{device_id}` | user | current derived availability and online state |
 | POST | `/v1/devices/{device_id}/sessions` | user | arm known unit; empty JSON `{}` |
 | GET | `/v1/sessions/{session_id}` | owning user | session and optional result |
@@ -80,12 +93,14 @@ mean unavailable, not a zero-reading account. No other operation shape changes.
 | GET | `/v1/measurements` | user | private history with `limit` and `offset` |
 | POST | `/v1/device/heartbeat` | device | record connectivity; `{}` |
 | GET | `/v1/device/session` | device | fetch its current active session |
-| POST | `/v1/device/sessions/{session_id}/sampling` | device | report valid breath sampling start; `{}` |
+| POST | `/v1/device/sessions/{session_id}/sampling` | device | report sensor acquisition start, not verified breath; `{}` |
 | POST | `/v1/device/measurements` | device | idempotent sample upload |
 
 Normal server must use Auth0 and an explicitly migrated persistent DB. Current
-feature source requires schema6; deployed games-era schema4 requires a backed-up
-005+006 upgrade before starting this source. Runtime startup does not migrate.
+source and production both require schema6. Other games-era schema4 databases
+require a backed-up005+006 upgrade before starting this source. Runtime startup
+does not migrate. Complete party role, membership, expiry and retry rules are in
+[PARTIES.md](PARTIES.md) and [NFC_CHECK_IN.md](NFC_CHECK_IN.md).
 `/docs` and `/openapi.json` document the implemented schema; keep examples in this document synchronized. The simulator starts an isolated loopback instance. Trusted public HTTPS is verified; real native access-token/history acceptance, universal links and NFC writing are separate integration steps. See [PROFILES.md](PROFILES.md) for complete onboarding fields, image limits, save/retry/removal semantics and client handoff. Phone stays in the Auth0 SMS identity; profile writes never accept a client-supplied owner or verified phone.
 
 ## Lifecycle and concurrency

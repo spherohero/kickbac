@@ -7,13 +7,23 @@ Native-client and sensor acceptance are separate; this is not a certified BAC
 instrument. Private display-name/picture profiles are deployed; see
 [verification](docs/PROFILE_VERIFICATION.md) and [client contract](docs/PROFILES.md).
 
+**Current live checkpoint:** schema6/33 API operations, immutable source172e54c
+from merged PR30, activated October18 after retained backups, exact old-data
+preservation, target tests and trusted public readback. Party/NFC reservation and
+truthful manual acquisition metadata are deployed; see
+[release verification](docs/BACKEND_RELEASE_VERIFICATION.md). Matching nullable
+iOS source passed real Swift fixtures/unsigned Xcode CI, not signed-phone/NFC
+acceptance. The firmware's earlier heartbeat/poll run passed, but its latest
+reconnect failed; read [current physical evidence](docs/DEVICE_SESSION_VERIFICATION.md)
+instead of assuming uninterrupted device connectivity. ADC/uploads remain unverified.
+
 ## Layout and contract
 
 - **Liam / iOS agents: read [the latest shared change/branch handoff](docs/LIAM_BACKEND_HANDOFF.md#read-first--agent-sync-and-latest-branchchange-checkpoint) before integration work.** Root `AGENTS.md` requires portable Liam-facing documentation for each shared change/merge/cleanup. Fetch and read `origin/main` even when your active client branch has older docs; no automatic agent synchronization is claimed.
 - `backend/`: Python/FastAPI, versioned SQLite migrations, tests and simulator.
 - [`docs/API.md`](docs/API.md): paths, bodies, errors and lifecycle.
 - [`docs/PROFILES.md`](docs/PROFILES.md): private display-name/picture onboarding; phone identity remains with Auth0.
-- [`docs/GAMES.md`](docs/GAMES.md): live generic private game results, server-assigned participation points and profile-wide stats; schema4.
+- [`docs/GAMES.md`](docs/GAMES.md): live generic private game results, party/game context, server-assigned participation points and profile-wide stats; schema6, not a gameplay engine.
 - [`docs/READING_HISTORY.md`](docs/READING_HISTORY.md): every accepted test persists privately by the same account as its profile; unavailable BAC is null, not zero.
 - [`docs/LIAM_BACKEND_HANDOFF.md`](docs/LIAM_BACKEND_HANDOFF.md): published client catch-up; real native acceptance remains Liam-owned.
 - [`docs/BACKEND_RELEASE_VERIFICATION.md`](docs/BACKEND_RELEASE_VERIFICATION.md): actual tests/deployment/source provenance and remaining limits.
@@ -28,7 +38,7 @@ instrument. Private display-name/picture profiles are deployed; see
 - [`docs/HARDWARE_BRINGUP.md`](docs/HARDWARE_BRINGUP.md): photo-confirmed Flying Fish-style MQ breakout (not bare sensor), actual header orientation, USB evidence, and conditional power/protection design awaiting actual parts/meter checks.
 - [`docs/AUSTIN_PERFBOARD_GUIDE.md`](docs/AUSTIN_PERFBOARD_GUIDE.md): shareable assembly/net guide, component-side perfboard concept, full-scale divider test, power sequencing and Austin's measurement handoff. Actual parts and electrical sign-off remain required before ADC connection.
 - [`docs/USB_ONLY_COMMISSIONING.md`](docs/USB_ONLY_COMMISSIONING.md): **current power decision: USB-C-only, no battery**; revised conditional schematic, keep/remove parts, capacitor checks, combined-load budget and commissioning gates. Supersedes older power proposals, not electrical safety checks.
-- [`docs/FIRMWARE_DURATION_PROPOSAL.md`](docs/FIRMWARE_DURATION_PROPOSAL.md): UNAPPROVED manual/timed acquisition proposal; current required breath duration is not fabricated or silently reinterpreted. The pressure sensor is confirmed unavailable.
+- [`docs/FIRMWARE_DURATION_PROPOSAL.md`](docs/FIRMWARE_DURATION_PROPOSAL.md): approved/deployed manual-timed contract; explicit null breath duration plus actual sample window and unvalidated notice, never fabricated breath duration or BAC. Physical sensing remains separate; pressure sensor unavailable.
 
 
 ## Run the iPhone app / phone login
@@ -64,9 +74,9 @@ Environment:
 | `AUTH0_DOMAIN` | Actual tenant DNS name only, e.g. `dev-EXAMPLE.us.auth0.com`; no scheme, port, path or trailing slash. |
 | `AUTH0_AUDIENCE` | Exact custom API identifier, coordinated as `https://kickbac-api` (no trailing slash). A logical identifier, **not a backend host**. |
 
-`init-db` in this feature source explicitly applies migrations001–006, preserving
+`init-db` explicitly applies migrations001–006, preserving
 existing device/session/history/profile/game rows. The source requires schema6;
-production is still the separately deployed schema4 release. Party/NFC status is
+production is on the verified schema6 release. Party/NFC status is
 in [PARTIES.md](docs/PARTIES.md) and [NFC_CHECK_IN.md](docs/NFC_CHECK_IN.md).
 Re-running initialization is safe. Normal startup never initializes or upgrades
 a database and fails closed without the required schema and Auth0 configuration.

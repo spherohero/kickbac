@@ -25,9 +25,14 @@ Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his bran
   current integration conflict is this shared handoff; retain both the USB-only
   safety entry and Liam's integration/earlier-cleanup entries. App source remains
   byte-for-byte Liam's; backend/firmware runtime remains byte-for-byte live main.
-- Status: integration candidate, not yet merged or deployed. Independent current
-  source review is pending; no merge approval is claimed here. The integration PR
-  and its exact merge SHA/state are authoritative after publication.
+- Status: integration candidate in [PR #24](https://github.com/spherohero/kickbac/pull/24),
+  not yet merged or deployed. Parent inspection and two independent source reviews
+  found no blocking auth/profile/privacy/device/session/game/provenance defect at
+  the exact Liam head above. The integration PR and its exact merge SHA/state are
+  authoritative after merge. Native execution remains a separate evidence level.
+- Nonblocking follow-ups: Home daily Avg/Max use loaded pages (already owner-accepted);
+  device online state is a lookup snapshot; history's “Test reading” simulator badge
+  would be clearer as “Simulated reading”. No app source was changed for these notes.
 - **NON-BREAKING:** existing endpoints, fields, payload examples, authentication,
   units, states, duration and participation-point policy are unchanged. Liam keeps
   ownership of the app and native acceptance; no source redesign is requested.

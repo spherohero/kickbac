@@ -1,6 +1,6 @@
 # Games, profile-wide points and private reading history
 
-Status: game-result/stats additions in development on `backend/games`. This document is the coordinated client contract; implementation, tests, GitHub integration and deployment must pass before status is marked live. Existing profile/measurement APIs are already deployed.
+Status: **LIVE at https://api.kickbac.vodka**, published and merged in [PR #7](https://github.com/spherohero/kickbac/pull/7). Explicit backed-up schema3→4 upgrade, staged target-host HTTP/profile/game/restart/migration checks and public17-operation contract verification passed. All14 earlier operations/18 component schemas are unchanged. See [BACKEND_RELEASE_VERIFICATION.md](BACKEND_RELEASE_VERIFICATION.md) and [LIAM_BACKEND_HANDOFF.md](LIAM_BACKEND_HANDOFF.md). Real native token/profile/history/game acceptance remains Liam-owned and unverified.
 
 ## Figma scope inspected read-only
 

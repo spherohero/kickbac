@@ -8,6 +8,7 @@
 #include <ctime>
 #include "device_diagnostic.hpp"
 #include "device_probe.hpp"
+#include "network_runtime.hpp"
 #include "session_safety.hpp"
 #include "tls_root.hpp"
 
@@ -18,6 +19,7 @@
 namespace {
 kickbac::DeviceCredentialFrame credential;
 kickbac::SessionFence session_fence;
+kickbac::DeviceRecovery recovery;
 bool failed = false;
 bool negative_checked = false;
 bool pass_reported = false;
@@ -35,6 +37,7 @@ std::int64_t utc_upper_ms() {
 
 void stop_probe(const char* stage, int status) {
     session_fence.clear();
+    recovery.clear();
     credential.clear();
     failed = true;
     Serial.printf("DEVICE_FAIL stage=%s status=%d credential=cleared uploads=disabled\n", stage, status);
@@ -74,6 +77,54 @@ int request(bool heartbeat, bool authenticated, char (&body)[769]) {
     http.end();
     return status;
 }
+
+void request_failed(bool heartbeat, int status) {
+    session_fence.clear(); // Never resume any acquisition across a transport gap.
+    const char* stage = heartbeat ? "heartbeat" : "poll";
+    if (kickbac::retryable_device_status(status) &&
+        recovery.schedule(heartbeat, static_cast<std::uint32_t>(millis()))) {
+        Serial.printf("device_retry stage=%s status=%d number=%u wait_ms=%lu acquisition=invalidated\n",
+                      stage, status, recovery.count(), static_cast<unsigned long>(recovery.wait_ms()));
+        return;
+    }
+    stop_probe(stage, status);
+}
+
+bool perform_request(bool heartbeat) {
+    char body[769] = {};
+    const int status = request(heartbeat, true, body);
+    if (heartbeat) {
+        char seen[40] = {};
+        if (!kickbac::heartbeat_response_ok(status, body, seen)) {
+            request_failed(true, status);
+            return false;
+        }
+        if (heartbeats > 0 && std::strcmp(seen, previous_seen) <= 0) {
+            stop_probe("heartbeat_not_advanced", status);
+            return false;
+        }
+        std::strcpy(previous_seen, seen);
+        last_heartbeat = static_cast<std::uint32_t>(millis());
+        ++heartbeats;
+        Serial.printf("device_heartbeat number=%u status=200 online=1 last_seen_at=%s\n", heartbeats, seen);
+    } else {
+        kickbac::PollSnapshot snapshot;
+        const kickbac::PollState state = kickbac::poll_response(status, body, snapshot);
+        if (state == kickbac::PollState::Invalid) { request_failed(false, status); return false; }
+        session_fence.observe(snapshot, static_cast<std::uint32_t>(millis()), utc_upper_ms());
+        const char* label = state == kickbac::PollState::Idle ? "IDLE" :
+                            (state == kickbac::PollState::Armed ? "ARMED" : "SAMPLING");
+        last_poll = static_cast<std::uint32_t>(millis());
+        ++polls;
+        Serial.printf("device_poll number=%u status=200 active_state=%s actions=disabled\n", polls, label);
+    }
+    if (recovery.active()) {
+        Serial.printf("device_recovered stage=%s retries=%u acquisition=requires_fresh_session\n",
+                      heartbeat ? "heartbeat" : "poll", recovery.count());
+        recovery.clear();
+    }
+    return true;
+}
 }  // namespace
 
 void device_probe_loop() {
@@ -94,6 +145,10 @@ void device_probe_loop() {
         return;
     }
     if (WiFi.status() != WL_CONNECTED) { stop_probe("wifi_lost", -1); return; }
+    if (recovery.active()) {
+        if (recovery.due(now)) perform_request(recovery.heartbeat());
+        return; // No other endpoint may mask/clear a failing endpoint's retry budget.
+    }
     char body[769] = {};
     if (!negative_checked) {
         const int status = request(false, false, body);
@@ -102,32 +157,10 @@ void device_probe_loop() {
         negative_checked = true;
     }
     if (heartbeats == 0 || now - last_heartbeat >= 10000U) {
-        const int status = request(true, true, body);
-        char seen[40] = {};
-        if (!kickbac::heartbeat_response_ok(status, body, seen)) {
-            stop_probe("heartbeat", status);
-            return;
-        }
-        if (heartbeats > 0 && std::strcmp(seen, previous_seen) <= 0) {
-            stop_probe("heartbeat_not_advanced", status);
-            return;
-        }
-        std::strcpy(previous_seen, seen);
-        last_heartbeat = static_cast<std::uint32_t>(millis());
-        ++heartbeats;
-        Serial.printf("device_heartbeat number=%u status=200 online=1 last_seen_at=%s\n", heartbeats, seen);
+        if (!perform_request(true)) return;
     }
     if (polls == 0 || now - last_poll >= 2000U) {
-        const int status = request(false, true, body);
-        kickbac::PollSnapshot snapshot;
-        const kickbac::PollState state = kickbac::poll_response(status, body, snapshot);
-        if (state == kickbac::PollState::Invalid) { stop_probe("poll", status); return; }
-        session_fence.observe(snapshot, static_cast<std::uint32_t>(millis()), utc_upper_ms());
-        const char* label = state == kickbac::PollState::Idle ? "IDLE" :
-                            (state == kickbac::PollState::Armed ? "ARMED" : "SAMPLING");
-        last_poll = static_cast<std::uint32_t>(millis());
-        ++polls;
-        Serial.printf("device_poll number=%u status=200 active_state=%s actions=disabled\n", polls, label);
+        if (!perform_request(false)) return;
     }
     if (!pass_reported && heartbeats >= 3 && polls >= 3) {
         Serial.printf("DEVICE_PASS identity=kb-demo-01 heartbeats=%u polls=%u online_refresh=1 ongoing=1 uploads=disabled\n", heartbeats, polls);

@@ -73,6 +73,9 @@ class DeviceProvisionTests(unittest.TestCase):
     def test_exact_sanitized_device_stage_is_retained(self):
         for line in [
             "device_auth_negative status=401 rejected=1",
+            "NETWORK_READY wifi=1 dhcp=1 dns=1 trusted_https=1 reconnect_test=skipped sensor=disabled uploads=disabled",
+            "device_retry stage=poll status=502 number=1 wait_ms=2000 acquisition=invalidated",
+            "device_recovered stage=poll retries=1 acquisition=requires_fresh_session",
             "probe_https_error attempt=2 tls_code=-1 duration_ms=7001",
             "device_heartbeat number=1 status=200 online=1 last_seen_at=2026-10-18T00:30:01.123456+00:00",
             "device_poll number=1 status=200 active_state=IDLE actions=disabled",

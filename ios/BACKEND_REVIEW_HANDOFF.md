@@ -1,0 +1,39 @@
+# iOS integration review and iPhone test handoff
+
+The iOS review branch includes current main's published backend, games, deployment, CI and firmware diagnostic sources. Backend source publication is no longer a blocker. The iOS changes consume existing contracts; no server path, payload, identity, duration or scoring policy was changed.
+
+## Implemented
+
+- Embedded Auth0 SMS OTP with exact audience `https://kickbac-api`, API base `https://api.kickbac.vodka`, and SDK Keychain credentials.
+- First-login storage handles absent Keychain items during SDK cleanup, while rejecting actual write/delete failures. The regression reproduces the former secure-sign-in error with an empty store; credentials remain Keychain-backed and prior session metadata is still cleared.
+- Profile GET/PUT, explicit null photo encoding, normalized bounded JPEGs, server-confirmed saves, retries, account-scoped cache and stale-response protection. Concurrent profile loaders await one request. Onboarding requires a captured photo; there is no Skip photo button. Camera preview ownership and ordered start/stop commands prevent stale views from stopping the current camera; native preview updates rebind their source.
+- Private paginated measurement history in server receipt order. Home uses actual loaded nonsimulated estimates; null stays unavailable/raw. Debug demo is labeled and isolated.
+- QR/manual trusted device selection, public resolver, authenticated availability, explicit empty-JSON arm, session poll/backoff/cancel/terminal result and history refresh. Pending sessions persist per subject. Authoritative 404 releases unavailable local tracking without automatic rearming.
+- Me loads server Games played/Wins/Points. All three open Recent games, which reads private paginated game results using the same API access token. Rows show game, outcome, score, awarded points, and completion date. Party grouping and linked check-ins await backend support; [RECENT_GAMES_HANDOFF.md](RECENT_GAMES_HANDOFF.md) records the request for Nicholas. Party gameplay and game-result submission remain separate work; no scores, completions or party totals are invented.
+
+## Verification and limits
+
+Profile/image/coalesced-load checks, Auth0 SDK request fixtures, API contract checks, and device/session fixtures pass. Device fixtures cover trusted URLs, persistence, offline availability, cancellation, expiry, busy conflicts, unavailable-session recovery, account switching, terminal polling and null/simulated BAC separation. A signed iPhone build and installation are recorded separately from these fixtures. No actual SMS, private photo upload, live device arming or sensor acceptance was performed by the agent. No screen inspection is used after the user's request to stop it.
+
+NFC Tag Reading cannot be provisioned by the current Apple Personal Team. The installed build uses QR/manual entry; NFC/background Universal Links are not claimed to work.
+
+## Test on the iPhone
+
+1. Sign in with your own phone/code. A new account should enter name/photo setup. Allow camera access, check the live preview, capture, retake, and use the photo before completing setup. A saved account should load its existing profile. Auth0 sign-in can succeed before the name/photo profile is saved.
+2. Save/edit a name and real photo. Force-quit/reopen, then sign out/in: name/photo and private history should restore. Change only the name and confirm the picture remains. Retake the photo and save; the editor has no Remove photo action.
+3. Turn connectivity off before saving an edit: input should remain and the error should permit retry after reconnecting. Switch accounts and confirm no prior private profile/history/stats appears.
+4. Home should show dashes when there are no real BAC estimates. Debug Demo must stay visibly labeled and must not add a private history entry.
+5. Connect with `kb-demo-01` (or its official QR/link). Inspect online/offline, explicitly Start test, then Cancel. Repeat and allow the server's 60-second session to expire. Relaunch during an active session: it should reload the same session, not arm a new one.
+6. A coordinated completed firmware/simulator test should show its actual result and refresh history. Null BAC must show no estimate. This step requires Nicholas's producer readiness; do not expect the current disabled upload firmware to complete a sample.
+
+## Tell Nicholas
+
+No new profile/auth/session/stats endpoint is needed. Coordinate the real SMS login so he can verify post-login feedback execution. Firmware sampling/uploads remain disabled pending electrical checks and a truthful duration/acquisition decision; current `breath_duration_ms` remains a required Int and the nullable-duration proposal is not adopted. For this Personal Team build, supply a QR or printed ID (`kb-demo-01` works for the published demo device) rather than relying on NFC app launch.
+
+## Pending account deletion
+
+Liam requested account deletion; the current backend has no deletion operation. Settings displays an unavailable message without changing the account. [ACCOUNT_DELETION_HANDOFF.md](ACCOUNT_DELETION_HANDOFF.md) records the requirements for Nicholas. No deletion endpoint or live deletion acceptance is claimed.
+
+## Integration review checkpoint
+
+Current app edits are committed in `4e31406`; backend/docs main `22f0635` was merged into this client branch in `89e698c`, preserving Nicholas's sources. `550355c` hides Cancel during sampling. All iOS checks, signed Debug build, 338 combined backend/deployment tests, Ruff checks, the isolated HTTP simulator, 78 Auth0 Action fixtures and two backend/C++ decoder fixtures passed locally. Source reviews found no confirmed spec regressions or actionable documented-standard breaches. Home's daily Avg/Max still depend on loaded history pages; Liam explicitly kept the approved Home and requested a follow-up for complete-day aggregation. These results do not establish live game-history, physical sensing or visual acceptance. The shared handoff records the branch/contract checkpoint; no main merge or branch deletion is claimed.

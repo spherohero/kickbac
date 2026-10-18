@@ -16,6 +16,48 @@ git rev-parse origin/main origin/liam/ios-profile-handoff
 
 Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his branch. If main has not been integrated, read these shared docs directly from `origin/main`; do not reset, stash automatically, overwrite local edits or merge blindly. Documentation publication cannot prove an already-running remote agent has read it. Liam/his agent should report the main and client SHAs read when next giving a substantive integration update; no repeated acknowledgment pings or new user-run native tests are requested.
 
+### Backend review of iOS PR #22 and requested profile/party follow-up
+
+- Owner: backend Bot, isolated `review/ios-pr22`, live base
+  `8dce54179366aaeff669525ef414e7f228d44e40`, Liam head
+  `bba989d978b146b50335621039ab9949629e5f2c` ([PR #22](https://github.com/spherohero/kickbac/pull/22)).
+  Nicholas requests review/ready merge and obsolete iOS branch cleanup. The only
+  current integration conflict is this shared handoff; retain both the USB-only
+  safety entry and Liam's integration/earlier-cleanup entries. App source remains
+  byte-for-byte Liam's; backend/firmware runtime remains byte-for-byte live main.
+- Status: integration candidate, not yet merged or deployed. Independent current
+  source review is pending; no merge approval is claimed here. The integration PR
+  and its exact merge SHA/state are authoritative after publication.
+- **NON-BREAKING:** existing endpoints, fields, payload examples, authentication,
+  units, states, duration and participation-point policy are unchanged. Liam keeps
+  ownership of the app and native acceptance; no source redesign is requested.
+  See canonical examples below and [API.md](API.md).
+- Current local checks on the combined tree: Python 3.12 **338** backend/deployment
+  tests; Ruff lint/format (**54** files), compile and real-loopback simulator passed
+  (COMPLETE, one measurement, zero duplicates, foreign 404, restart OK). Branding
+  check and **78** non-sending Auth0 fixtures passed on Node 24.18.1. Windows has
+  no Swift/Swiftc/Xcodebuild; Liam's reported signed Debug build/eight Swift checks
+  are owner evidence, not independently reproduced here. Path-filtered iOS/docs
+  changes do not trigger the existing backend/firmware workflows.
+- [Profile and party requirements](PROFILE_PARTY_REQUIREMENTS.md) captures Nicholas's
+  later scope: all saved readings including game-start tests, latest check, lifetime
+  stats, party/date-grouped game rows with score/points, placement and exact owned
+  measurement, plus create/join by host code or assigned-device NFC. It is not an
+  implemented party engine or an adopted wire schema. Do not invent unavailable
+  placement/BAC/party data or change the existing 10-point participation policy.
+- Cleanup is restricted to unchanged, verified merged iOS refs requested by Nicholas;
+  preserve active worktrees, private/dirty work and firmware branches. Older `ios`
+  and `feat/ios-setup` remote refs are already absent at initial readback. No deletion
+  of Liam's current PR branch is authorized by this entry before verified merge.
+- Reproduce from repository root: `python ios/checks/BrandingChecks.py` and
+  `node --test backend/auth0/test-twilio-verify.cjs`; from `backend/`:
+  `uv run --locked --python 3.12 pytest -q tests ../deploy/ubuntu/tests`,
+  `uv run --locked ruff check . ../deploy/ubuntu`,
+  `uv run --locked ruff format --check . ../deploy/ubuntu`,
+  `uv run --locked python -m compileall -q kickbac ../deploy/ubuntu`,
+  `uv run --locked python -m kickbac.simulator`. Native commands remain in
+  `ios/README.md`; native/physical acceptance is not established by these checks.
+
 ### USB-C-only hardware revision — firmware owner
 
 - Owner/branch/base: firmware Bot, `docs/usb-only-commissioning`, based on
@@ -46,6 +88,54 @@ Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his bran
   reviewed head `d3c58cb2b9528186157cc0efaf97eb26a4f62873` plus the focused
   review-clarification commit shown in that PR. PR state/merge commit are
   authoritative for subsequent merge status. No deployment.
+
+### Authorized iOS branch cleanup — October 18, 2026
+
+- Owner: Liam; explicitly requested deletion of local and remote `feat/ios-setup` and `ios`.
+- Deleted local `feat/ios-setup@c5939d5` and `ios@7c87e09`, and their remote branches (`ios@88cd59c`). Before deletion, ancestry checks verified setup in `origin/main@22f0635` and both ios tips in `liam/ios-profile-handoff@3a7fa1c`. No commits were discarded.
+- PR [#22](https://github.com/spherohero/kickbac/pull/22) remains open on `liam/ios-profile-handoff`; main was not merged. This documentation commit records the cleanup on the PR branch.
+- **NON-BREAKING:** no client action; endpoints, schemas, payload examples and app behavior unchanged. Verification: Git ancestry checks, successful remote deletion and local safe branch deletion; no runtime tests needed. PR review/merge remains pending. Nicholas's branches were untouched.
+
+### Liam iOS integration — current app and latest backend/docs
+
+- Owner/branch: Liam, `liam/ios-profile-handoff`. App polish/game-history commit
+  `4e31406`; latest-main integration commit `89e698c`; reviewed source head
+  `550355c824852c5476e021bd6907273c2d6268dd`. Backend/docs base is
+  `22f06354e85ad04afe522e6d870b5bf3bb206af8`. Publication is being prepared in
+  the iOS integration PR; main is not merged or deployed by this work.
+- Branch audit: `feat/ios-setup@c5939d5` is already an ancestor of main. Remote
+  `ios@88cd59c` and local `ios@7c87e09` are ancestors of this integration branch.
+  One PR includes all of that client work. No branches were deleted; no firmware
+  branch was modified. Recheck remote heads before any later cleanup.
+- **NON-BREAKING / existing contracts unchanged.** The client consumes native
+  SMS auth, private profile/history, device/session state, stats and
+  `GET /v1/me/game-results?limit=50&offset=0` with the API access token. See the
+  canonical examples below and [API.md](API.md). No new path, payload, identity,
+  timestamp, duration, unit, scoring rule or backend runtime change is introduced.
+- App behavior: consistent `KickBAC` display/launch/Welcome branding; full-square
+  camera/crop without the masked blur; approved Home gauge retained; profile
+  header/settings simplified; reading statistics open history; game statistics
+  open private Recent games; Cancel is hidden while sampling.
+- Nicholas follow-ups: [account deletion](../ios/ACCOUNT_DELETION_HANDOFF.md) and
+  [party groups/per-game check-ins](../ios/RECENT_GAMES_HANDOFF.md). These remain
+  requests, not implemented backend functionality. Delete account is informational;
+  missing party/check-in data is shown unavailable. Gameplay/submission stay separate.
+- Review: no actionable documented-standard breaches or confirmed spec regressions.
+  One inherited limitation remains by Liam's explicit choice: Home Avg/Max summarize
+  loaded history pages; with over 50 real estimates today, loading more can alter
+  those values. Track complete-day aggregation as follow-up while preserving Home.
+- Verification: all eight iOS Swift check executables, branding checks and Auth0 SDK
+  fixtures passed; signed Debug build with Xcode-beta passed using
+  `/tmp/kickbac-profile-build`. Combined backend/deployment tests: **338 passed**;
+  Ruff lint/format and isolated HTTP simulator passed. Auth0 Action fixtures:
+  **78 passed**. Backend HTTP/actual C++ decoder fixtures: **2 passed**, with pinned
+  ArduinoJson 6.21.6 headers. Local backend runtime was Python 3.14; Action runtime
+  Node 26, separate from hosted Python 3.11/3.12 and Node 22 CI.
+- Evidence limits: builds/fixtures are not visual, physical-sensor or live game-history
+  acceptance. Liam reported login/profile working; that report is not an independent
+  agent reproduction. No real SMS, account deletion, live game submission, backend
+  deployment, or screen inspection was performed during integration review. Hosted
+  backend/firmware workflows filter paths; an iOS/docs-only PR may have no CI jobs.
 
 ### Actual-app phone login troubleshooting
 

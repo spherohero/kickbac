@@ -53,8 +53,8 @@ def test_repository_schema_survives_backup_restore(tmp_path):
     source = tmp_path / "schema.sqlite3"
     backend = SCRIPT.parents[2] / "backend"
     with sqlite3.connect(source) as db:
-        for name in ("001_initial.sql", "002_sessions_measurements.sql"):
-            db.executescript((backend / "migrations" / name).read_text())
+        for migration in sorted((backend / "migrations").glob("[0-9][0-9][0-9]_*.sql")):
+            db.executescript(migration.read_text())
         db.execute(
             "INSERT INTO devices(id, credential_hash) VALUES (?, ?)",
             ("fixture", "fixture-hash"),

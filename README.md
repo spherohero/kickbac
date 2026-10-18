@@ -27,6 +27,7 @@ instrument. Private display-name/picture profiles are deployed; see
 - [`docs/DEVICE_CONNECTIVITY.md`](docs/DEVICE_CONNECTIVITY.md): actual device-bearer heartbeat/poll passed; independent live readback proves persisted ongoing heartbeat after helper exit. No API/iOS or measurement changes.
 - [`docs/HARDWARE_BRINGUP.md`](docs/HARDWARE_BRINGUP.md): photo-confirmed Flying Fish-style MQ breakout (not bare sensor), actual header orientation, USB evidence, and conditional power/protection design awaiting actual parts/meter checks.
 - [`docs/AUSTIN_PERFBOARD_GUIDE.md`](docs/AUSTIN_PERFBOARD_GUIDE.md): shareable assembly/net guide, component-side perfboard concept, full-scale divider test, power sequencing and Austin's measurement handoff. Actual parts and electrical sign-off remain required before ADC connection.
+- [`docs/USB_ONLY_COMMISSIONING.md`](docs/USB_ONLY_COMMISSIONING.md): **current power decision: USB-C-only, no battery**; revised conditional schematic, keep/remove parts, capacitor checks, combined-load budget and commissioning gates. Supersedes older power proposals, not electrical safety checks.
 - [`docs/FIRMWARE_DURATION_PROPOSAL.md`](docs/FIRMWARE_DURATION_PROPOSAL.md): UNAPPROVED manual/timed acquisition proposal; current required breath duration is not fabricated or silently reinterpreted. The pressure sensor is confirmed unavailable.
 
 

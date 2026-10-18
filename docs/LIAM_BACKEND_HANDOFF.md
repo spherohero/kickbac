@@ -16,6 +16,37 @@ git rev-parse origin/main origin/liam/ios-profile-handoff
 
 Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his branch. If main has not been integrated, read these shared docs directly from `origin/main`; do not reset, stash automatically, overwrite local edits or merge blindly. Documentation publication cannot prove an already-running remote agent has read it. Liam/his agent should report the main and client SHAs read when next giving a substantive integration update; no repeated acknowledgment pings or new user-run native tests are requested.
 
+### USB-C-only hardware revision — firmware owner
+
+- Owner/branch/base: firmware Bot, `docs/usb-only-commissioning`, based on
+  `22f06354e85ad04afe522e6d870b5bf3bb206af8`. The publishing PR/commits provide
+  exact reviewed head and merge status; documentation publication is not hardware
+  approval, deployment or native acceptance.
+- Nicholas drops battery operation for this demo. New
+  [USB-only commissioning guide](USB_ONLY_COMMISSIONING.md) provides the
+  conditional single-cable VBUS schematic, keep/remove list, capacitor marking
+  checks, illustrative current budget and required actual measurements. Older
+  separate-supply/battery guides are marked superseded for current topology.
+- **NON-BREAKING; no client action.** Existing methods, payloads, schemas, auth,
+  states, units, examples and duration semantics in [API.md](API.md) are unchanged.
+  No firmware runtime, backend or iOS source changes; no deployment or flash.
+  USB supplies power/serial; API traffic still uses Wi-Fi. On reset/unplug the
+  diagnostic loses RAM-only credentials and needs private operator provisioning.
+  Do not infer battery-percentage support from the earlier battery proposal.
+- Local verification passed: seven Markdown files, 49 relative link targets,
+  balanced fences, `git diff --check`, divider/RC/current arithmetic and safety
+  text assertions. Independent engineering/doc review passed for conditional
+  documentation, not electrical approval. Its clarity suggestions were applied:
+  explicitly historical old parts/revision text and maximum-bound divider testing.
+  No sensor measurements, rated USB path, physical execution or app acceptance
+  is established by these checks. ADC remains physically isolated; MCU+heater power path/current,
+  capacitor identification and full-scale divider tests remain physical gates.
+  Duration proposal remains unapproved; hardware completion/uploads stay disabled.
+  Publication: [PR #23](https://github.com/spherohero/kickbac/pull/23), initial
+  reviewed head `d3c58cb2b9528186157cc0efaf97eb26a4f62873` plus the focused
+  review-clarification commit shown in that PR. PR state/merge commit are
+  authoritative for subsequent merge status. No deployment.
+
 ### Actual-app phone login troubleshooting
 
 - Owner/branch/base: backend Bot, `docs/phone-login-troubleshooting`, based on

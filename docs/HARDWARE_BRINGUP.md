@@ -1,5 +1,11 @@
 # Physical bring-up checkpoint — XIAO + MQ module
 
+> **Current power choice:** Nicholas selects **USB-C-only, battery omitted**.
+> Read [USB_ONLY_COMMISSIONING.md](USB_ONLY_COMMISSIONING.md) for the revised
+> schematic, reported-versus-required parts, power-budget and electrical gates.
+> Older separate-positive-supply guidance below is historical/alternate, not the
+> current single-cable wiring. No new heater/ADC execution is established.
+
 ## Actual hardware evidence
 
 - Nicholas identifies XIAO ESP32-S3 and says it is connected alone by USB.

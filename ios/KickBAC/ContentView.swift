@@ -16,11 +16,16 @@ struct ContentView: View {
     @State private var showsOnboarding = false
     @State private var session = AuthSession()
     @State private var profile = ProfileStore()
+    @State private var deviceFlow = DeviceSessionStore()
+    @State private var showsDevice = false
+    @State private var signInAfterDevice = false
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         TabView(selection: $selectedTab) {
             Tab("Home", image: "NavHome", value: .home) {
-                HomeView { showsOnboarding = true }
+                HomeView(session: session, deviceFlow: deviceFlow,
+                         onConnect: { showsDevice = true }, onOnboarding: { showsOnboarding = true })
             }
 
             Tab("Party", image: "NavParty", value: .party) {
@@ -35,7 +40,17 @@ struct ContentView: View {
         .tint(.primary)
         .background(pageBackground.ignoresSafeArea())
         .tabBarMinimizeBehavior(.never)
-        .fullScreenCover(isPresented: $showsOnboarding) {
+        .sheet(isPresented: $showsDevice, onDismiss: {
+            if signInAfterDevice { signInAfterDevice = false; showsOnboarding = true }
+        }) {
+            DeviceConnectionView(session: session, flow: deviceFlow) {
+                signInAfterDevice = true
+                showsDevice = false
+            }
+        }
+        .fullScreenCover(isPresented: $showsOnboarding, onDismiss: {
+            if session.isSignedIn, deviceFlow.targetID != nil, profile.remoteState == .saved { showsDevice = true }
+        }) {
             OnboardingView()
                 .environment(session)
                 .environment(profile)
@@ -43,6 +58,7 @@ struct ContentView: View {
         .task { await session.restore() }
         .onChange(of: session.profileOwner, initial: true) {
             profile.load(owner: session.profileOwner)
+            deviceFlow.switchOwner(session.profileOwner)
         }
         .task(id: session.profileOwner) {
             profile.load(owner: session.profileOwner)
@@ -55,6 +71,22 @@ struct ContentView: View {
         }
         .task(id: session.generation) {
             if session.isSignedIn { await session.checkAPI() }
+        }
+        .task(id: session.generation) {
+            if session.isSignedIn { await session.loadStats() }
+        }
+        .task(id: scenePhase == .active ? deviceFlow.pollID : nil) {
+            if scenePhase == .active && session.isSignedIn {
+                await deviceFlow.poll(fetch: { try await session.testSession($0) }, onComplete: { await session.checkAPI() })
+            }
+        }
+        .onOpenURL { url in
+            guard let baseURL = session.apiBaseURL else { return }
+            do {
+                try deviceFlow.select(url.absoluteString, baseURL: baseURL)
+                selectedTab = .home
+                if !showsOnboarding { showsDevice = true }
+            } catch { /* Ignore unrelated URLs, including Auth0 callbacks. */ }
         }
         .preferredColorScheme(.dark)
     }

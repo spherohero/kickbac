@@ -22,6 +22,7 @@ final class ProfileStore {
     private(set) var isLoading = false
     private(set) var isSaving = false
     private var generation = UUID()
+    private var refreshTask: Task<Void, Never>?
     private let directory: URL
 
     enum RemoteState: Equatable { case unknown, missing, saved }
@@ -33,6 +34,8 @@ final class ProfileStore {
 
     func load(owner: String?) {
         guard self.owner != owner else { return }
+        refreshTask?.cancel()
+        refreshTask = nil
         generation = UUID()
         self.owner = owner
         profile = PartyProfile()
@@ -50,23 +53,30 @@ final class ProfileStore {
         }
     }
 
-    func refresh(fetch: () async throws -> APIProfile) async {
-        guard owner != nil, !isLoading, !isSaving else { return }
+    func refresh(fetch: @escaping () async throws -> APIProfile) async {
+        if let refreshTask { await refreshTask.value; return }
+        guard owner != nil, !isSaving else { return }
         let requestGeneration = generation
         isLoading = true
         message = nil
-        defer { if generation == requestGeneration { isLoading = false } }
-        do {
-            let response = try await fetch()
-            try Task.checkCancellation()
-            guard generation == requestGeneration else { return }
-            try accept(response)
-        } catch is CancellationError {
-            return
-        } catch {
-            guard generation == requestGeneration else { return }
-            message = "Couldn't load your saved profile. Check your connection and retry."
+        let task = Task {
+            defer {
+                if generation == requestGeneration { isLoading = false; refreshTask = nil }
+            }
+            do {
+                let response = try await fetch()
+                try Task.checkCancellation()
+                guard generation == requestGeneration else { return }
+                try accept(response)
+            } catch is CancellationError {
+                return
+            } catch {
+                guard generation == requestGeneration else { return }
+                message = "Couldn't load your saved profile. Check your connection and retry."
+            }
         }
+        refreshTask = task
+        await task.value
     }
 
     func save(name: String, photoData: Data?, persist: (String, Data?) async throws -> APIProfile) async throws {

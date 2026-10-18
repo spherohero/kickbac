@@ -8,6 +8,8 @@ mkdir -p "$task_package_root/Sources/Checks"
 cp "$task_repo_root/ios/KickBAC/AuthConfiguration.swift" "$task_package_root/Sources/Checks/"
 cp "$task_repo_root/ios/KickBAC/AuthSession.swift" "$task_package_root/Sources/Checks/"
 cp "$task_repo_root/ios/KickBAC/KickBACAPI.swift" "$task_package_root/Sources/Checks/"
+cp "$task_repo_root/ios/KickBAC/DeviceModels.swift" "$task_package_root/Sources/Checks/"
+cp "$task_repo_root/ios/KickBAC/BACReading.swift" "$task_package_root/Sources/Checks/"
 cp "$task_repo_root/ios/checks/AuthIntegrationChecks.swift" "$task_package_root/Sources/Checks/"
 cat > "$task_package_root/Package.swift" <<'SWIFT'
 // swift-tools-version: 6.0

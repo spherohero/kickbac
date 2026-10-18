@@ -11,6 +11,9 @@ final class AuthSession {
     private(set) var isCheckingAPI = false
     private(set) var user: APIUser?
     private(set) var history: MeasurementPage?
+    private(set) var stats: APIStats?
+    private(set) var statsMessage: String?
+    private(set) var isLoadingStats = false
     private(set) var message: String?
     private(set) var apiMessage: String?
     private(set) var generation = UUID()
@@ -128,16 +131,58 @@ final class AuthSession {
     }
 
     func loadProfile() async throws -> APIProfile {
-        try await profileRequest { api, token in try await api.profile(accessToken: token) }
+        try await userRequest({ api, token in try await api.profile(accessToken: token) }, owner: { $0.userID })
     }
 
     func saveProfile(name: String, photoData: Data?) async throws -> APIProfile {
-        try await profileRequest { api, token in
+        try await userRequest({ api, token in
             try await api.saveProfile(name: name, photoData: photoData, accessToken: token)
+        }, owner: { $0.userID })
+    }
+
+    func resolveDevice(_ id: String) async throws -> DeviceResolution {
+        guard let api else { throw SignInError.configuration }
+        return try await api.resolveDevice(id)
+    }
+
+    var apiBaseURL: URL? { configuration?.apiBaseURL }
+
+    func device(_ id: String) async throws -> APIDevice {
+        try await userRequest { api, token in try await api.device(id, accessToken: token) }
+    }
+
+    func armDevice(_ id: String) async throws -> APITestSession {
+        try await userRequest({ api, token in try await api.armDevice(id, accessToken: token) }, owner: { $0.userID })
+    }
+
+    func testSession(_ id: String) async throws -> APITestSession {
+        try await userRequest({ api, token in try await api.testSession(id, accessToken: token) }, owner: { $0.userID })
+    }
+
+    func cancelSession(_ id: String) async throws -> APITestSession {
+        try await userRequest({ api, token in try await api.cancelSession(id, accessToken: token) }, owner: { $0.userID })
+    }
+
+    func loadStats() async {
+        guard isSignedIn, !isLoadingStats else { return }
+        let requestGeneration = generation
+        isLoadingStats = true
+        statsMessage = nil
+        defer { if generation == requestGeneration { isLoadingStats = false } }
+        do {
+            let loaded = try await userRequest({ api, token in try await api.stats(accessToken: token) }, owner: { $0.userID })
+            guard generation == requestGeneration else { return }
+            stats = loaded
+        } catch is CancellationError {
+            return
+        } catch {
+            guard generation == requestGeneration else { return }
+            statsMessage = "Couldn't load your game stats. Pull to refresh and try again."
         }
     }
 
-    private func profileRequest(_ operation: (KickBACAPI, String) async throws -> APIProfile) async throws -> APIProfile {
+    private func userRequest<Response>(_ operation: (KickBACAPI, String) async throws -> Response,
+                                       owner: (Response) -> String? = { _ in nil }) async throws -> Response {
         guard isSignedIn, let credentialsManager, let api, let profileOwner else { throw KickBACAPI.APIError.unauthorized }
         let requestGeneration = generation
         do {
@@ -145,7 +190,7 @@ final class AuthSession {
             guard generation == requestGeneration, isSignedIn else { throw CancellationError() }
             let response = try await operation(api, credentials.accessToken)
             guard generation == requestGeneration, isSignedIn else { throw CancellationError() }
-            guard response.userID == profileOwner else { throw KickBACAPI.APIError.invalidResponse }
+            if let responseOwner = owner(response), responseOwner != profileOwner { throw KickBACAPI.APIError.invalidResponse }
             return response
         } catch {
             if generation == requestGeneration,
@@ -236,6 +281,9 @@ final class AuthSession {
         user = nil
         profileOwner = nil
         history = nil
+        stats = nil
+        statsMessage = nil
+        isLoadingStats = false
         apiMessage = nil
         isCheckingAPI = false
     }

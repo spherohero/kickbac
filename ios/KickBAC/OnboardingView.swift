@@ -146,9 +146,16 @@ struct OnboardingView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             Group {
                 if step == .photo {
-                    CameraCaptureControls(camera: camera, previewSize: cameraPreviewSize) { image in
-                        photo = image
-                        move(to: .complete)
+                    VStack(spacing: 0) {
+                        CameraCaptureControls(camera: camera, previewSize: cameraPreviewSize) { image in
+                            photo = image
+                            move(to: .complete)
+                        }
+                        Button("Skip photo") {
+                            photo = nil
+                            move(to: .complete)
+                        }
+                        .frame(minHeight: 44).padding(.bottom, 12)
                     }
                 } else {
                     footer(for: step)

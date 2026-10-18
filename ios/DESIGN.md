@@ -37,8 +37,8 @@ The approved Home screen is the visual reference for the main app. Preserve its 
 
 ## Verification
 
-Build with Xcode-beta and inspect visual changes in Device Hub. Check the full interaction, including empty, loading, error, and completed states that apply. A successful build alone does not verify rendering.
+Build with Xcode-beta and use code checks appropriate to the change. Do not use vision or Device Hub unless the user explicitly asks to use them again. A successful build alone does not verify rendering; report that limit accurately.
 
-Debug builds accept `--show-profile` to open Me directly for visual checks. This changes only the initial selected tab and does not bypass sign-in or supply account data.
+Debug builds accept `--show-profile` to open Me directly. This changes only the initial selected tab and does not bypass sign-in or supply account data.
 
-Check the connected iPhone when available and report installation accurately. Commit, push, or merge only with explicit permission.
+Report installation accurately when installing on the connected iPhone. Commit, push, or merge only with explicit permission.

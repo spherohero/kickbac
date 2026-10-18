@@ -1,6 +1,6 @@
 import Foundation
 
-struct BACReading: Identifiable {
+nonisolated struct BACReading: Identifiable, Sendable {
     let id = UUID()
     let value: Double
     let date: Date
@@ -21,7 +21,7 @@ struct DailyBACSummary {
 
 // Display bands follow NHTSA's published BAC effects, not a drinking target or driving clearance.
 // https://www.nhtsa.gov/risky-driving/drunk-driving
-enum BACBand: Int, CaseIterable {
+nonisolated enum BACBand: Int, CaseIterable, Sendable {
     case notDetected, detected, judgmentAffected, coordinationAffected, impaired, highImpairment
 
     init(value: Double) {

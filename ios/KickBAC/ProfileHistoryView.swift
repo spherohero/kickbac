@@ -23,9 +23,7 @@ struct ProfileHistoryView: View {
                             Text("Your saved breathalyzer check-ins.")
                                 .font(.system(.subheadline, design: .rounded)).foregroundStyle(.secondary)
                                 .padding(.bottom, 8)
-                            ForEach(history.items.sorted {
-                                ($0.recordedDate ?? .distantPast) > ($1.recordedDate ?? .distantPast)
-                            }) { reading in
+                            ForEach(history.items) { reading in
                                 ProfileReadingRow(reading: reading)
                             }
                             if history.hasMore {

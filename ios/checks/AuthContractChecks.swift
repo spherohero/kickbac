@@ -1,7 +1,7 @@
 import Foundation
 
 // Run from the repository root:
-// swiftc ios/KickBAC/AuthConfiguration.swift ios/KickBAC/KickBACAPI.swift ios/checks/AuthContractChecks.swift -o /tmp/kickbac-auth-checks
+// swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/AuthConfiguration.swift ios/KickBAC/KickBACAPI.swift ios/checks/AuthContractChecks.swift -o /tmp/kickbac-auth-checks
 // /tmp/kickbac-auth-checks ios/KickBAC/Auth0.plist
 @main
 struct AuthContractChecks {
@@ -45,6 +45,31 @@ struct AuthContractChecks {
         precondition(measurement.raw.value == 1200 && measurement.raw.unit == "adc_counts")
         precondition(measurement.estimatedBACPercent == nil && measurement.measuredAt == nil)
         precondition(measurement.source == "simulator")
+
+        APIStub.payload = Data(#"{"device_id":"kb-demo-01"}"#.utf8)
+        let target = try await api.resolveDevice("kb-demo-01")
+        precondition(target.deviceID == "kb-demo-01")
+        precondition(APIStub.lastRequest!.value(forHTTPHeaderField: "Authorization") == nil)
+        APIStub.payload = Data(#"{"id":"kb-demo-01","state":"AVAILABLE","online":false,"last_seen_at":null}"#.utf8)
+        let device = try await api.device("kb-demo-01", accessToken: token)
+        precondition(!device.online && device.state == "AVAILABLE")
+        checkRequest(path: "/v1/devices/kb-demo-01", token: token)
+        APIStub.payload = Data(#"{"id":"3b0c0a9e-2604-4b78-a487-3fd8fa1d4a4b","device_id":"kb-demo-01","user_id":"sms|opaque:subject/+not-a-phone","status":"ARMED","created_at":"2026-10-17T23:00:00Z","expires_at":"2026-10-17T23:01:00Z","completed_at":null,"measurement":null}"#.utf8)
+        let armed = try await api.armDevice("kb-demo-01", accessToken: token)
+        precondition(armed.status == .armed && armed.measurement == nil)
+        precondition(APIStub.lastRequest!.httpMethod == "POST" && APIStub.lastRequest!.url!.path == "/v1/devices/kb-demo-01/sessions")
+        let armBody = try jsonBody(APIStub.lastRequest!)
+        precondition(armBody.isEmpty)
+        _ = try await api.testSession(armed.id, accessToken: token)
+        checkRequest(path: "/v1/sessions/\(armed.id)", token: token)
+        _ = try await api.cancelSession(armed.id, accessToken: token)
+        precondition(APIStub.lastRequest!.httpMethod == "POST" && APIStub.lastRequest!.url!.path == "/v1/sessions/\(armed.id)/cancel")
+        let cancelBody = try jsonBody(APIStub.lastRequest!)
+        precondition(cancelBody.isEmpty)
+        APIStub.payload = Data(#"{"user_id":"sms|opaque:subject/+not-a-phone","total_points":10,"games_played":1,"wins":1,"per_game":[]}"#.utf8)
+        let stats = try await api.stats(accessToken: token)
+        precondition(stats.totalPoints == 10 && stats.gamesPlayed == 1 && stats.wins == 1)
+        checkRequest(path: "/v1/me/stats", token: token)
 
         APIStub.payload = Data(#"{"user_id":"sms|opaque:subject/+not-a-phone","display_name":null,"profile_picture":null,"created_at":null,"updated_at":null}"#.utf8)
         let empty = try await api.profile(accessToken: token)

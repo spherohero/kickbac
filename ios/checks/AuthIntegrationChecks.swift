@@ -150,12 +150,18 @@ struct AuthIntegrationChecks {
             preconditionFailure("Accepted a profile for a different subject")
         } catch KickBACAPI.APIError.invalidResponse { }
         precondition(session.isSignedIn)
+        AuthStub.payload = Data(#"{"user_id":"sms|opaque-profile-owner","total_points":10,"games_played":1,"wins":1,"per_game":[]}"#.utf8)
+        await session.loadStats()
+        precondition(session.stats?.totalPoints == 10 && session.statsMessage == nil)
+        AuthStub.status = 503
+        await session.loadStats()
+        precondition(session.stats?.totalPoints == 10 && session.statsMessage != nil && session.isSignedIn)
         AuthStub.status = 401
         do {
             _ = try await session.loadProfile()
             preconditionFailure("Accepted unauthorized profile")
         } catch KickBACAPI.APIError.unauthorized { }
-        precondition(!session.isSignedIn && session.history == nil && session.profileOwner == nil && storage.isEmpty)
+        precondition(!session.isSignedIn && session.history == nil && session.stats == nil && session.profileOwner == nil && storage.isEmpty)
         // Repeat the history-specific expiry path with a newly restored session.
         try manager.store(credentials: Credentials(accessToken: "PRIVATE-READINGS-TEST", tokenType: "Bearer",
                                                   idToken: "eyJhbGciOiJSUzI1NiJ9.\(payload).fixture", expiresAt: .now.addingTimeInterval(3600)))

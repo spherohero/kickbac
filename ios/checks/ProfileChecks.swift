@@ -4,7 +4,7 @@ import ImageIO
 import UniformTypeIdentifiers
 
 // Run from the repository root:
-// swiftc ios/KickBAC/ProfileStore.swift ios/KickBAC/ProfilePhoto.swift ios/KickBAC/KickBACAPI.swift ios/checks/ProfileChecks.swift -o /tmp/kickbac-profile-checks
+// swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/ProfileStore.swift ios/KickBAC/ProfilePhoto.swift ios/KickBAC/KickBACAPI.swift ios/checks/ProfileChecks.swift -o /tmp/kickbac-profile-checks
 // /tmp/kickbac-profile-checks
 @main
 struct ProfileChecks {
@@ -13,6 +13,30 @@ struct ProfileChecks {
         let directory = FileManager.default.temporaryDirectory.appending(path: "kickbac-profile-\(UUID())")
         defer { try? FileManager.default.removeItem(at: directory) }
         let owner = "sms|../account-a/+opaque"
+        let coalesced = ProfileStore(directory: directory)
+        coalesced.load(owner: owner)
+        var resume: CheckedContinuation<APIProfile, Never>?
+        let first = Task {
+            await coalesced.refresh {
+                await withCheckedContinuation { resume = $0 }
+            }
+        }
+        while resume == nil { await Task.yield() }
+        var secondStarted = false
+        var secondReturned = false
+        let second = Task {
+            secondStarted = true
+            await coalesced.refresh { preconditionFailure("Duplicated in-flight profile GET") }
+            secondReturned = true
+        }
+        while !secondStarted { await Task.yield() }
+        await Task.yield()
+        precondition(!secondReturned && coalesced.remoteState == .unknown)
+        resume!.resume(returning: response(owner: owner, name: "Loaded once"))
+        await first.value
+        await second.value
+        precondition(secondReturned && coalesced.remoteState == .saved && !coalesced.isLoading)
+
         let store = ProfileStore(directory: directory)
         store.load(owner: owner)
         precondition(store.remoteState == .unknown && !store.needsOnboarding)

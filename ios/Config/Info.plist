@@ -5,7 +5,7 @@
 	<key>CFBundleDisplayName</key>
 	<string>kickBAC</string>
 	<key>NSCameraUsageDescription</key>
-	<string>Take your party profile photo.</string>
+	<string>Take a profile photo or scan a kickBAC device QR code.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>LCMogi-A.otf</string>

@@ -49,8 +49,8 @@ struct MeasurementPage: Decodable {
     }
 }
 
-struct APIMeasurement: Decodable, Identifiable {
-    struct Raw: Decodable {
+nonisolated struct APIMeasurement: Decodable, Identifiable, Sendable {
+    struct Raw: Decodable, Sendable {
         let sensor: String
         let value: Int
         let unit: String
@@ -77,6 +77,12 @@ struct APIMeasurement: Decodable, Identifiable {
     }
 
     var isTestReading: Bool { source == "simulator" }
+
+    var bacReading: BACReading? {
+        guard !isTestReading, let value = estimatedBACPercent, value.isFinite, value >= 0,
+              let date = recordedDate else { return nil }
+        return BACReading(value: value, date: date)
+    }
 
     enum CodingKeys: String, CodingKey {
         case id, raw, source
@@ -113,6 +119,35 @@ struct KickBACAPI {
         try await get("v1/me/profile", accessToken: accessToken)
     }
 
+    func resolveDevice(_ id: String) async throws -> DeviceResolution {
+        guard DeviceTarget.isValidID(id) else { throw APIError.invalidRequest }
+        return try await get("d/\(id)", accessToken: nil)
+    }
+
+    func device(_ id: String, accessToken: String) async throws -> APIDevice {
+        guard DeviceTarget.isValidID(id) else { throw APIError.invalidRequest }
+        return try await get("v1/devices/\(id)", accessToken: accessToken)
+    }
+
+    func armDevice(_ id: String, accessToken: String) async throws -> APITestSession {
+        guard DeviceTarget.isValidID(id) else { throw APIError.invalidRequest }
+        return try await get("v1/devices/\(id)/sessions", accessToken: accessToken, method: "POST", body: Data("{}".utf8))
+    }
+
+    func testSession(_ id: String, accessToken: String) async throws -> APITestSession {
+        guard UUID(uuidString: id) != nil else { throw APIError.invalidRequest }
+        return try await get("v1/sessions/\(id)", accessToken: accessToken)
+    }
+
+    func cancelSession(_ id: String, accessToken: String) async throws -> APITestSession {
+        guard UUID(uuidString: id) != nil else { throw APIError.invalidRequest }
+        return try await get("v1/sessions/\(id)/cancel", accessToken: accessToken, method: "POST", body: Data("{}".utf8))
+    }
+
+    func stats(accessToken: String) async throws -> APIStats {
+        try await get("v1/me/stats", accessToken: accessToken)
+    }
+
     func saveProfile(name: String, photoData: Data?, accessToken: String) async throws -> APIProfile {
         guard photoData.map({ $0.count <= 524_288 }) ?? true else { throw APIError.http(413) }
         let picture = photoData.map { APIProfilePicture(contentType: "image/jpeg", data: $0) }
@@ -130,8 +165,8 @@ struct KickBACAPI {
     }
 
     private func get<Response: Decodable>(_ path: String, query: [URLQueryItem] = [],
-                                          accessToken: String, method: String = "GET", body: Data? = nil) async throws -> Response {
-        guard !accessToken.isEmpty else { throw APIError.unauthorized }
+                                          accessToken: String?, method: String = "GET", body: Data? = nil) async throws -> Response {
+        if let accessToken, accessToken.isEmpty { throw APIError.unauthorized }
         guard baseURL.scheme == "https", baseURL.host != nil,
               var components = URLComponents(url: baseURL.appendingPathComponent(path), resolvingAgainstBaseURL: false) else {
             throw APIError.invalidRequest
@@ -143,7 +178,7 @@ struct KickBACAPI {
         request.httpBody = body
         if body != nil { request.setValue("application/json", forHTTPHeaderField: "Content-Type") }
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization")
+        if let accessToken { request.setValue("Bearer \(accessToken)", forHTTPHeaderField: "Authorization") }
         let (data, response) = try await session.data(for: request)
         guard let response = response as? HTTPURLResponse else { throw APIError.invalidResponse }
         if response.statusCode == 401 { throw APIError.unauthorized }

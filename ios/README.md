@@ -33,14 +33,14 @@ Nicholas's October 17 backend handoff reports the Native SMS connection and Pass
 
 The Me tab supports sign-in, sign-out, and retrying the private API connection. After login or session restoration, the app calls `GET /v1/me` and `GET /v1/measurements` with `Authorization: Bearer <credentials.accessToken>`. It preserves `user_id` as an opaque string and never links accounts by phone. Transient API downtime preserves sign-in and cached data. Profile loading errors show a retry instead of treating the account as new; onboarding completes only after a successful server save. Sensor counts, null BAC estimates, and simulator source labels remain distinct in the API models; Home's demo readings are not uploaded or mixed with private history.
 
-`APIBaseURL` in `KickBAC/Auth0.plist` is separate from the audience. Both match the handoff: HTTPS base `https://api.kickbac.vodka`, exact audience `https://kickbac-api` with no trailing slash. The actual SDK OTP request is checked against that audience. The authoritative deployed contract is [live OpenAPI](https://api.kickbac.vodka/openapi.json); Nicholas's profile source was still unpublished at handoff, so GitHub main may lag deployment.
+`APIBaseURL` in `KickBAC/Auth0.plist` is separate from the audience. Both match the handoff: HTTPS base `https://api.kickbac.vodka`, exact audience `https://kickbac-api` with no trailing slash. The actual SDK OTP request is checked against that audience. The authoritative deployed contract is [live OpenAPI](https://api.kickbac.vodka/openapi.json); The published backend/profile/games/firmware diagnostic sources from current main are integrated into this review branch. The old request for Nicholas to publish the profile backend is resolved.
 
 ## Validation
 
 Run the isolated request/response checks from the repository root:
 
 ```sh
-swiftc ios/KickBAC/AuthConfiguration.swift ios/KickBAC/KickBACAPI.swift ios/checks/AuthContractChecks.swift -o /tmp/kickbac-auth-checks
+swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/AuthConfiguration.swift ios/KickBAC/KickBACAPI.swift ios/checks/AuthContractChecks.swift -o /tmp/kickbac-auth-checks
 /tmp/kickbac-auth-checks ios/KickBAC/Auth0.plist
 ```
 
@@ -71,12 +71,12 @@ PUT always includes `display_name` and `profile_picture`, including an explicit 
 
 The per-subject local cache is retained for offline display and old local-only profiles become drafts when the server confirms a first-time account. They are never uploaded automatically. Account switches/logout clear the displayed profile; stale network responses cannot update another account. A cache-write failure after a successful server save is reported separately from a failed server save.
 
-History includes loading, empty, retry, and pagination states. Test readings are labeled, missing BAC estimates stay distinct from raw sensor counts, and Home's demo readings never enter this history. Game statistics wait for a real backend source.
+History includes loading, empty, retry, and pagination states. Test readings are labeled, missing BAC estimates stay distinct from raw sensor counts, and Home's demo readings never enter this history. Me loads Games played, Wins and Points from `/v1/me/stats`; failures remain unavailable rather than becoming zero. Party gameplay is still separate work; this client does not fabricate game completions or rewards.
 
 Run the local storage and timestamp checks alongside the authentication checks above:
 
 ```sh
-swiftc ios/KickBAC/ProfileStore.swift ios/KickBAC/ProfilePhoto.swift ios/KickBAC/KickBACAPI.swift ios/checks/ProfileChecks.swift -o /tmp/kickbac-profile-checks
+swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/ProfileStore.swift ios/KickBAC/ProfilePhoto.swift ios/KickBAC/KickBACAPI.swift ios/checks/ProfileChecks.swift -o /tmp/kickbac-profile-checks
 /tmp/kickbac-profile-checks
 ```
 
@@ -86,4 +86,17 @@ These checks cover server-confirmed onboarding, cache restoration, Unicode limit
 
 The simulator build and local stub/image checks are separate from real acceptance. No unattended SMS is sent and no test bypass is added to production authentication. Complete onboarding on an iPhone, save a real photo, force-quit/relaunch, logout/relogin, test offline retry, and repeat with a second account before calling the live profile flow accepted.
 
-Home still contains its existing demo gauge/reading flow. NFC/QR resolution, explicit hardware arming, active-session polling/cancellation and hardware result rendering are a separate client integration; the profile work does not claim to implement or verify them. Nicholas owns firmware/device readiness and must publish the deployed backend source so the repository can reproduce the live release.
+Home starts without sample BAC. Its average/high values use loaded, nonsimulated, finite server BAC estimates. Uncalibrated/null readings show raw sensor values with no invented BAC. Debug Demo mode is explicitly labeled and never contributes to saved history.
+
+Connect supports QR scanning or entry of an official device URL/ID. It validates the target against the configured API origin, resolves it publicly, preserves it through sign-in, loads independent availability/online state, and requires explicit confirmation before sending the existing empty-JSON arming request. Active sessions poll once per second with bounded backoff, stop on terminal states, support cancellation, and refresh private history on completion. Pending IDs are cached per subject for relaunch/relogin. Authoritative session 404 clears local tracking; transport failures retain the pending session. Foreground/background changes stop/resume polling without silently rearming.
+
+Foreground NFC was excluded from the installable build because the current Personal Team does not support NFC Tag Reading provisioning. QR and printed-ID entry remain available. HTTPS background NFC/Universal Links are not configured.
+
+Nicholas's published firmware still disables real sampling/uploads pending electrical and truthful acquisition-duration sign-off. Native app installation and source/fixture checks do not establish sensor or real Auth0 acceptance.
+
+Run the isolated device/session checks:
+
+```sh
+swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/DeviceSessionStore.swift ios/KickBAC/KickBACAPI.swift ios/checks/DeviceSessionChecks.swift -o /tmp/kickbac-device-checks
+/tmp/kickbac-device-checks
+```

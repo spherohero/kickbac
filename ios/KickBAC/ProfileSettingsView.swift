@@ -64,6 +64,7 @@ struct ProfileSettingsView: View {
                             Task {
                                 await profile.refresh { try await session.loadProfile() }
                                 await session.checkAPI()
+                                await session.loadStats()
                             }
                         } label: {
                             HStack {

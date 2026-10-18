@@ -95,6 +95,13 @@ struct AccountView: View {
                         LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 12), count: columns), spacing: 12) {
                             statistic("Saved readings", value: readingCount)
                             statistic("Last check", value: lastCheck)
+                            statistic("Games played", value: session.stats.map { String($0.gamesPlayed) } ?? "—")
+                            statistic("Wins", value: session.stats.map { String($0.wins) } ?? "—")
+                            statistic("Points", value: session.stats.map { String($0.totalPoints) } ?? "—")
+                        }
+                        if session.isLoadingStats && session.stats == nil { ProgressView("Loading game stats") }
+                        if let message = session.statsMessage {
+                            Text(message).font(.footnote).foregroundStyle(.secondary)
                         }
                         if session.isCheckingAPI && session.history == nil {
                             ProgressView("Loading your readings")
@@ -123,6 +130,7 @@ struct AccountView: View {
         .refreshable {
             await profile.refresh { try await session.loadProfile() }
             await session.checkAPI()
+            await session.loadStats()
         }
         .sheet(item: $sheet, onDismiss: {
             if signInAfterDismiss {
@@ -136,11 +144,6 @@ struct AccountView: View {
             case .history: ProfileHistoryView(session: session, onSignIn: queuedSignIn)
             }
         }
-        #if DEBUG
-        .task {
-            if ProcessInfo.processInfo.arguments.contains("--review-profile-editor") { sheet = .edit }
-        }
-        #endif
     }
 
     private var readingCount: String {
@@ -170,7 +173,7 @@ struct AccountView: View {
                     .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: 5) {
                     Text(title).font(.system(.body, design: .rounded, weight: .semibold))
-                    Text(detail).font(.system(.footnote, design: .rounded)).foregroundStyle(.secondary)
+                    Text(detail).font(.system(.footnote, design: .rounded)).foregroundStyle(.white.opacity(0.8))
                 }
                 Spacer(minLength: 8)
                 Image("ProfileChevron").resizable().scaledToFit().frame(width: 10, height: 10)

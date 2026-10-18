@@ -18,6 +18,9 @@ def is_party_private(path):
 
 
 MESSAGES = {
+    "rate_limited": "Too many join attempts.",
+    "device_assigned": "Device is assigned to another party.",
+    "already_completed": "A result is already stored for this game.",
     "payload_too_large": "Request payload exceeds the size limit.",
     "unauthorized": "Invalid or missing credentials.",
     "not_found": "Resource not found.",

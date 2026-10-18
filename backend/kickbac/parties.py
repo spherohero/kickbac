@@ -1,10 +1,13 @@
+import math
+import re
 import secrets
 import unicodedata
+from datetime import datetime, timedelta
 from typing import Annotated, Literal
 from uuid import UUID
 
-from fastapi import APIRouter, Query, Request, Response
-from pydantic import BaseModel, StrictStr, field_validator
+from fastapi import APIRouter, HTTPException, Query, Request, Response
+from pydantic import BaseModel, StrictStr, field_validator, model_validator
 
 from .db import connect, transaction
 from .errors import fail
@@ -123,6 +126,125 @@ def create_party(
             (str(body.party_id), subject, now),
         )
         return party_response(party_row(db, body.party_id), subject)
+
+
+class PartyJoin(Empty):
+    join_code: StrictStr | None = None
+    device_id: StrictStr | None = None
+
+    @model_validator(mode="after")
+    def selector(self):
+        if self.model_fields_set not in ({"join_code"}, {"device_id"}):
+            raise ValueError("Exactly one selector required")
+        if "join_code" in self.model_fields_set:
+            if self.join_code is None:
+                raise ValueError("Code required")
+            self.join_code = self.join_code.strip().upper()
+            if len(self.join_code) != 8 or any(
+                c not in CODE_ALPHABET for c in self.join_code
+            ):
+                raise ValueError("Invalid code")
+        elif self.device_id is None or not re.fullmatch(
+            r"[a-zA-Z0-9][a-zA-Z0-9_-]{0,63}", self.device_id
+        ):
+            raise ValueError("Invalid device ID")
+        return self
+
+
+@router.post("/v1/parties/join", response_model=PartyResponse)
+def join_party(body: PartyJoin, request: Request, subject: User):
+    # Deliberately committed before lookup so rejected invitations consume attempts.
+    with transaction(request.app.state.settings.db_path) as db:
+        now = instant(request)
+        db.execute(
+            "DELETE FROM party_join_attempts WHERE window_started<=?",
+            ((now - timedelta(seconds=60)).isoformat(),),
+        )
+        attempt = db.execute(
+            "SELECT * FROM party_join_attempts WHERE user_id=?", (subject,)
+        ).fetchone()
+        if attempt is not None and attempt["attempts"] >= 10:
+            retry = max(
+                1,
+                math.ceil(
+                    (
+                        datetime.fromisoformat(attempt["window_started"])
+                        + timedelta(seconds=60)
+                        - now
+                    ).total_seconds()
+                ),
+            )
+            raise HTTPException(
+                429, "rate_limited", headers={"Retry-After": str(retry)}
+            )
+        db.execute(
+            "INSERT INTO party_join_attempts VALUES (?,?,1) ON CONFLICT(user_id) DO UPDATE SET attempts=attempts+1",
+            (subject, now.isoformat()),
+        )
+    with transaction(request.app.state.settings.db_path) as db:
+        if body.join_code is not None:
+            row = db.execute(
+                "SELECT party_id FROM parties WHERE join_code=? AND state='OPEN'",
+                (body.join_code,),
+            ).fetchone()
+        else:
+            row = db.execute(
+                "SELECT p.party_id FROM parties p JOIN party_devices d ON d.party_id=p.party_id WHERE d.device_id=? AND p.state='OPEN'",
+                (body.device_id,),
+            ).fetchone()
+        if row is None:
+            fail(404, "not_found")
+        party_id = row["party_id"]
+        db.execute(
+            "INSERT INTO party_members VALUES (?,?,?,NULL) ON CONFLICT(party_id,user_id) DO UPDATE SET left_at=NULL",
+            (party_id, subject, instant(request).isoformat()),
+        )
+        return party_response(party_row(db, party_id), subject)
+
+
+@router.post("/v1/parties/{party_id}/leave", response_model=PartyResponse)
+def leave_party(party_id: UUID, body: Empty, request: Request, subject: User):
+    with transaction(request.app.state.settings.db_path) as db:
+        row = party_row(db, party_id)
+        if (
+            db.execute(
+                "SELECT 1 FROM party_members WHERE party_id=? AND user_id=?",
+                (str(party_id), subject),
+            ).fetchone()
+            is None
+        ):
+            fail(404, "not_found")
+        if row["host_user_id"] == subject:
+            fail(409, "invalid_state")
+        db.execute(
+            "UPDATE party_members SET left_at=COALESCE(left_at,?) WHERE party_id=? AND user_id=?",
+            (instant(request).isoformat(), str(party_id), subject),
+        )
+        return party_response(party_row(db, party_id), subject)
+
+
+def require_host(row, subject):
+    if row["host_user_id"] != subject:
+        fail(404, "not_found")
+
+
+@router.post("/v1/parties/{party_id}/close", response_model=PartyResponse)
+def close_party(party_id: UUID, body: Empty, request: Request, subject: User):
+    with transaction(request.app.state.settings.db_path) as db:
+        row = party_row(db, party_id)
+        require_host(row, subject)
+        if row["state"] == "OPEN":
+            now = instant(request).isoformat()
+            db.execute(
+                "UPDATE parties SET state='CLOSED',closed_at=? WHERE party_id=?",
+                (now, str(party_id)),
+            )
+            db.execute(
+                "UPDATE party_games SET state='CLOSED',closed_at=? WHERE party_id=? AND state='OPEN'",
+                (now, str(party_id)),
+            )
+            db.execute("DELETE FROM party_devices WHERE party_id=?", (str(party_id),))
+        return party_response(party_row(db, party_id), subject)
 
 
 @router.get("/v1/parties/{party_id}", response_model=PartyResponse)

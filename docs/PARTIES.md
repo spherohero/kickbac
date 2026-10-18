@@ -1,14 +1,17 @@
 # Parties and richer private profile history — reviewed backend source
 
-**Status: implemented, locally exercised, independently approved; NOT deployed.** Owner:
+**Status: implemented, independently approved and MERGED; NOT deployed.** Owner:
 backend Bot, integration branch `backend/party-profile-completion`, publishing
 branch `backend/party-profile-contract` in [PR #26](https://github.com/spherohero/kickbac/pull/26),
-based on main `dd19b404210517b1b0c8b8f8a1809ba988bb250d`. The combined local
+based on prior main `dd19b404210517b1b0c8b8f8a1809ba988bb250d`, merged as
+`67c46916bda95250cdae739fd99e19cde8634667`. Exact merged-main CI and reviewed
+tree/ancestry checks passed; see [release verification](BACKEND_RELEASE_VERIFICATION.md).
+The source
 application currently exposes33 operations on schema6. Its real-loopback
 party→join→game→check-in reservation→simulator upload→completion→private
 history/restart acceptance passes. Existing live API remains the17-operation
 schema4 release until a backed-up, target-verified release is deployed. Exact
-head CI/review/merge and production deployment are separate gates.
+head CI/review/merge gates passed. Production deployment remains separate.
 
 **NFC-first flow:** host binding identifies the assigned unit; new authenticated
 check-in creates the exclusive session and immutable owner/party/game context

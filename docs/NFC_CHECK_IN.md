@@ -1,6 +1,6 @@
 # NFC-first party check-in — implementation direction
 
-**Status: implemented, exercised over real HTTP, independently approved and CI verified; NOT deployed.** Nicholas confirmed host NFC linking, then player tap BEFORE measurement to reserve that person's next test and show accepted app status/result. [PR #26](https://github.com/spherohero/kickbac/pull/26) publishes this source; its exact final head/check/merge state is authoritative. The reviewed runtime at2f04074 is unchanged in5a8d8e0; later edits record documentation evidence only. Source API has33 operations/schema6; public production readback remains17/schema4 without check-in routes. Native NFC/Universal Link delivery and physical sensor acquisition are separate, unverified gates. The [party contract](PARTIES.md) and this immutable session context preserve all existing public operation/schema shapes.
+**Status: implemented, independently approved and MERGED; main CI passed; NOT deployed.** Nicholas confirmed host NFC linking, then player tap BEFORE measurement to reserve that person's next test and show accepted app status/result. [PR #26](https://github.com/spherohero/kickbac/pull/26), head `8cdab3a`, merged as `67c46916bda95250cdae739fd99e19cde8634667`; exact merge parents, remote-main ancestry and reviewed-tree equality were verified. The reviewed runtime at2f04074 is unchanged; later edits record documentation evidence only. Source API has33 operations/schema6; public production readback remains17/schema4 without check-in routes. Native NFC/Universal Link delivery and physical sensor acquisition are separate, unverified gates. The [party contract](PARTIES.md) and this immutable session context preserve all existing public operation/schema shapes.
 
 ## What to write to each sticker
 
@@ -149,7 +149,9 @@ spec/security/integration reviews approved; one separately ran528 tests and20
 scratch-only real-HTTP race probes. Parent repeated528 tests and local gates after
 review. Exact5a8d8e0 push/PR CI passed on Python3.11/3.12, actual firmware decoder
 and non-sending Auth0 fixtures; see [release evidence](BACKEND_RELEASE_VERIFICATION.md).
-Final documentation-only head checks and merge readback remain publication gates.
+Final8cdab3a PR CI and exact67c4691 merged-main CI also passed with the same test
+counts and simulator result. Merge parents/tree/ancestry were verified; final
+status-only documentation does not change the tested runtime/workflow.
 No native NFC, Auth0 delivery, physical sensor or deployment acceptance is inferred.
 
 Reproduce from `backend/` with `PYTHONPATH` unset:

@@ -1,6 +1,12 @@
 # Backend release verification — games, profiles and private history
 
-## NFC context integration checkpoint — not a production release
+## NFC context merged and main CI verified — not a production release
+
+[PR #26](https://github.com/spherohero/kickbac/pull/26) head
+`8cdab3a5b52e7d59115586719a90ff69233e46e6` merged as
+`67c46916bda95250cdae739fd99e19cde8634667`. Remote-main ancestry, exact
+parents (prior main dd19b40 and reviewed head8cdab3a) and full reviewed-tree
+equality were independently read back. Existing branches/worktrees are retained.
 
 Integrated runtime `2f0407483bc5f2b539de79495a171d86c0571b67` now includes
 migration006/schema6 and33 operations. Parent ran the full backend/deployment and
@@ -22,8 +28,13 @@ Published5a8d8e0 differs from the reviewed runtime only in documentation. Exact
 [PR CI](https://github.com/spherohero/kickbac/actions/runs/39105277114) passed on
 that head. Logs read back521 backend/deployment tests plus7 party HTTP checks
 per Python version,2 actual C++ decoder checks,78 non-sending Node22 Action
-fixtures, Ruff/compile and `SIMULATOR_OK`. Final docs-only head CI/merge readback
-are still required before calling the PR merged.
+fixtures, Ruff/compile and `SIMULATOR_OK`. The final8cdab3a
+[PR CI](https://github.com/spherohero/kickbac/actions/runs/39105861628) passed,
+then exact67c4691 [merged-main push CI](https://github.com/spherohero/kickbac/actions/runs/39105975584)
+passed. Actual merged-main logs confirm the same521+7 tests per interpreter,
+2 decoder checks,78 Action fixtures and simulator result. The subsequent
+`docs/nfc-merge-verification` closeout changes documentation only; existing
+workflow path filters do not require a new runtime run for it.
 
 No native tag scan, live Auth0 acceptance, physical sensing, target-host isolated
 test or production upgrade is claimed. Fresh public readback after reviews:

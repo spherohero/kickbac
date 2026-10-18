@@ -62,6 +62,9 @@ def create_app(settings=None, verifier=None, clock=None):
     app.include_router(measurements_router)
     app.include_router(profiles_router)
     app.include_router(games_router)
+    from .parties import router as parties_router
+
+    app.include_router(parties_router)
     return app
 
 

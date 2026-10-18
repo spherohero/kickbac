@@ -1,6 +1,6 @@
 from starlette.responses import JSONResponse
 
-from .errors import MESSAGES
+from .errors import MESSAGES, is_party_private
 
 PROFILE_BODY_LIMIT = 1024 * 1024
 GAME_BODY_LIMIT = 32768
@@ -22,6 +22,11 @@ class ProfileBodyLimit:
         if scope["type"] != "http":
             return await self.app(scope, receive, send)
         policy = PRIVATE_BODY_POLICIES.get(scope["path"].rstrip("/"))
+        if is_party_private(scope["path"]):
+            policy = (
+                scope["method"] if scope["method"] in {"POST", "PUT"} else None,
+                GAME_BODY_LIMIT,
+            )
         if policy is None:
             return await self.app(scope, receive, send)
         method, body_limit = policy

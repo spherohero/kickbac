@@ -13,6 +13,7 @@ instrument. Private display-name/picture profiles are deployed; see
 - [`docs/API.md`](docs/API.md): paths, bodies, errors and lifecycle.
 - [`docs/PROFILES.md`](docs/PROFILES.md): private display-name/picture onboarding; phone identity remains with Auth0.
 - [`docs/SETUP.md`](docs/SETUP.md): Auth0 account/Native app and hosting checklist.
+- [`docs/PHONE_LOGIN.md`](docs/PHONE_LOGIN.md): configured primary SMS OTP flow, versioned Auth0 Actions and remaining native acceptance; no repeat provider setup needed.
 - [`docs/CLOUDFLARE_DNS.md`](docs/CLOUDFLARE_DNS.md): DNS setup history; public delegation and HTTPS now verified.
 - `ios/`: Liam's separately owned SwiftUI client. Current native auth/profile work is concurrent/unpublished and was not edited here; he needs to integrate the additive profile save/load calls.
 - ESP32 firmware and physical calibration are separate integration work.

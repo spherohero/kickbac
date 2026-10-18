@@ -16,6 +16,13 @@ git rev-parse origin/main origin/liam/ios-profile-handoff
 
 Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his branch. If main has not been integrated, read these shared docs directly from `origin/main`; do not reset, stash automatically, overwrite local edits or merge blindly. Documentation publication cannot prove an already-running remote agent has read it. Liam/his agent should report the main and client SHAs read when next giving a substantive integration update; no repeated acknowledgment pings or new user-run native tests are requested.
 
+### Authorized iOS branch cleanup — October 18, 2026
+
+- Owner: Liam; explicitly requested deletion of local and remote `feat/ios-setup` and `ios`.
+- Deleted local `feat/ios-setup@c5939d5` and `ios@7c87e09`, and their remote branches (`ios@88cd59c`). Before deletion, ancestry checks verified setup in `origin/main@22f0635` and both ios tips in `liam/ios-profile-handoff@3a7fa1c`. No commits were discarded.
+- PR [#22](https://github.com/spherohero/kickbac/pull/22) remains open on `liam/ios-profile-handoff`; main was not merged. This documentation commit records the cleanup on the PR branch.
+- **NON-BREAKING:** no client action; endpoints, schemas, payload examples and app behavior unchanged. Verification: Git ancestry checks, successful remote deletion and local safe branch deletion; no runtime tests needed. PR review/merge remains pending. Nicholas's branches were untouched.
+
 ### Liam iOS integration — current app and latest backend/docs
 
 - Owner/branch: Liam, `liam/ios-profile-handoff`. App polish/game-history commit

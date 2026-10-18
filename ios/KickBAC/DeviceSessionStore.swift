@@ -164,7 +164,8 @@ final class DeviceSessionStore {
         }
         guard loaded.status != .complete || loaded.measurement != nil else { throw KickBACAPI.APIError.invalidResponse }
         if let reading = loaded.measurement {
-            guard reading.sessionID == id, reading.deviceID == targetID else { throw KickBACAPI.APIError.invalidResponse }
+            guard reading.sessionID == id, reading.deviceID == targetID,
+                  loaded.status == .complete, reading.hasValidAcquisition else { throw KickBACAPI.APIError.invalidResponse }
         }
         test = loaded
         if !loaded.status.isActive {

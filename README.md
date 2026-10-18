@@ -12,6 +12,7 @@ instrument. Private display-name/picture profiles are deployed; see
 - `backend/`: Python/FastAPI, versioned SQLite migrations, tests and simulator.
 - [`docs/API.md`](docs/API.md): paths, bodies, errors and lifecycle.
 - [`docs/PROFILES.md`](docs/PROFILES.md): private display-name/picture onboarding; phone identity remains with Auth0.
+- [`docs/GAMES.md`](docs/GAMES.md): generic private game results, server-assigned participation points and profile-wide stats; additive candidate requires schema4 and release verification before live use.
 - [`docs/SETUP.md`](docs/SETUP.md): Auth0 account/Native app and hosting checklist.
 - [`docs/PHONE_LOGIN.md`](docs/PHONE_LOGIN.md): configured primary SMS OTP flow, versioned Auth0 Actions and remaining native acceptance; no repeat provider setup needed.
 - [`docs/CLOUDFLARE_DNS.md`](docs/CLOUDFLARE_DNS.md): DNS setup history; public delegation and HTTPS now verified.
@@ -43,9 +44,9 @@ Environment:
 | `AUTH0_DOMAIN` | Actual tenant DNS name only, e.g. `dev-EXAMPLE.us.auth0.com`; no scheme, port, path or trailing slash. |
 | `AUTH0_AUDIENCE` | Exact custom API identifier, coordinated as `https://kickbac-api` (no trailing slash). A logical identifier, **not a backend host**. |
 
-`init-db` explicitly applies migrations 001–003, preserving existing device/session/history rows;
+`init-db` explicitly applies migrations001–004, preserving existing device/session/history/profile rows;
 re-running it is safe. Normal startup never initializes or upgrades a database
-and fails closed without schema 3 and Auth0 configuration. Back up the SQLite
+and fails closed without schema4 and Auth0 configuration. Back up the SQLite
 file before upgrades. Do not put SQLite on an ephemeral container filesystem or
 run multiple replicas: use **one API instance with a persistent local disk**.
 The existing Vultr host uses persistent local SQLite and online daily snapshots;
@@ -77,7 +78,7 @@ uv run uvicorn kickbac.app:app --host 127.0.0.1 --port 8000 --workers 1
 ```
 
 Visit `http://127.0.0.1:8000/health` for readiness and `/docs` for OpenAPI.
-User requests require an Auth0 **API access token** from Native PKCE login,
+User requests require an Auth0 **API access token** from supported Native embedded SMS OTP or hosted PKCE login,
 RS256-signed with the configured issuer/audience, expiry and nonblank subject.
 ID tokens and explicit machine-to-machine tokens are not accepted as users.
 Public Auth0 signing keys are cached from the fixed HTTPS tenant JWKS URL; no

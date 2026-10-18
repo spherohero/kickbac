@@ -1,5 +1,14 @@
 # Architectural decisions
 
+## Shared game ledger and profile-wide points
+- **Choice:** one immutable owner-scoped game_results table and additive POST/GET `/v1/me/game-results`, GET `/v1/me/stats`; SQL aggregates derive profile-wide/per-game totals. Fixed10 server-assigned participation points per unique accepted completion under `completion_v1`; raw score stays separate.
+- **Why:** generic Trivia/Pictionary/future-game result data without a table per game, mutable client balances or double awards during retries/concurrency. Persisted UUID/canonical payload gives201first/200replay/409changed; verified token subject owns all data, independent of mutable profile or readings.
+- **Limits/rejected:** bounded client-reported outcomes are not verified gameplay/anti-cheat. No multiplayer engine, party membership/count, public leaderboard or reward for BAC/alcohol/tests. Figma Party/Me flows inspected read-only; full roadmap not assumed. Schema004 explicitly upgrades preserved existing data; backups/rollback must respect schema4. Exact JSON/limits in GAMES.md.
+
+## Signing-key cache lifetime
+- **Choice:** disable PyJWT's non-expiring per-key LRU, retain300-second JWKS-set cache and5-second fetch timeout. Removed keys cannot remain trusted indefinitely; transport outage is503 rather than stale-key fallback. Existing401/503 contract unchanged.
+- **Why:** JWKS-set TTL alone did not expire previously resolved keys. Ten transport-mocked real-client regressions cover removal/rotation/cache/outage and malformed inputs, with independent review. No real Auth0 key-removal/network/native-acceptance claim.
+
 ## Minimal profile onboarding (additive)
 - **Choice:** keep SMS phone/verified login in Auth0; store only display name and a bounded, sanitized JPEG in a private SQLite profile keyed by the validated subject. Add `GET`/`PUT /v1/me/profile`; preserve `/v1/me`, auth and all device/session/history contracts. Schema 003 adds profiles without rewriting historical migrations/data.
 - **Why:** Nicholas confirmed the only onboarding fields are phone, picture and name. This closes the actual app-persistence gap without inventing demographics, a second identity authority or another cloud service. Inline bounded Base64 JSON is a low-volume demo tradeoff, not a design for bulk media.

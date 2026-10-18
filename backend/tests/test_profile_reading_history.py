@@ -42,10 +42,27 @@ def test_each_reading_survives_profile_creation_edits_and_relogin(world, identit
             == 200
         )
         assert client.get("/v1/measurements", headers=users["alice"]).json() == before
+        game = client.post(
+            "/v1/me/game-results",
+            headers=users["alice"],
+            json={
+                "result_id": str(uuid4()),
+                "game_id": "trivia",
+                "score": 5,
+                "outcome": "completed",
+                "data": {},
+            },
+        )
+        assert game.status_code == 201
+        assert client.get("/v1/measurements", headers=users["alice"]).json() == before
+    assert (
+        client.get("/v1/me/stats", headers=users["alice"]).json()["total_points"] == 20
+    )
     _, token = identity
     fresh = {"Authorization": "Bearer " + token(sub="auth0|alice")}
     with TestClient(create_app(Settings(path), client.app.state.verifier)) as restarted:
         assert restarted.get("/v1/measurements", headers=fresh).json() == before
+        assert restarted.get("/v1/me/stats", headers=fresh).json()["total_points"] == 20
         assert (
             restarted.get("/v1/me/profile", headers=fresh).json()["display_name"]
             == "Edited Name"

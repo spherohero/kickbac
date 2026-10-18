@@ -1,12 +1,14 @@
 # Firmware duration / manual acquisition — implementation contract
 
-**Implemented candidate; independent review/native CI pending; NOT DEPLOYED.** Nicholas
+**DEPLOYED; source/replay/Ubuntu/native CI verified; physical acceptance separate.** Nicholas
 authorizes truthful unvalidated acquisition with a notice and, until 04:00 Eastern
 on October18, necessary iOS implementation in parallel. Backend owner is working
 on `backend/manual-timed-acquisition`, base3fd50c7. Firmware owns physical work.
-Existing live API remains unchanged; do not send this format until deployed
-OpenAPI and exact acceptance are verified. Older proposal wording below is
-historical where superseded by this freeze.
+The live API now supports this frozen format; public OpenAPI33/schema6 readback
+and release proof are in [BACKEND_RELEASE_VERIFICATION.md](BACKEND_RELEASE_VERIFICATION.md).
+Nicholas subsequently lifted the04:00 client cutoff. Older proposal/approval
+wording below is historical where superseded by this freeze. API support is not
+electrical/ADC/native-phone acceptance or permission to fabricate a sample.
 
 ## Frozen bounded implementation
 

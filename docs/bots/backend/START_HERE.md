@@ -2,6 +2,23 @@
 
 Snapshot prepared after backend/CI delivery and Liam's source review, with remote main `016d5b8a4c43d0f8a599f7e75303262de9b09db9` (firmware diagnostic PR10 subsequently included; no backend contract change). These are dated checkpoints, not evidence of the environment on your next launch. Fetch/reinspect before work. This is the backend role's handoff, not firmware instructions.
 
+## Current release superseding the startup snapshot
+
+Read [release verification](../../BACKEND_RELEASE_VERIFICATION.md) and the latest
+[shared client handoff](../../LIAM_BACKEND_HANDOFF.md) before the historical
+checkpoint below. The existing host is now on schema6/33 operations from immutable
+`172e54c1604356e3e83db2fc0672706829841795` (PR30 mergec78a042), activated
+2026-10-18T07:55:20UTC. Retained backup, production-copy4→6 preservation,56 target
+tests, runtime simulator, exact PR/main backend+native CI and external exact-source
+OpenAPI readback passed. No production user/arm/reading inserted. Actual phone
+acceptance and protected physical acquisition remain unverified. Firmware's latest
+reconnect failed, superseding earlier bounded online evidence; check current
+DEVICE_SESSION_VERIFICATION rather than reporting permanent connectivity.
+Nicholas subsequently lifted the04:00 client cutoff for necessary iOS work in
+isolated branches; preserve Liam's original worktree/ref/designs. PR32 preserves
+his latest preview plus compatible main; native CIgreen is not merge approval.
+This is continuity documentation, not a new request to redeploy or restart work.
+
 ## 1. Identity, ownership and first reads
 
 - Nicholas Reyes owns kickBAC, a 36-hour UF SwampHacks prototype. Display brand **kickBAC**, folders/packages `kickbac`.

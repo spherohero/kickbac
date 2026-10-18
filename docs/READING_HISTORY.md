@@ -2,7 +2,7 @@
 
 Every **accepted completed test** is persisted in SQLite `measurements`, linked to its unique session/device and the session's verified Auth0 subject. The private profile uses the same subject. History is not stored in the mutable name/photo fields, and does not depend on creating the profile first. No extra user table or duplicate history store is needed.
 
-## Manual acquisition compatibility — source candidate, not deployed
+## Manual acquisition compatibility — deployed, physical acceptance separate
 
 Manual readings retain `breath_duration_ms:null`, `acquisition_method:"manual_timed"`
 and actual `sample_duration_ms`, distinct from measured breath duration. Show
@@ -12,7 +12,7 @@ neither migration nor profile edits rewrite their payloads. No trigger or an
 invalid window is no result, never zero BAC. Exact frozen validation/retry and
 rollout gates: [FIRMWARE_DURATION_PROPOSAL.md](FIRMWARE_DURATION_PROPOSAL.md).
 
-## Exact summary and game-use readings — local addition, not deployed
+## Exact summary and game-use readings — deployed
 
 `GET /v1/me/reading-summary` supplies an owner-scoped exact SQL count and latest
 saved measurement in one read-only snapshot; details in

@@ -22,6 +22,18 @@ Use concise actionable group messages with owner, current/proposed contract, bra
 
 Read `docs/PROJECT_BRIEF.md` before substantive work; it is the full user-authored engineering brief. Display name is **kickBAC**. Nicholas owns backend/infrastructure FIRST, then ESP32 firmware; Liam owns SwiftUI. Do not rewrite, redesign, reorganize or overwrite his app. Assume concurrent work.
 
+## Current release checkpoint superseding older delivery counts
+
+Existing authorized production is now schema6/33 operations from immutable
+172e54c (PR30 mergec78a042), with backups, exact old-data preservation, target
+tests, PR/main backend+native CI and external OpenAPI readback verified. Read
+`docs/BACKEND_RELEASE_VERIFICATION.md` and current `docs/LIAM_BACKEND_HANDOFF.md`;
+older17-operation/schema4 text below is a dated checkpoint. No new provider setup.
+Native Swift/unsigned simulator compilation passed, not signed iPhone/NFC or real
+sensor acceptance. Latest firmware reconnect failed; do not promote its earlier
+bounded heartbeat pass into current-online proof. Nicholas lifted the04:00 cutoff
+for necessary isolated iOS work; preserve Liam's branch/worktree and designs.
+
 ## Current delivery scope
 
 Nicholas explicitly authorized full GitHub control for this kickBAC project: focused commits, branch publication, reviewed PRs and tested merges. This supersedes older no-push/no-merge checkpoints, not protection of teammate work/secrets or the prohibition on force-push/history rewrites/destructive resets/branch deletion. Keep unfinished firmware/client work off main.

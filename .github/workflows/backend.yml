@@ -1,0 +1,78 @@
+name: Backend checks
+
+on:
+  pull_request:
+    paths:
+      - 'backend/**'
+      - 'deploy/**'
+      - '.github/workflows/backend.yml'
+  push:
+    branches: [main, 'backend/**', 'fix/**', 'ci/**']
+    paths:
+      - 'backend/**'
+      - 'deploy/**'
+      - '.github/workflows/backend.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backend-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.12']
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Set up uv
+        uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - name: Install locked development dependencies
+        run: uv sync --locked --python '${{ matrix.python }}'
+      - name: Backend and deployment tests
+        run: uv run pytest -q tests ../deploy/ubuntu/tests
+      - name: Lint
+        run: uv run ruff check . ../deploy/ubuntu
+      - name: Formatting
+        run: uv run ruff format --check . ../deploy/ubuntu
+      - name: Compile
+        run: uv run python -m compileall -q kickbac ../deploy/ubuntu
+      - name: Explicit isolated HTTP demonstration
+        run: uv run python -m kickbac.simulator
+
+  auth0-actions:
+    name: Auth0 Action fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Match hosted Action runtime
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+      - name: Check syntax
+        run: node --check backend/auth0/twilio-verify.cjs
+      - name: Run non-sending fixture tests
+        run: node --test backend/auth0/test-twilio-verify.cjs

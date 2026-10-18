@@ -1,5 +1,7 @@
 # Cross-team integration readiness
 
+> **Historical checkpoint.** The client SHA, conflicts and client action list below describe the original review, not Liam's current branch. Before integration work, read [the latest shared handoff](LIAM_BACKEND_HANDOFF.md#read-first--agent-sync-and-latest-branchchange-checkpoint), fetch current refs and inspect Liam's current owner handoff. At main `307aa69` / client `48f1744`, a new merge-tree dry-run succeeded; no fresh native acceptance or full client review is implied. Keep the original execution evidence below attributed to its recorded revisions.
+
 ## Scope and verified source checkpoint
 
 Backend-owned continuation on `docs/integration-readiness`, based on remote main

@@ -2,11 +2,57 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+## Read first — agent sync and latest branch/change checkpoint
+
+This is the shared catch-up entry point for Liam and his agent, not a request to redo completed integration. Before work, fetch without changing the active checkout:
+
+```bash
+git status --short --branch
+git fetch origin --prune
+git show origin/main:docs/LIAM_BACKEND_HANDOFF.md
+git log -5 --oneline origin/main
+git rev-parse origin/main origin/liam/ios-profile-handoff
+```
+
+Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his branch. If main has not been integrated, read these shared docs directly from `origin/main`; do not reset, stash automatically, overwrite local edits or merge blindly. Documentation publication cannot prove an already-running remote agent has read it. Liam/his agent should report the main and client SHAs read when next giving a substantive integration update; no repeated acknowledgment pings or new user-run native tests are requested.
+
+### Documentation synchronization change
+
+- Owner/branch: backend Bot, `docs/liam-agent-sync`, based on `307aa694098ee3922e9e7454ef58f4dccbac9b51`. The publishing PR provides this change's exact head and merge state; do not infer merge or deployment from a branch name.
+- What/why: require this portable handoff for every backend/firmware/shared-contract change and branch operation so Liam's agent does not rely on group history or stale reviews. Entry points are root `AGENTS.md` and `README.md`.
+- **NON-BREAKING.** No endpoint, payload, auth, identity, state, timestamp, unit, duration or scoring change. No app code action and no deployment. Existing examples below remain valid; this adds a read/sync step only.
+
+### Verified upstream changes since the older iOS review
+
+| Change | Published/merged evidence | Liam action and verification limit |
+| --- | --- | --- |
+| Backend HTTP to actual C++ firmware decoder tests | [PR #18](https://github.com/spherohero/kickbac/pull/18), head `4aebbfa`, merged `3771596c51de35bfc1fc2c38359939a59a68a676`; [exact merged-main CI](https://github.com/spherohero/kickbac/actions/runs/39092673467) read back successful | NON-BREAKING; no API/client changes. Reproduction/prerequisites: [FIRMWARE_WIRE_VERIFICATION.md](FIRMWARE_WIRE_VERIFICATION.md). Tests are real loopback HTTP plus the firmware decoder, not full ESP32 HTTPS execution, physical sensing or native acceptance. |
+| Placement-only hardware correction | [PR #19](https://github.com/spherohero/kickbac/pull/19), merged `307aa694098ee3922e9e7454ef58f4dccbac9b51` | NON-BREAKING; parts are placed, not soldered/connected; no boost converter, pressure sensor or installed JP1. Software communication checks do not require assembly photos. Physical commissioning and truthful acquisition metadata remain separate. Docs-only, not a new runtime/CI result. |
+| Scoped merged-branch cleanup | Remote refs read back: `main`, `liam/ios-profile-handoff`, `ios`, `feat/ios-setup`, `firmware/esp32-core`; no open PRs at this checkpoint | NON-BREAKING; Liam's branches were preserved. No code/runtime change or new merge-ready client claim. Use main/PR/commit links rather than deleted feature refs; fetch again because this inventory can change. |
+
+### Newer Liam branch — do not reassign old findings blindly
+
+Observed client tip: `liam/ios-profile-handoff@48f1744c3f499c1a333525919977c0b2eaf9c0d0`, after `be3fcbb` and backend integration merge `8f0d8fa`. Read its `ios/BACKEND_REVIEW_HANDOFF.md` and `ios/README.md` before assigning follow-up work. Those current owner documents describe connected QR/manual selection and session polling/cancel/recovery, real-account Home data, stats, coalesced profile loads and first-login empty-Keychain handling. Game-result submission/gameplay remain separate in that handoff; do not confuse stats consumption with implemented gameplay.
+
+Those documents and commit identities were independently read, **not a full fresh source/contract review, Swift test run or native acceptance reproduction**. A dry-run `git merge-tree --write-tree origin/main origin/liam/ios-profile-handoff` succeeded against main `307aa69`; the old two-file conflicts were not reproduced at these tips. That is not merge approval and does not prove an Xcode/iPhone build. The older `2cc42da6` review and readiness document remain historical evidence, not current defect assignments. Refresh both refs before an actual merge/review; Liam's active branch and app remain untouched.
+
+### Required entry for every subsequent change
+
+The responsible backend/firmware owner updates this section in the same PR, even for NON-BREAKING work or branch-only cleanup; contract docs remain the single schema source, not a second divergent specification. Record:
+
+1. Owner, branch, exact reviewed head/current base, PR, publication/merge SHA/state, and deployment state separately.
+2. What/why; current versus proposed contract; BREAKING or NON-BREAKING; exactly what Liam must do, or explicitly **no action**.
+3. Methods/paths, changed fields/types/states/units/errors and request/response examples; if none, explicitly say unchanged and link canonical examples.
+4. Verification actually run, exact commands/evidence links, limits and remaining owner/gates. Never promote source/fixture/backend CI to native or physical acceptance.
+5. Before material client-facing implementation/merge, notify Nicholas using `=== LIAM / iOS IMPACT ===`; firmware-driven changes also need `=== BACKEND CONTRACT CHANGE ===`. Keep proposals provisional until coordinated/tested.
+
+After merging, update the entry with actual merge/deployment evidence as needed, and share its main/commit link in the room. Do not edit Liam's app, agent configuration or working branch to force discovery.
+
 ## === LIAM / iOS IMPACT ===
 
 **Additive / NON-BREAKING:** existing14 operations and18 component schemas were compared unchanged against the live pre-games contract. Three new game/stats operations bring the API to17. `/v1/me` remains identity-only. Two existing error **messages** now use generic resource/payload wording; codes/statuses remain unchanged—branch on `error.code`, not English text.
 
-Integrate profile save/restore, private reading history, game result persistence and separate profile-wide stats using the same validated Auth0 subject. Phone stays in Auth0. No Twilio SDK/secret, native client secret or device credential belongs in iOS. Do not invent missing party/leaderboard/measurement endpoints to fit mock screens.
+The following sections describe the existing contract, not a list of missing client features. Preserve published profile/history/device/stats integration; refresh Liam's branch before proposing more work. Game result persistence uses the same validated Auth0 subject. Phone stays in Auth0. No Twilio SDK/secret, native client secret or device credential belongs in iOS. Do not invent missing party/leaderboard/measurement endpoints to fit mock screens.
 
 Canonical references (same GitHub repository): [API](API.md), [profiles](PROFILES.md), [games/points](GAMES.md), [reading history](READING_HISTORY.md), [phone login](PHONE_LOGIN.md), [release verification](BACKEND_RELEASE_VERIFICATION.md). Live schema is authoritative for implemented wire shapes: https://api.kickbac.vodka/openapi.json .
 

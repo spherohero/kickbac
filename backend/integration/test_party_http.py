@@ -53,10 +53,42 @@ def test_real_http_party_join_check_in_completion_retry_and_restart(tmp_path):
         assert response.status_code == status
         return response.json()
 
-    def sample(client):
-        armed = checked(
-            client, "POST", "/v1/devices/party-fixture-unit/sessions", bob, 201, json={}
-        )
+    check_in_bodies = []
+
+    def sample(client, party_id=None, game_instance_id=None):
+        if party_id is None:
+            armed = checked(
+                client,
+                "POST",
+                "/v1/devices/party-fixture-unit/sessions",
+                bob,
+                201,
+                json={},
+            )
+        else:
+            body = {
+                "check_in_id": str(uuid4()),
+                "device_id": "party-fixture-unit",
+                "game_instance_id": game_instance_id,
+            }
+            accepted = checked(
+                client,
+                "POST",
+                f"/v1/parties/{party_id}/check-ins",
+                bob,
+                201,
+                json=body,
+            )
+            assert accepted["party_id"] == party_id
+            assert accepted["game_instance_id"] == game_instance_id
+            armed = accepted["session"]
+            check_in_bodies.append(body)
+            assert (
+                checked(client, "GET", "/v1/device/session", device)["active_session"][
+                    "id"
+                ]
+                == armed["id"]
+            )
         body = {
             "measurement_id": str(uuid4()),
             "session_id": armed["id"],
@@ -138,8 +170,17 @@ def test_real_http_party_join_check_in_completion_retry_and_restart(tmp_path):
             client, "POST", f"/v1/parties/{party_id}/games", alice, 201, json=game_body
         )
         assert game["device_id"] == "party-fixture-unit"
-        measurement = sample(client)
+        measurement = sample(client, party_id, game["game_instance_id"])
         assert measurement["id"] != ordinary["id"]
+        check_ins = checked(client, "GET", "/v1/me/check-ins", bob)
+        assert len(check_ins["items"]) == 1 and check_ins["has_more"] is False
+        check_in = check_ins["items"][0]
+        assert check_in["party_id"] == party_id
+        assert check_in["game_instance_id"] == game["game_instance_id"]
+        assert check_in["session"]["id"] == measurement["session_id"]
+        assert check_in["session"]["status"] == "COMPLETE"
+        assert check_in["session"]["measurement"] == measurement
+        assert checked(client, "GET", "/v1/me/check-ins", charlie)["items"] == []
         result_body = {
             "result_id": str(uuid4()),
             "game_id": "trivia",
@@ -192,6 +233,17 @@ def test_real_http_party_join_check_in_completion_retry_and_restart(tmp_path):
         assert checked(client, "POST", result_path, bob, json=result_body) == accepted
 
     with serve(app()) as client:
+        assert (
+            checked(
+                client,
+                "POST",
+                f"/v1/parties/{party_id}/check-ins",
+                bob,
+                json=check_in_bodies[0],
+            )
+            == check_in
+        )
+        assert checked(client, "GET", "/v1/me/check-ins", bob) == check_ins
         assert checked(client, "POST", result_path, bob, json=result_body) == accepted
         assert checked(client, "GET", "/v1/me/game-history", bob) == rich
         assert checked(client, "GET", "/v1/me/reading-summary", bob) == summary
@@ -203,6 +255,7 @@ def test_real_http_party_join_check_in_completion_retry_and_restart(tmp_path):
             "/v1/me/game-history",
             "/v1/me/reading-summary",
             "/v1/me/parties",
+            "/v1/me/check-ins",
         ):
             response = client.get(route)
             assert (
@@ -224,6 +277,7 @@ def test_real_http_party_join_check_in_completion_retry_and_restart(tmp_path):
         ("POST", "/v1/parties/join"),
         ("PUT", "/v1/parties/11111111-1111-4111-8111-111111111111/device"),
         ("POST", "/v1/parties/11111111-1111-4111-8111-111111111111/games"),
+        ("POST", "/v1/parties/11111111-1111-4111-8111-111111111111/check-ins"),
         ("POST", "/v1/party-games/11111111-1111-4111-8111-111111111111/results"),
     ],
 )

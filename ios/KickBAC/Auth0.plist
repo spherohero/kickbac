@@ -8,5 +8,7 @@
 	<string>5gJK2T71UkL0fbVj9pbzzEzKeMWZoYlC</string>
 	<key>Audience</key>
 	<string>https://kickbac-api</string>
+	<key>APIBaseURL</key>
+	<string>https://api.kickbac.vodka</string>
 </dict>
 </plist>

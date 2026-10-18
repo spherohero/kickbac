@@ -64,9 +64,13 @@ Environment:
 | `AUTH0_DOMAIN` | Actual tenant DNS name only, e.g. `dev-EXAMPLE.us.auth0.com`; no scheme, port, path or trailing slash. |
 | `AUTH0_AUDIENCE` | Exact custom API identifier, coordinated as `https://kickbac-api` (no trailing slash). A logical identifier, **not a backend host**. |
 
-`init-db` explicitly applies migrations001–004, preserving existing device/session/history/profile rows;
-re-running it is safe. Normal startup never initializes or upgrades a database
-and fails closed without schema4 and Auth0 configuration. Back up the SQLite
+`init-db` in this feature source explicitly applies migrations001–006, preserving
+existing device/session/history/profile/game rows. The source requires schema6;
+production is still the separately deployed schema4 release. Party/NFC status is
+in [PARTIES.md](docs/PARTIES.md) and [NFC_CHECK_IN.md](docs/NFC_CHECK_IN.md).
+Re-running initialization is safe. Normal startup never initializes or upgrades
+a database and fails closed without the required schema and Auth0 configuration.
+Back up the SQLite
 file before upgrades. Do not put SQLite on an ephemeral container filesystem or
 run multiple replicas: use **one API instance with a persistent local disk**.
 The existing Vultr host uses persistent local SQLite and online daily snapshots;

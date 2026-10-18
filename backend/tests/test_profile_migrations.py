@@ -37,7 +37,7 @@ def test_upgrade_to_three_preserves_every_old_row_and_is_repeatable(tmp_path, ve
     initialize(path)
     check_schema(path)
     with connect(path) as db:
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 4
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 6
         for table, rows in old.items():
             assert [tuple(row) for row in db.execute(f"SELECT * FROM {table}")] == rows
         assert {row[1] for row in db.execute("PRAGMA table_info(profiles)")} == {
@@ -50,7 +50,7 @@ def test_upgrade_to_three_preserves_every_old_row_and_is_repeatable(tmp_path, ve
         assert db.execute("SELECT count(*) FROM profiles").fetchone()[0] == 0
 
 
-@pytest.mark.parametrize("version", [0, 1, 2, 3, 5])
+@pytest.mark.parametrize("version", [0, 1, 2, 3, 4, 5, 7])
 def test_startup_refuses_wrong_version_without_upgrade(tmp_path, version):
     path = tmp_path / "db"
     initialize(path)

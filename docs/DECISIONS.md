@@ -1,5 +1,25 @@
 # Architectural decisions
 
+## Party persistence and NFC-first context
+
+- **Choice:** additive schema5 party/membership/operator-grant/device-binding/game
+  instance/context tables around the existing immutable measurement and result
+  ledgers. Private rich history adds nullable legacy context without changing old
+  operations; code/device joins share transactional membership and durable
+  per-subject guessing limits. Live production remains schema4 until verified release.
+- **Why:** support host-created parties and correct private game history while
+  retaining opaque ownership, exact retries, fixed participation awards and all
+  saved readings. Public device identifiers are not ownership grants; NFC tags
+  carry only a stable HTTPS unit URI and GET remains read-only.
+- **NFC implementation:** schema006 adds immutable session-owned party/game check-in
+  context. Explicit authenticated arming snapshots it before acquisition, never by
+  timestamp-nearest inference or a mutable latest-reading field. Exact attempt
+  retries return the original session through terminal states; private check-in
+  history survives without game completion. New result links must match that exact
+  context. Existing ESP32 session ID/expiry/upload and all legacy response shapes
+  remain unchanged; native entitlement, physical acquisition and production
+  deployment are independent gates.
+
 ## Shared game ledger and profile-wide points
 - **Choice:** one immutable owner-scoped game_results table and additive POST/GET `/v1/me/game-results`, GET `/v1/me/stats`; SQL aggregates derive profile-wide/per-game totals. Fixed10 server-assigned participation points per unique accepted completion under `completion_v1`; raw score stays separate.
 - **Why:** generic Trivia/Pictionary/future-game result data without a table per game, mutable client balances or double awards during retries/concurrency. Persisted UUID/canonical payload gives201first/200replay/409changed; verified token subject owns all data, independent of mutable profile or readings.

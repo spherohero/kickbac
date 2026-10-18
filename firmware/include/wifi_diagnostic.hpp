@@ -80,5 +80,16 @@ inline bool health_response_ok(int status, const char* body) {
     return status == 200 && body != nullptr && std::strcmp(body, "{\"status\":\"ok\"}") == 0;
 }
 
+// Public read-only reconnect diagnostic only, not authenticated request retries.
+// The callback must repeat the SAME trusted HTTPS/health validation each time.
+template <typename Check, typename Wait>
+bool reconnect_health_probe(Check check, Wait wait) {
+    for (unsigned attempt = 2; attempt <= 4; ++attempt) {
+        if (attempt != 2) wait();
+        if (check(attempt)) return true;
+    }
+    return false;
+}
+
 }  // namespace kickbac
 #endif

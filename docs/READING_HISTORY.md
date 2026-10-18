@@ -2,6 +2,29 @@
 
 Every **accepted completed test** is persisted in SQLite `measurements`, linked to its unique session/device and the session's verified Auth0 subject. The private profile uses the same subject. History is not stored in the mutable name/photo fields, and does not depend on creating the profile first. No extra user table or duplicate history store is needed.
 
+## Manual acquisition compatibility — source candidate, not deployed
+
+Manual readings retain `breath_duration_ms:null`, `acquisition_method:"manual_timed"`
+and actual `sample_duration_ms`, distinct from measured breath duration. Show
+"Timed sensor sample — breath not validated" visibly and for accessibility.
+Legacy records retain exact integer-duration wire JSON and omit new metadata;
+neither migration nor profile edits rewrite their payloads. No trigger or an
+invalid window is no result, never zero BAC. Exact frozen validation/retry and
+rollout gates: [FIRMWARE_DURATION_PROPOSAL.md](FIRMWARE_DURATION_PROPOSAL.md).
+
+## Exact summary and game-use readings — local addition, not deployed
+
+`GET /v1/me/reading-summary` supplies an owner-scoped exact SQL count and latest
+saved measurement in one read-only snapshot; details in
+[API.md](API.md#private-reading-summary). It includes ordinary, game-use and
+simulator readings independently of profile existence or loaded pages. The new
+party result context references an existing owned measurement; it does not
+remove it from this history, create a second reading, award test points or make
+its unavailable BAC numeric. NFC ARM-time context is implemented locally and
+retained before/without completion via private `GET /v1/me/check-ins`; exact
+semantics are in [NFC_CHECK_IN.md](NFC_CHECK_IN.md). Existing live history below
+is unchanged; native NFC and physical samples are not established by this source.
+
 ## === LIAM / iOS IMPACT ===
 
 **NON-BREAKING — existing API; explicit integration for Me → Reading history.**

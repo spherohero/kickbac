@@ -91,7 +91,14 @@ bool check_https(unsigned attempt) {
     http.setFollowRedirects(HTTPC_DISABLE_FOLLOW_REDIRECTS);
     http.setReuse(false);
     if (!http.begin(tls, "https://api.kickbac.vodka/health")) return false;
+    const auto request_started = static_cast<std::uint32_t>(millis());
     const int status = http.GET();
+    if (status <= 0) {
+        char description[128] = {}; // SDK buffer only; NEVER print error text/config.
+        const int code = tls.lastError(description, sizeof(description));
+        Serial.printf("probe_https_error attempt=%u tls_code=%d duration_ms=%lu\n", attempt, code,
+                      static_cast<unsigned long>(static_cast<std::uint32_t>(millis()) - request_started));
+    }
     bool ok = false;
     // Fixed endpoint has a tiny Content-Length; never accept a captive portal or large body.
     if (status == 200 && http.getSize() > 0 && http.getSize() <= 64) {
@@ -130,7 +137,9 @@ void run_probe() {
     WiFi.begin();  // Reuse the same RAM-only SDK network config.
     if (!wait_joined()) { fail("reassociation_or_dhcp"); return; }
     Serial.printf("probe_wifi rejoined=1 dhcp=1 rssi_dbm=%d channel=%d\n", WiFi.RSSI(), WiFi.channel());
-    if (!resolve_backend() || !check_https(2)) { fail("reconnect_https"); return; }
+    if (!resolve_backend() || !kickbac::reconnect_health_probe(
+            [](unsigned attempt) { return check_https(attempt); },
+            []() { delay(1000); })) { fail("reconnect_https"); return; }
     Serial.printf("CONNECTIVITY_PASS wifi=1 dhcp=1 dns=1 trusted_https=1 reconnect=1 sensor=disabled uploads=disabled\n");
     network_proven = true;
 }

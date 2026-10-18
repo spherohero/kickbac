@@ -83,7 +83,7 @@ final class DeviceSessionStore {
             let started = try await create(targetID)
             guard generation == requestGeneration else { return }
             guard started.deviceID == targetID, started.userID == owner, UUID(uuidString: started.id) != nil,
-                  started.status.isActive else {
+                  started.status.isActive, started.measurement == nil else {
                 throw KickBACAPI.APIError.invalidResponse
             }
             test = started

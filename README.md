@@ -27,6 +27,7 @@ instrument. Private display-name/picture profiles are deployed; see
 - [`docs/DEVICE_CONNECTIVITY.md`](docs/DEVICE_CONNECTIVITY.md): actual device-bearer heartbeat/poll passed; independent live readback proves persisted ongoing heartbeat after helper exit. No API/iOS or measurement changes.
 - [`docs/HARDWARE_BRINGUP.md`](docs/HARDWARE_BRINGUP.md): photo-confirmed Flying Fish-style MQ breakout (not bare sensor), actual header orientation, USB evidence, and conditional power/protection design awaiting actual parts/meter checks.
 - [`docs/AUSTIN_PERFBOARD_GUIDE.md`](docs/AUSTIN_PERFBOARD_GUIDE.md): shareable assembly/net guide, component-side perfboard concept, full-scale divider test, power sequencing and Austin's measurement handoff. Actual parts and electrical sign-off remain required before ADC connection.
+- [`docs/USB_ONLY_COMMISSIONING.md`](docs/USB_ONLY_COMMISSIONING.md): **current power decision: USB-C-only, no battery**; revised conditional schematic, keep/remove parts, capacitor checks, combined-load budget and commissioning gates. Supersedes older power proposals, not electrical safety checks.
 - [`docs/FIRMWARE_DURATION_PROPOSAL.md`](docs/FIRMWARE_DURATION_PROPOSAL.md): UNAPPROVED manual/timed acquisition proposal; current required breath duration is not fabricated or silently reinterpreted. The pressure sensor is confirmed unavailable.
 
 
@@ -63,9 +64,13 @@ Environment:
 | `AUTH0_DOMAIN` | Actual tenant DNS name only, e.g. `dev-EXAMPLE.us.auth0.com`; no scheme, port, path or trailing slash. |
 | `AUTH0_AUDIENCE` | Exact custom API identifier, coordinated as `https://kickbac-api` (no trailing slash). A logical identifier, **not a backend host**. |
 
-`init-db` explicitly applies migrations001–004, preserving existing device/session/history/profile rows;
-re-running it is safe. Normal startup never initializes or upgrades a database
-and fails closed without schema4 and Auth0 configuration. Back up the SQLite
+`init-db` in this feature source explicitly applies migrations001–006, preserving
+existing device/session/history/profile/game rows. The source requires schema6;
+production is still the separately deployed schema4 release. Party/NFC status is
+in [PARTIES.md](docs/PARTIES.md) and [NFC_CHECK_IN.md](docs/NFC_CHECK_IN.md).
+Re-running initialization is safe. Normal startup never initializes or upgrades
+a database and fails closed without the required schema and Auth0 configuration.
+Back up the SQLite
 file before upgrades. Do not put SQLite on an ephemeral container filesystem or
 run multiple replicas: use **one API instance with a persistent local disk**.
 The existing Vultr host uses persistent local SQLite and online daily snapshots;

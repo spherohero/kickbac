@@ -10,7 +10,8 @@ on:
       - 'firmware/platformio.ini'
       - '.github/workflows/backend.yml'
   push:
-    branches: [main, 'backend/**', 'fix/**', 'ci/**']
+    # Feature branches run via pull_request; avoid duplicate push+PR matrices.
+    branches: [main]
     paths:
       - 'backend/**'
       - 'deploy/**'
@@ -64,6 +65,8 @@ jobs:
         run: uv run python -m compileall -q kickbac ../deploy/ubuntu
       - name: Explicit isolated HTTP demonstration
         run: uv run python -m kickbac.simulator
+      - name: Party check-in history and streamed-body HTTP acceptance
+        run: uv run --locked pytest -q integration/test_party_http.py
 
   firmware-wire:
     name: Backend HTTP to firmware decoder

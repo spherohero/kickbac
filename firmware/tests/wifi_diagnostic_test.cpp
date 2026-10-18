@@ -55,4 +55,16 @@ int main() {
           !kickbac::health_response_ok(200,"login required") &&
           !kickbac::health_response_ok(200,nullptr),"redirect/captive portal/wrong body fail");
     std::cout << "PASS: malformed/partial frames, timeout/wrap and health validation (fixture)\n";
+    for (unsigned success_at = 2; success_at <= 5; ++success_at) {
+        unsigned calls = 0, waits = 0;
+        const bool ok = kickbac::reconnect_health_probe([&](unsigned attempt) {
+            ++calls;
+            check(attempt == calls + 1, "reconnect attempt labels start at two");
+            return attempt == success_at;
+        }, [&]() { ++waits; });
+        const unsigned expected = success_at <= 4 ? success_at - 1 : 3;
+        check(ok == (success_at <= 4) && calls == expected && waits == expected - 1,
+              "reconnect health bounded to three attempts, waits only between failures");
+    }
+    std::cout << "PASS: bounded reconnect health retries, success short-circuit and exhaustion (fixture)\n";
 }

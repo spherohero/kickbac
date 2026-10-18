@@ -3,8 +3,14 @@ from typing import Annotated
 
 from fastapi import APIRouter, Query, Request, Response
 
+from .db import connect
 from .errors import fail
-from .models import HistoryResponse, MeasurementResponse, MeasurementUpload
+from .models import (
+    HistoryResponse,
+    MeasurementResponse,
+    MeasurementUpload,
+    ReadingSummaryResponse,
+)
 from .sessions import (
     Device,
     User,
@@ -80,6 +86,31 @@ def upload(
             measurement_id,
         )
         return measurement_response(result)
+
+
+@router.get("/v1/me/reading-summary", response_model=ReadingSummaryResponse)
+def reading_summary(request: Request, subject: User):
+    """Exact lifetime count and latest accepted reading for the validated owner.
+
+    Includes simulator and game-use readings; no profile or pagination dependency.
+    Reads one SQL snapshot without persisting lazy session expiry or other writes.
+    """
+    with connect(request.app.state.settings.db_path) as db:
+        db.execute("PRAGMA query_only=ON")
+        db.execute("BEGIN")
+        count = db.execute(
+            "SELECT COUNT(*) FROM measurements WHERE user_id=?", (subject,)
+        ).fetchone()[0]
+        latest = db.execute(
+            "SELECT * FROM measurements WHERE user_id=? "
+            "ORDER BY received_at DESC,id DESC LIMIT 1",
+            (subject,),
+        ).fetchone()
+    return {
+        "user_id": subject,
+        "saved_readings": count,
+        "latest_measurement": measurement_response(latest) if latest else None,
+    }
 
 
 @router.get("/v1/measurements", response_model=HistoryResponse)

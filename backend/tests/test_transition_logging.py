@@ -4,8 +4,11 @@ import subprocess
 import sys
 import textwrap
 
+import pytest
 
-def test_transition_logs_under_normal_uvicorn_startup(tmp_path):
+
+@pytest.mark.parametrize("mode", ["ordinary", "check_in"])
+def test_transition_logs_under_normal_uvicorn_startup(tmp_path, mode):
     program = textwrap.dedent(
         """
         import logging
@@ -21,7 +24,7 @@ def test_transition_logs_under_normal_uvicorn_startup(tmp_path):
 
         from kickbac.app import create_app
         from kickbac.cli import provision_device
-        from kickbac.db import initialize
+        from kickbac.db import connect, initialize
         from kickbac.settings import Settings
 
         root = Path(sys.argv[1])
@@ -56,9 +59,22 @@ def test_transition_logs_under_normal_uvicorn_startup(tmp_path):
                 with httpx.Client(base_url=origin, timeout=3, trust_env=False) as c:
                     user = {'Authorization': 'Bearer fixture-user-token'}
                     device = {'Authorization': 'Bearer ' + credential}
-                    response = c.post('/v1/devices/logging-one/sessions', headers=user, json={})
+                    if sys.argv[2] == 'check_in':
+                        from datetime import UTC, datetime
+                        party = str(uuid4())
+                        stamp = datetime.now(UTC).isoformat()
+                        with connect(path) as db:
+                            db.execute("INSERT INTO parties VALUES (?,'fixture|logging-user','private-party-name','ABCDEFGH',?,'OPEN',NULL)",(party,stamp))
+                            db.execute("INSERT INTO party_members VALUES (?,'fixture|logging-user',?,NULL)",(party,stamp))
+                            db.execute("INSERT INTO party_devices VALUES (?,'logging-one')",(party,))
+                        response = c.post('/v1/parties/'+party+'/check-ins', headers=user, json={'check_in_id':str(uuid4()),'device_id':'logging-one'})
+                        assert response.status_code == 201
+                        response_session = response.json()['session']
+                    else:
+                        response = c.post('/v1/devices/logging-one/sessions', headers=user, json={})
+                        response_session = response.json()
                     assert response.status_code == 201
-                    sid = response.json()['id']
+                    sid = response_session['id']
                     assert c.post('/v1/device/sessions/' + sid + '/sampling', headers=device, json={}).status_code == 200
                     mid = str(uuid4())
                     response = c.post('/v1/device/measurements', headers=device, json={
@@ -76,7 +92,7 @@ def test_transition_logs_under_normal_uvicorn_startup(tmp_path):
         """
     )
     result = subprocess.run(
-        [sys.executable, "-c", program, str(tmp_path)],
+        [sys.executable, "-c", program, str(tmp_path), mode],
         capture_output=True,
         check=False,
         text=True,
@@ -99,6 +115,8 @@ def test_transition_logs_under_normal_uvicorn_startup(tmp_path):
     output = result.stdout + result.stderr
     assert (tmp_path / "device.secret").read_text().strip() not in output
     for sensitive in (
+        "private-party-name",
+        "ABCDEFGH",
         "fixture-user-token",
         "Authorization",
         "adc_counts",

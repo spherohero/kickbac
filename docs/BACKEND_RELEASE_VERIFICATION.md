@@ -1,5 +1,73 @@
 # Backend release verification — games, profiles and private history
 
+## NFC context merged and main CI verified — not a production release
+
+[PR #26](https://github.com/spherohero/kickbac/pull/26) head
+`8cdab3a5b52e7d59115586719a90ff69233e46e6` merged as
+`67c46916bda95250cdae739fd99e19cde8634667`. Remote-main ancestry, exact
+parents (prior main dd19b40 and reviewed head8cdab3a) and full reviewed-tree
+equality were independently read back. Existing branches/worktrees are retained.
+
+Integrated runtime `2f0407483bc5f2b539de79495a171d86c0571b67` now includes
+migration006/schema6 and33 operations. Parent ran the full backend/deployment and
+signed-fixture real-HTTP acceptance command on **both Python3.11 and3.12:528
+passed on each**. Seven HTTP cases include the actual party-aware reservation,
+unchanged device session poll/upload, private party/game/ordinary reading history,
+terminal replay after leave/close and new server restart, plus streaming bounds.
+Ruff lint,71-file formatting, compile, original `SIMULATOR_OK` and immutable old
+17-operation/23-schema compatibility checks passed.
+
+Both independent final reviews APPROVED the unchanged runtime at2f04074:
+SPEC PASS, QUALITY/security PASS and cross-feature integration PASS, no actionable
+blockers. Integration reviewer ran528 tests plus20 scratch-only real-HTTP race
+probes (check-in versus close/rebind, upload versus cancel/leave, result versus
+game close); parent repeated528 tests and all local gates after review.
+
+Published5a8d8e0 differs from the reviewed runtime only in documentation. Exact
+[push CI](https://github.com/spherohero/kickbac/actions/runs/39105274853) and
+[PR CI](https://github.com/spherohero/kickbac/actions/runs/39105277114) passed on
+that head. Logs read back521 backend/deployment tests plus7 party HTTP checks
+per Python version,2 actual C++ decoder checks,78 non-sending Node22 Action
+fixtures, Ruff/compile and `SIMULATOR_OK`. The final8cdab3a
+[PR CI](https://github.com/spherohero/kickbac/actions/runs/39105861628) passed,
+then exact67c4691 [merged-main push CI](https://github.com/spherohero/kickbac/actions/runs/39105975584)
+passed. Actual merged-main logs confirm the same521+7 tests per interpreter,
+2 decoder checks,78 Action fixtures and simulator result. The subsequent
+`docs/nfc-merge-verification` closeout changes documentation only; existing
+workflow path filters do not require a new runtime run for it.
+
+No native tag scan, live Auth0 acceptance, physical sensing, target-host isolated
+test or production upgrade is claimed. Fresh public readback after reviews:
+health200,17 operations, no check-in routes. Production remains the deployed
+schema4 runtime below. Upgrades require verified backup/copy testing for both
+005+006; source/merge does not automatically deploy. Older checkpoints below
+describe their own historical state, not missing implementation now.
+
+## Earlier party/profile foundation checkpoint — historical, not production
+
+Draft [PR #26](https://github.com/spherohero/kickbac/pull/26) has been integrated
+locally on backend-owned `backend/party-profile-completion`, with worker commits
+cherry-picked into the complete application and both routers registered. Current
+local surface is 31 operations/schema5. Existing production runtime/checkpoint
+below remains unchanged; **no production migration, deployment, user writes or
+sensor enablement occurred**.
+
+Parent execution of the combined source passed **447 tests**, including
+backend/deployment suites and six real-loopback HTTP party/history/streaming
+acceptance cases. Ruff lint, 65-file formatting, compilation, `git diff --check`
+and the original explicit simulator passed. Two additional parent concurrency
+checks passed: simultaneous join-limit exhaustion across three app instances,
+and an arm transaction holding the write lock while a competing reassignment
+waits then rejects `device_busy`. These are local fixture results, not native,
+Auth0 delivery, physical sensor or target-host acceptance. Independent core/game
+reviews and new exact-head CI are still required before ready/merge claims.
+
+Migration005/reading-summary slices at `73d66be` independently passed spec and
+security/correctness review, including populated backups/restores and a WAL
+snapshot probe. Executable compatibility checks preserve the existing live 17
+operations, 23 schemas and authentication definitions. NFC party/game context
+at arming is **not yet implemented**; see [NFC_CHECK_IN.md](NFC_CHECK_IN.md).
+
 ## Live checkpoint
 
 **Current final runtime:** `/opt/kickbac/releases/games-1e9d830-20261018T005743Z`, activated **2026-10-18T00:57:57.865903+00:00**, source **`1e9d83070cf4096283246078cb9a9193519a13ec`**, merged [PR #8](https://github.com/spherohero/kickbac/pull/8), main merge `58c3a0bcef5afd9aa8d0a040f0ccdba7310dd529`. ArchiveSHA256 `537d0840f298a2620ea4912bc0a31bf1d1ec3e755805fb25297669b517eba462`;31 manifest entries verified after activation. Effective process working directory matches this release; runtime/lock/migration/deployment hashes match published main. Fresh trusted public health200/OpenAPI17 and all6 missing-auth profile/game/stats/history requests were read back; all rejected401 as intended. Initial schema4 rollout below is retained as migration evidence.

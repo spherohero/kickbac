@@ -31,6 +31,7 @@ FixtureWiFi WiFi;
 #include "../src/device_probe.cpp"
 
 void reset_fixture() {
+    session_fence = kickbac::SessionFence{};
     credential.clear();
     failed = negative_checked = pass_reported = false;
     heartbeats = polls = 0;
@@ -198,6 +199,33 @@ void boundary_and_wifi_cases() {
     std::cout << "PASS: exact body bound, embedded NUL rejection, Wi-Fi loss and negative-auth gate (synthetic fixtures)\n";
 }
 
+void retained_session_cases() {
+    reset_fixture();
+    provision_fixture();
+    const std::time_t deadline = std::time(nullptr) + 30;
+    char expiry[40] = {};
+    assert(std::strftime(expiry, sizeof(expiry), "%Y-%m-%dT%H:%M:%SZ", std::gmtime(&deadline)) > 0);
+    fixture_override_body = true;
+    fixture_override_heartbeat = false;
+    const std::string id = "3b0c0a9e-2604-4b78-a487-3fd8fa1d4a4b";
+    fixture_response_body = "{\"device_id\":\"kb-demo-01\",\"active_session\":{\"id\":\"" + id +
+        "\",\"device_id\":\"kb-demo-01\",\"status\":\"ARMED\",\"expires_at\":\"" + expiry + "\"}}";
+    fixture_now = 2000;
+    device_probe_loop();
+    assert(!failed && std::strcmp(session_fence.snapshot().id, id.c_str()) == 0);
+    assert(std::strcmp(session_fence.snapshot().expires_at, expiry) == 0);
+    kickbac::SessionTicket ticket;
+    assert(session_fence.begin(ticket, fixture_now, utc_upper_ms()));
+    fixture_now = 4000;
+    fixture_response_body = "{\"device_id\":\"kb-demo-01\",\"active_session\":null}";
+    device_probe_loop();
+    assert(!session_fence.matches(ticket, fixture_now, utc_upper_ms()));
+    assert(session_fence.snapshot().id[0] == '\0');
+    assert(fixture_posts == 1); // heartbeat only; no sampling or upload
+    for (const auto& line : fixture_lines) assert(line.find(id) == std::string::npos);
+    std::cout << "PASS: actual adapter retains session UUID/expiry, fences idle and does not sample/upload/log IDs (fixtures)\n";
+}
+
 int main() {
     device_probe_loop();
     assert(fixture_posts == 0 && fixture_gets == 0);
@@ -242,4 +270,5 @@ int main() {
     std::cout << "PASS: diagnostic negative auth, exact endpoints/bodies/TLS, heartbeat vs polling cadence, ongoing keepalive and revoked-credential stop (synthetic fixtures)\n";
     fault_matrix();
     boundary_and_wifi_cases();
+    retained_session_cases();
 }

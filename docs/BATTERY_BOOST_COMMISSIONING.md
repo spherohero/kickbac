@@ -1,5 +1,11 @@
 # Battery / boost perfboard revision — commissioning hold
 
+> **Superseded:** Nicholas explicitly drops the battery system for the demo.
+> Current design is [USB-C-only](USB_ONLY_COMMISSIONING.md); omit batteries,
+> battery wiring, boost and external charging/balancing parts, leave BAT pads
+> unconnected. Do not construct this historical battery revision. USB power-path
+> and ADC protection checks remain necessary; no new physical test has passed.
+
 > **Historical proposal — not the current parts list.** Nicholas subsequently clarified that components are only placed on perfboard, not soldered or connected, with **no boost converter, no pressure sensor and no installed JP1**. The replacement MQ heater supply/final power topology is not established. Do not use this battery/boost document as authorization to add a converter or wire that obsolete proposal. Continue software-only backend/firmware communication tests independently; actual supply/protection checks apply before powered acquisition, not before host tests.
 
 **PROPOSED ASSEMBLY; NOT ELECTRICALLY SIGNED OFF.** This reconciles Nicholas's

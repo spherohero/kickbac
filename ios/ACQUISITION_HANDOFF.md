@@ -1,5 +1,16 @@
 # Manual acquisition client compatibility
 
+## Integration closeout — latest preview preserved
+
+Before the04:00 Eastern cutoff, backend main `c78a042` was merged into this
+isolated client branch while preserving Liam `0e5a6e4` Party/Trivia preview and
+Home game-check-in layout. The original `liam/party-setup` ref is untouched.
+Core main has actual passing Swift fixtures/unsigned Xcode CI and its API is now
+live on schema6; this combined preview branch has separate native CI pending.
+Its publishing PR remains draft until independently reviewed/native checked.
+No signed install, rendering, NFC, physical sample or iPhone acceptance is implied.
+The prior worker-local no-publication checkpoint below is historical.
+
 Owner: bounded backend/iOS worker, branch `ios/manual-acquisition-notice`, isolated
 worktree `kickbac-ios-acquisition-worker`; base Liam `0e5a6e4c87e650d5ea40090d7d232e9807d9dc2f`.
 No push, merge, deployment, installation or native acceptance is claimed.

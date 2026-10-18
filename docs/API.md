@@ -2,6 +2,22 @@
 
 Status: **LIVE at https://api.kickbac.vodka**,17 operations, explicitly migrated schema4. Profiles, generic private game results/stats and per-person reading history are published and deployed. See [release verification](BACKEND_RELEASE_VERIFICATION.md), [client handoff](LIAM_BACKEND_HANDOFF.md), [games/points](GAMES.md) and [reading history](READING_HISTORY.md). Profile source is published in merged [PR #3](https://github.com/spherohero/kickbac/pull/3); see `PROFILE_VERIFICATION.md` for the earlier deployment evidence. Display name **kickBAC**. REST JSON uses snake_case, opaque UUID session/measurement/result IDs, a provisioned device slug, and ISO 8601 UTC timestamps (`Z` or `+00:00`). Users are opaque verified Auth0 `sub` strings, not client-chosen IDs. No certified BAC or safe-to-drive interpretation is provided.
 
+## Manual acquisition candidate — implemented source, not deployed
+
+`backend/manual-timed-acquisition` implements the frozen
+[manual acquisition contract](FIRMWARE_DURATION_PROPOSAL.md). Current public
+OpenAPI above remains authoritative until a separately verified release.
+**BREAKING for older clients:** manual readings use required
+`breath_duration_ms:null`, `acquisition_method:"manual_timed"`, and measured
+strict integer `sample_duration_ms`1..60000. Legacy integer-duration request,
+response and stored-payload retries remain exact; new keys are omitted for legacy
+responses. Mixed/incomplete metadata is422. Manual metadata persists in all
+nested history/session/check-in/game responses; null BAC stays unavailable.
+SAMPLING means sensor acquisition, not proof of breath. Necessary iOS decoding,
+visible/accessibility notice and exact-session handling are included in isolated
+bounded client work; native CI is a separate verification gate, not a real-phone
+claim. Existing device/auth/session fields and paths are unchanged.
+
 ## Authentication
 User routes require `Authorization: Bearer <Auth0 API access token>` (not an ID token). RS256 signature, issuer, audience, expiry and subject must be validated. `/v1/me` returns only the verified subject. The Native app's SMS connection and Passwordless OTP grant are enabled for Liam's reported embedded Auth0 phone/code flow; hosted Authorization Code + PKCE remains supported. Native client ID/domain/audience/bundle/callback values must be coordinated with Liam. There is no kickBAC password/OTP endpoint or native client secret.
 
@@ -12,6 +28,36 @@ No demo auth endpoint exists. Local simulator identities and measurements must b
 Initial Auth0 audience: `https://kickbac-api` (no trailing slash). This is a logical API identifier, not the deployed base URL. For Nicholas's account setup steps and the public-only report-back template, see [SETUP.md](SETUP.md).
 
 Approved primary login is **phone number + SMS OTP through Auth0/Twilio, not SMS MFA**. Provider configuration, earlier team delivery and separate Post Login feedback binding are verified; actual native token/API acceptance, feedback execution and newly unlisted-recipient delivery are not. See [PHONE_LOGIN.md](PHONE_LOGIN.md) for the embedded OTP requests and client handoff. Hosted PKCE remains supported with `connection=sms` and the same audience. The backend still receives only an API access token, never a raw phone number or OTP, and does not require an email claim or a particular subject prefix. `/v1/me` and all ownership rules are unchanged. Separate SMS/database subjects are separate users; matching contact claims do not link accounts or history.
+
+## Private reading summary
+
+**Additive local implementation; not yet deployed.** The combined party/profile
+branch currently has33 operations on schema6; the live17-operation release above
+is unchanged. Party create/join/binding/game/context/history routes are documented
+in [PARTIES.md](PARTIES.md). Atomic ARM-time party/game context is now implemented
+locally through the additional POST/private GET in [NFC_CHECK_IN.md](NFC_CHECK_IN.md),
+not yet deployed or native/physical accepted. Existing17 operations and23 component
+schemas are frozen by an executable compatibility fixture captured from public
+HTTPS OpenAPI.
+
+`GET /v1/me/reading-summary` uses the existing user API access token, with no
+request body or pagination/filter parameters. Example for an empty account:
+
+```json
+{"user_id":"sms|opaque-example","saved_readings":0,"latest_measurement":null}
+```
+
+`saved_readings` is the exact SQL count of all accepted measurements belonging to
+the validated subject, including simulator and game-use readings. It is not the
+number of loaded pages, attempts, games or profiles. Retries do not duplicate it.
+`latest_measurement` is the existing full `MeasurementResponse` object (same shape
+as a history item), selected by `received_at DESC,id DESC`, or null if none exist.
+Acquisition time does not choose latest; unavailable BAC stays null, never zero.
+Count and latest share one read-only SQL snapshot. This GET creates no profile,
+expires no sessions and writes no rows. Profile edits and restart do not reset it.
+Success and errors, including missing-auth 401 and storage-failure 500, return
+`Cache-Control: no-store`; existing auth/error envelopes are unchanged. Errors
+mean unavailable, not a zero-reading account. No other operation shape changes.
 
 ## Endpoint summary
 | Method | Path | Auth | Purpose |
@@ -24,6 +70,9 @@ Approved primary login is **phone number + SMS OTP through Auth0/Twilio, not SMS
 | POST | `/v1/me/game-results` | user | persist completed client-reported game, award10 participation points once |
 | GET | `/v1/me/game-results` | user | own paginated game ledger, optional game_id filter |
 | GET | `/v1/me/stats` | user | profile-wide points/games/wins and per-game aggregates |
+| GET | `/v1/me/reading-summary` | user | exact saved reading count/latest owned measurement; feature source, not deployed |
+| POST | `/v1/parties/{party_id}/check-ins` | party member | atomic next-test reservation with retry-safe party/game context; feature source, not deployed |
+| GET | `/v1/me/check-ins` | user | private persisted check-in/session/result history; feature source, not deployed |
 | GET | `/v1/devices/{device_id}` | user | current derived availability and online state |
 | POST | `/v1/devices/{device_id}/sessions` | user | arm known unit; empty JSON `{}` |
 | GET | `/v1/sessions/{session_id}` | owning user | session and optional result |
@@ -34,7 +83,10 @@ Approved primary login is **phone number + SMS OTP through Auth0/Twilio, not SMS
 | POST | `/v1/device/sessions/{session_id}/sampling` | device | report valid breath sampling start; `{}` |
 | POST | `/v1/device/measurements` | device | idempotent sample upload |
 
-Normal server must be configured with Auth0 and an explicitly migrated persistent DB (schema4 for games; profile-era schema3 requires an explicit backed-up upgrade). `/docs` and `/openapi.json` document the implemented schema; keep examples in this document synchronized. The simulator starts an isolated loopback instance. Trusted public HTTPS is verified; real native access-token/history acceptance, universal links and NFC writing are separate integration steps. See [PROFILES.md](PROFILES.md) for complete onboarding fields, image limits, save/retry/removal semantics and client handoff. Phone stays in the Auth0 SMS identity; profile writes never accept a client-supplied owner or verified phone.
+Normal server must use Auth0 and an explicitly migrated persistent DB. Current
+feature source requires schema6; deployed games-era schema4 requires a backed-up
+005+006 upgrade before starting this source. Runtime startup does not migrate.
+`/docs` and `/openapi.json` document the implemented schema; keep examples in this document synchronized. The simulator starts an isolated loopback instance. Trusted public HTTPS is verified; real native access-token/history acceptance, universal links and NFC writing are separate integration steps. See [PROFILES.md](PROFILES.md) for complete onboarding fields, image limits, save/retry/removal semantics and client handoff. Phone stays in the Auth0 SMS identity; profile writes never accept a client-supplied owner or verified phone.
 
 ## Lifecycle and concurrency
 Session status is one of `ARMED`, `SAMPLING`, `COMPLETE`, `CANCELLED`, `EXPIRED`. Creation sets `ARMED` with 60-second server-owned expiry. Device state is `AVAILABLE`, `ARMED` or `SAMPLING`, derived from an active unexpired session. `online` is separately derived from a heartbeat within the last 30 seconds; heartbeat does not extend an arming session. An offline device may be armed; app should show online state and timeout honestly.

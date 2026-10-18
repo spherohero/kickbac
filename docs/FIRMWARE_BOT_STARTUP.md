@@ -2,6 +2,11 @@
 
 ## Latest firmware integration checkpoint — session guard, not flashed
 
+Merged [PR #28](https://github.com/spherohero/kickbac/pull/28) at
+`706d5bb27ab2aa00b620375b27b7a93adaf6addf`; reviewed source head `11b5e38`,
+exact remote merge/tree verified. Merged-main firmware/backend CI both passed;
+links and limits are in the checkpoint below. No physical patch was applied.
+
 Read [FIRMWARE_SESSION_GUARD.md](FIRMWARE_SESSION_GUARD.md). Firmware owner branch
 `firmware/session-ownership-guard`, base `86adb12b4c1f669aafb1ee5ee1726f6da87454bb`,
 adds exact session UUID/expiry retention, fail-closed acquisition tickets and a

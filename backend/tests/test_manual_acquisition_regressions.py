@@ -200,7 +200,7 @@ def test_original_legacy_payload_and_response_survive_restart_byte_exact(world):
         assert restarted.get("/v1/measurements", headers=u["alice"]).content == before
     with connect(path) as db:
         assert db.execute("SELECT payload FROM measurements").fetchone()[0] == canonical
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 7
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 8
 
 
 def test_manual_metadata_in_check_in_retry_history_and_rich_game_history(party_world):

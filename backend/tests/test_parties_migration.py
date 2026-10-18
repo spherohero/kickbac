@@ -59,7 +59,7 @@ def test_populated_schema4_upgrade_is_additive_repeatable_and_backup_safe(tmp_pa
     initialize(path)
     initialize(path)
     with connect(path) as db:
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 7
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 8
         tables = {
             row[0]
             for row in db.execute("SELECT name FROM sqlite_master WHERE type='table'")
@@ -157,7 +157,7 @@ def test_populated_party_context_survives_online_backup_and_app_restart(tmp_path
         source.backup(target)
     check_schema(backup)
     with connect(backup) as db:
-        assert db.execute("PRAGMA user_version").fetchone()[0] == 7
+        assert db.execute("PRAGMA user_version").fetchone()[0] == 8
         assert db.execute("PRAGMA foreign_key_check").fetchall() == []
         for table, rows in snapshot.items():
             assert [tuple(row) for row in db.execute("SELECT * FROM " + table)] == rows

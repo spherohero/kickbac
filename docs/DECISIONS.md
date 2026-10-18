@@ -40,6 +40,33 @@
 - **Choice:** a standalone simulator may generate an ephemeral RSA identity fixture and exercise real HTTP and signed-token validation on loopback, explicitly labeled simulated OIDC. Normal server configuration accepts only the configured Auth0 tenant.
 - **Why:** test without hardware/accounts, without adding a public dev-login endpoint or silently bypassing production authentication. This is NOT proof of real Auth0 login, live sensor calibration, public HTTPS or iPhone integration.
 
+## Firmware experiment boundary
+- **Choice:** a board-independent C++11 MQ signal-trigger core, explicit operator-accepted baseline, median/EWMA filtering, configurable baseline-relative onset, sustained crossing, hysteresis, recovery/cooldown, and fail-closed telemetry faults. See `firmware/README.md` for tests and pending physical experiments.
+- **Why:** evaluate signal behavior without selecting an unconfirmed board, unsafe voltage/pins or fabricated breath metadata. Freeze baseline during an experiment so residual exposure is not automatically normalized away. All current test signals/tuning are synthetic; no actual sensor conditioning or breath detection is verified.
+- **Rejected for now:** arbitrary fixed ADC threshold, MQ-only proof of sober breath, assumed DHT11 airflow detection, timeout-as-zero, synthetic breath duration, guessed pinout/board target, BAC conversion and disabled TLS checks.
+- **Contract gate:** no paths, schemas or statuses changed. Sampling/upload implementation remains blocked on truthful duration semantics. `docs/FIRMWARE_DURATION_PROPOSAL.md` describes an UNAPPROVED breaking manual/timed fallback and Liam's required coordination; it is not permission to change the API.
+
+## Confirmed XIAO USB-only bring-up
+- **Choice:** PlatformIO's standard `seeed_xiao_esp32s3` Arduino target with pinned platform/framework/uploader and native USB CDC. First firmware reports uptime only; no external sensor pin, heater, radio or credentials are configured.
+- **Why:** isolate USB verification from electrical sensor risks. Nicholas's later actual photo and purchased ASIN supersede the earlier verbal bare-sensor description: the hardware is a Flying Fish-style four-pin MQ breakout with VCC/GND/DO/AO, comparator and trimmer. Its six sensor legs must not be separately wired or given a bare-sensor load network. Use serial initially; no external button/LED or assumed DHT11 breath gate is needed.
+- **Verification boundary:** host USB fixture, real XIAO cross-build, verified-chip/flash identification, physical COM3 upload with flash hashes, and two physical serial monitor opens pass. These establish USB-only execution, not gas sensing or Wi-Fi. Fresh PC-side trusted HTTPS health/device-resolution/OpenAPI checks pass against the concurrently deployed backend; no device-authenticated ESP32 traffic or contract revision is claimed. Actual supply/protection parts and meter checks still gate sensor wiring; see `docs/HARDWARE_BRINGUP.md`.
+
+## Physical Wi-Fi diagnostic without changing device/API semantics
+
+Subsequent authenticated diagnostic: separate `xiao_device` adds the existing
+device bearer, heartbeat10s/poll2s, exact bounded JSON validation and fail-closed
+credential clearing. Reuse the existing operator credential over private SSH
+and trusted local USB, not a new provisioning/rotation or human auth flow.
+Pinned ArduinoJson6.21.6 is shared by real firmware and host validation tests.
+All3targets build and the new image was flashed/hash-verified. After Nicholas
+returned with his phone and requested a reopen, actual negative401, three
+heartbeat200, six idle polls200 and independent live persisted ongoing heartbeat
+readback pass. No sessions/measurements created; no sampling/uploads/API/iOS changes. Details:
+`docs/DEVICE_CONNECTIVITY.md`.
+- **Choice:** independent `xiao_wifi` source-filtered target, radio scan with no SSID logging, user-selected local masked-entry window, bounded USB credential framing, RAM-only SDK Wi-Fi config, SNTP before trusted TLS, exact public health response validation and one deliberate software reconnect.
+- **Why:** prove actual radio-to-backend HTTPS without reading OS keys, storing hotspot passwords, disabling certificate validation, using captive-portal workarounds or claiming device-auth/upload completion. The public ISRG Root X1 certificate was checked against its official source and server chain; no private credential is compiled in.
+- **Verified:** real scan, association/DHCP, DNS, SNTP, HTTP200 and post-disconnect second HTTP200. Host fixtures cover credential framing/timeouts/clearing and response validation; both firmware targets cross-build. See `docs/WIFI_CONNECTIVITY.md` for read-back evidence. Sensor/ADC/BLE and uploads remain disabled. Current image needs private network re-entry after reset; no production provisioning or long-term reliability claim.
+
 ## Primary phone signup/login
 - **Choice:** primary phone + SMS OTP, not MFA. Support Liam's reported embedded Auth0 `/passwordless/start` -> `/oauth/token` flow with realm `sms`, passwordless OTP grant, exact audience `https://kickbac-api`, and no client secret. Hosted Authorization Code + PKCE remains enabled, not mandated as a rewrite.
 - **Why:** Auth0 owns code validation and opaque identity; existing subject-based API isolation needs no new phone table, route, Twilio dependency or API secret. Display name/picture persistence is separately owned by the profile branch; phone stays in Auth0.

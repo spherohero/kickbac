@@ -1,20 +1,22 @@
 # Authenticated App readings — frozen backend contract
 
-## Implemented source; production release pending
+## Deployed — schema 8 / 38 operations
 
-Backend branch `backend/app-reading-integration`, current reviewed candidate
-`4a29218b1516f285d7b419edcfe0f18258064a6d`, base0d43f61. Actual-app router is
-registered; migration008/source schema8 and38operations are implemented.
-Parent641combinedtests pass (including13realHTTPcases), Ruff/83fileformat/compile/
-simulator pass. New HTTP tests cover receipt/canonical retry/privacy/pagination/
-summary/restart, concurrent UUID idempotency and durable quota. Populated schema8
-backup restoration also passes. Independent review/CI/private7→8trial/backed-up
-target activation/public readback gate deployment; existing liveparty7/35 stays
-unchanged until then. No iOS/local-record/firmware edits or cloud-sync claim.
+Activated **2026-10-18T10:53:55 UTC** from immutable runtime
+`4a29218b1516f285d7b419edcfe0f18258064a6d`; [PR #43](https://github.com/spherohero/kickbac/pull/43)
+merged as `d92a640b9a6f68b3986d27e889085cc85937f002`. Independent SPEC and
+QUALITY/security approved; parent 641 combined tests (13 real HTTP), target 70
+tests, lint/83-file formatting/compile/simulator, exact PR and merged-main CI passed.
+Retained schema-7 backup, private 7→8 trial and final stopped-writer migration
+preserved every old SQL object/typed row/BLOB/hash. All 99 source hashes, actual
+PID/cwd, integrity/FK, services, fresh schema-8 backup and public exact-source
+OpenAPI/auth rejection were read back. No client/local-record changes or native
+sync acceptance are claimed. [Final handoff](FINAL_BACKEND_HANDOFF.md) and
+[release evidence](BACKEND_RELEASE_VERIFICATION.md).
 
 Final scope from Nicholas's forwarded `combined.md`, after linked-party work.
 Backend owns API/storage/release; Liam owns the local reading store, outbox and
-native acceptance. **Implementation target, not deployed yet.** Existing local
+native acceptance. **These backend operations are live.** Existing local
 records must not be removed or rewritten by backend work.
 
 ## Separate provenance and identity

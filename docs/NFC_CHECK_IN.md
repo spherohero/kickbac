@@ -1,9 +1,11 @@
 # NFC-first party check-in — implementation direction
 
-**Current:** device-party resolve/current policy is deployed schema7/35operations
-from768e992, PR40merge9d52390, activated10:29:53UTC October18. Stable tag URL and
-private test/upload contract unchanged. [Release proof](BACKEND_RELEASE_VERIFICATION.md).
-Older33/schema6/grant-first/setup-target wording below is a historical checkpoint,
+**Current: schema 8 / 38 operations**, source `4a29218`, PR #43 merge `d92a640`,
+activated 10:53:55 UTC October 18. Device-party resolve/current policy (PR #40)
+remains live, along with separate App reading persistence. Stable tag URL and
+private test/upload contract unchanged. [Final handoff](FINAL_BACKEND_HANDOFF.md)
+and [release proof](BACKEND_RELEASE_VERIFICATION.md).
+Older schema/grant-first/setup-target wording below is a historical checkpoint,
 not a reason to keep using create-then-bind or request a grant for resolve.
 Native NFC/URL/multi-phone acceptance remains separate and Liam-owned.
 

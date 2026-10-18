@@ -1,5 +1,6 @@
 import Auth0
 import Foundation
+import SimpleKeychain
 
 // Uses the real Auth0.swift request builders with a local transport stub and in-memory storage.
 // Run with: bash ios/checks/run-authentication-checks.sh
@@ -17,6 +18,32 @@ struct AuthIntegrationChecks {
         let transport = URLSession(configuration: network)
         defer { transport.invalidateAndCancel() }
         let storage = MemoryCredentialsStorage()
+        let firstLogin = AuthSession(configuration: configuration, transport: transport, storage: storage)
+        await firstLogin.restore()
+        try storage.setEntry(Data("old-thumbprint".utf8), forKey: "dpop_thumbprint")
+        try storage.setEntry(Data("old-expiry".utf8), forKey: "credentials_session_expiry")
+        let subject = Data(#"{"sub":"sms|first-login"}"#.utf8).base64EncodedString()
+            .replacingOccurrences(of: "=", with: "").replacingOccurrences(of: "+", with: "-").replacingOccurrences(of: "/", with: "_")
+        // Represents credentials already validated by Auth0, never a live token or login bypass.
+        let fixture = Credentials(accessToken: "FIXTURE-ACCESS", tokenType: "Bearer",
+                                  idToken: "eyJhbGciOiJSUzI1NiJ9.\(subject).fixture", expiresAt: .now.addingTimeInterval(3600))
+        try firstLogin.storeValidatedCredentials(fixture)
+        precondition(firstLogin.isSignedIn && firstLogin.profileOwner == "sms|first-login" && !storage.isEmpty)
+        precondition((try? storage.getEntry(forKey: "dpop_thumbprint")) == nil)
+        precondition((try? storage.getEntry(forKey: "credentials_session_expiry")) == nil)
+        await firstLogin.signOut()
+        precondition(!firstLogin.isSignedIn && storage.isEmpty)
+        for failingStorage in [MemoryCredentialsStorage(deletionFailure: .interactionNotAllowed), MemoryCredentialsStorage(writeFailure: .authFailed)] {
+            let failingLogin = AuthSession(configuration: configuration, transport: transport, storage: failingStorage)
+            await failingLogin.restore()
+            do {
+                try failingLogin.storeValidatedCredentials(fixture)
+                preconditionFailure("Ignored a genuine Keychain failure")
+            } catch AuthSession.SignInError.storage(let status) {
+                precondition(status != nil && !failingLogin.isSignedIn && failingStorage.isEmpty)
+            }
+        }
+        print("Credential storage checks passed: missing-item first login, old metadata cleanup, logout, and rejection of genuine Keychain write/delete failures.")
         let session = AuthSession(configuration: configuration, transport: transport, storage: storage)
         await session.restore()
         precondition(!session.isSignedIn && !session.isBusy && AuthStub.requests.isEmpty)
@@ -226,15 +253,28 @@ private final class AuthStub: URLProtocol, @unchecked Sendable {
 private final class MemoryCredentialsStorage: CredentialsStorage {
     private let lock = NSLock()
     private var entries: [String: Data] = [:]
+    private let deletionFailure: SimpleKeychainError?
+    private let writeFailure: SimpleKeychainError?
+    init(deletionFailure: SimpleKeychainError? = nil, writeFailure: SimpleKeychainError? = nil) {
+        self.deletionFailure = deletionFailure
+        self.writeFailure = writeFailure
+    }
     var isEmpty: Bool { lock.withLock { entries.isEmpty } }
     func getEntry(forKey key: String) throws -> Data {
         try lock.withLock {
-            guard let data = entries[key] else { throw Missing.entry }
+            guard let data = entries[key] else { throw SimpleKeychainError.itemNotFound }
             return data
         }
     }
-    func setEntry(_ data: Data, forKey key: String) throws { lock.withLock { entries[key] = data } }
-    func deleteEntry(forKey key: String) throws { lock.withLock { _ = entries.removeValue(forKey: key) } }
+    func setEntry(_ data: Data, forKey key: String) throws {
+        if let writeFailure { throw writeFailure }
+        lock.withLock { entries[key] = data }
+    }
+    func deleteEntry(forKey key: String) throws {
+        if let deletionFailure { throw deletionFailure }
+        try lock.withLock {
+            guard entries.removeValue(forKey: key) != nil else { throw SimpleKeychainError.itemNotFound }
+        }
+    }
     func deleteAllEntries() throws { lock.withLock { entries.removeAll() } }
-    private enum Missing: Error { case entry }
 }

@@ -2,6 +2,7 @@ import Auth0
 import Foundation
 import Observation
 import JWTDecode
+import SimpleKeychain
 
 @MainActor @Observable
 final class AuthSession {
@@ -36,11 +37,8 @@ final class AuthSession {
             let authentication = Auth0.authentication(clientId: configuration.clientID,
                                                       domain: configuration.domain, session: transport ?? .shared)
             self.authentication = authentication
-            if let storage {
-                credentialsManager = CredentialsManager(authentication: authentication, storage: storage)
-            } else {
-                credentialsManager = CredentialsManager(authentication: authentication)
-            }
+            let safeStorage = SessionCredentialsStorage(base: storage ?? SimpleKeychain())
+            credentialsManager = CredentialsManager(authentication: authentication, storage: safeStorage)
             api = KickBACAPI(baseURL: configuration.apiBaseURL, session: transport)
         } else {
             credentialsManager = nil
@@ -93,7 +91,7 @@ final class AuthSession {
 
     func verifyCode(_ code: String) async throws {
         guard !isBusy else { throw SignInError.busy }
-        guard let configuration, let authentication, let credentialsManager else { throw SignInError.configuration }
+        guard let configuration, let authentication, credentialsManager != nil else { throw SignInError.configuration }
         guard let phoneNumber = pendingPhoneNumber else { throw SignInError.missingCode }
         guard code.count == 6, code.allSatisfy({ $0.isASCII && $0.isNumber }) else { throw SignInError.invalidCode }
         isAuthenticating = true
@@ -110,6 +108,12 @@ final class AuthSession {
         } catch {
             throw SignInError.verificationFailed
         }
+        try storeValidatedCredentials(credentials)
+    }
+
+    // Called only after Auth0's code exchange and ID-token claims validation succeed.
+    func storeValidatedCredentials(_ credentials: Credentials) throws {
+        guard let credentialsManager else { throw SignInError.configuration }
         resetPrivateData()
         isSignedIn = false
         do {
@@ -117,7 +121,7 @@ final class AuthSession {
             try credentialsManager.clear()
             try credentialsManager.store(credentials: credentials)
         } catch {
-            throw SignInError.storage
+            throw SignInError.storage((error as? SimpleKeychainError)?.status)
         }
         clearPhoneChallenge()
         profileOwner = try? decode(jwt: credentials.idToken).subject
@@ -290,7 +294,8 @@ final class AuthSession {
 
     enum SignInError: LocalizedError {
         case busy, configuration, connectionUnavailable, grantUnavailable, invalidPhone
-        case cooldown, rateLimited, missingCode, invalidCode, sendFailed, verificationFailed, storage
+        case cooldown, rateLimited, missingCode, invalidCode, sendFailed, verificationFailed
+        case storage(Int32?)
         var errorDescription: String? {
             switch self {
             case .busy: "Please wait for sign-in to finish."
@@ -304,7 +309,7 @@ final class AuthSession {
             case .invalidCode: "That code is incorrect or expired. Try again or resend it."
             case .sendFailed: "Couldn't send your code. Please try again."
             case .verificationFailed: "Couldn't verify your code. Please try again."
-            case .storage: "Couldn't save your sign-in securely. Please try again."
+            case .storage(let status): "Couldn't save your sign-in securely. Please try again." + (status.map { " (Keychain \($0))" } ?? "")
             }
         }
     }

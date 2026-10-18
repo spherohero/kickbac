@@ -7,6 +7,7 @@ trap 'rm -r "$task_package_root"' EXIT
 mkdir -p "$task_package_root/Sources/Checks"
 cp "$task_repo_root/ios/KickBAC/AuthConfiguration.swift" "$task_package_root/Sources/Checks/"
 cp "$task_repo_root/ios/KickBAC/AuthSession.swift" "$task_package_root/Sources/Checks/"
+cp "$task_repo_root/ios/KickBAC/SessionCredentialsStorage.swift" "$task_package_root/Sources/Checks/"
 cp "$task_repo_root/ios/KickBAC/KickBACAPI.swift" "$task_package_root/Sources/Checks/"
 cp "$task_repo_root/ios/KickBAC/DeviceModels.swift" "$task_package_root/Sources/Checks/"
 cp "$task_repo_root/ios/KickBAC/BACReading.swift" "$task_package_root/Sources/Checks/"

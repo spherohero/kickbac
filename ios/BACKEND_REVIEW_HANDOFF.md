@@ -5,6 +5,7 @@ The iOS review branch includes current main's published backend, games, deployme
 ## Implemented
 
 - Embedded Auth0 SMS OTP with exact audience `https://kickbac-api`, API base `https://api.kickbac.vodka`, and SDK Keychain credentials.
+- First-login storage handles absent Keychain items during SDK cleanup, while rejecting actual write/delete failures. The regression reproduces the former secure-sign-in error with an empty store; credentials remain Keychain-backed and prior session metadata is still cleared.
 - Profile GET/PUT, explicit null photo removal, normalized bounded JPEGs, server-confirmed saves, retries, account-scoped cache and stale-response protection. Concurrent profile loaders await one request. Camera denial does not trap onboarding: Skip photo is available.
 - Private paginated measurement history in server receipt order. Home uses actual loaded nonsimulated estimates; null stays unavailable/raw. Debug demo is labeled and isolated.
 - QR/manual trusted device selection, public resolver, authenticated availability, explicit empty-JSON arm, session poll/backoff/cancel/terminal result and history refresh. Pending sessions persist per subject. Authoritative 404 releases unavailable local tracking without automatic rearming.

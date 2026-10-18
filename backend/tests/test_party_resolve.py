@@ -237,6 +237,52 @@ def test_resolve_serializes_same_device_phones_and_same_phone_devices(world):
         assert db.execute("SELECT COUNT(*) FROM party_devices").fetchone()[0] == 1
 
 
+def test_concurrent_identical_and_changed_resolve_retries(world):
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Barrier
+
+    from kickbac.db import connect
+
+    c, users, _, _, path = world
+    body = {"request_id": str(uuid4()), "device_id": "one"}
+    barrier = Barrier(2)
+
+    def send(payload):
+        barrier.wait(timeout=10)
+        return c.post("/v1/parties/resolve", json=payload, headers=users["alice"])
+
+    with ThreadPoolExecutor(2) as pool:
+        a, b = list(pool.map(send, [body, body]))
+    assert sorted([a.status_code, b.status_code]) == [200, 201]
+    assert a.json() == b.json()
+    barrier = Barrier(2)
+    with ThreadPoolExecutor(2) as pool:
+        a, b = list(pool.map(send, [body, body | {"name": "Changed"}]))
+    assert a.status_code == 200 and b.status_code == 409
+    with connect(path) as db:
+        assert (
+            db.execute("SELECT COUNT(*) FROM party_resolve_requests").fetchone()[0] == 1
+        )
+        assert db.execute("SELECT COUNT(*) FROM parties").fetchone()[0] == 1
+
+
+def test_resolve_openapi_documents_retry_and_both_conflict_shapes(world):
+    c, *_ = world
+    spec = c.get("/openapi.json").json()
+    op = spec["paths"]["/v1/parties/resolve"]["post"]
+    assert set(op["responses"]) >= {"200", "201", "409", "413", "422"}
+    assert op["responses"]["200"]["content"]["application/json"]["schema"] == {
+        "$ref": "#/components/schemas/PartyResolveResponse"
+    }
+    assert op["responses"]["409"]["content"]["application/json"]["schema"]["anyOf"] == [
+        {"$ref": "#/components/schemas/ActivePartyConflict"},
+        {"$ref": "#/components/schemas/ErrorEnvelope"},
+    ]
+    assert (
+        spec["components"]["schemas"]["PartyResolve"]["additionalProperties"] is False
+    )
+
+
 def test_resolve_creates_bound_party_without_grant_and_replays(world):
     from kickbac.db import connect
 

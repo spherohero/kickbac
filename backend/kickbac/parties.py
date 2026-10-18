@@ -3,7 +3,7 @@ import re
 import secrets
 import unicodedata
 from datetime import datetime, timedelta
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 from uuid import UUID, uuid4
 
 from fastapi import APIRouter, HTTPException, Query, Request, Response
@@ -67,7 +67,9 @@ class ActivePartyConflict(BaseModel):
     error: ActivePartyConflictDetail
 
 
-ACTIVE_CONFLICT = {409: {"model": ActivePartyConflict}}
+ACTIVE_CONFLICT: dict[int | str, dict[str, Any]] = {
+    409: {"model": ActivePartyConflict | ErrorEnvelope}
+}
 
 
 def current_rows(db, subject):

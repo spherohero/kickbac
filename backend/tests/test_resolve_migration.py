@@ -39,8 +39,9 @@ def legacy(path, count=6):
     return ids
 
 
+@pytest.mark.parametrize("count", [6, 101])
 def test_legacy_duplicates_are_readonly_conflicts_until_explicit_close(
-    tmp_path, identity
+    tmp_path, identity, count
 ):
     from fastapi.testclient import TestClient
 
@@ -49,7 +50,7 @@ def test_legacy_duplicates_are_readonly_conflicts_until_explicit_close(
     from kickbac.settings import Settings
 
     path = tmp_path / "db"
-    ids = legacy(path)
+    ids = legacy(path, count)
     initialize(path)
     private, token = identity
     verifier = JWTVerifier(
@@ -61,10 +62,14 @@ def test_legacy_duplicates_are_readonly_conflicts_until_explicit_close(
         with connect(path) as db:
             before = list(db.iterdump())
         r = c.get("/v1/me/parties/current", headers=owner)
-        assert r.status_code == 409 and len(r.json()["error"]["current_parties"]) == 6
-        assert r.json()["error"]["has_more"] is False
+        assert r.status_code == 409 and len(
+            r.json()["error"]["current_parties"]
+        ) == min(count, 100)
+        assert r.json()["error"]["has_more"] == (count > 100)
         assert c.get("/v1/me/parties/current", headers=foreign).json() is None
-        assert len(c.get("/v1/me/parties", headers=owner).json()["items"]) == 6
+        assert len(
+            c.get("/v1/me/parties?limit=100", headers=owner).json()["items"]
+        ) == min(count, 100)
         with connect(path) as db:
             assert list(db.iterdump()) == before
         for party_id in ids[:-1]:

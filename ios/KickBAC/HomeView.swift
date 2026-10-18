@@ -6,7 +6,6 @@ struct HomeView: View {
     var onConnect: () -> Void = { }
     var onOnboarding: () -> Void = { }
     var isGameCheckIn = false
-    var onGameCheckInComplete: (Double) -> Void = { _ in }
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
@@ -122,9 +121,6 @@ struct HomeView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) { readingControls }
         .background(background.ignoresSafeArea())
         .task(id: runID) { await runDemoReading() }
-        .task(id: scenePhase) {
-            if isGameCheckIn && scenePhase == .active && phase == .ready { startReading() }
-        }
         .onDisappear {
             if isGameCheckIn { exitDemo() }
             else { interruptReading() }
@@ -354,10 +350,10 @@ struct HomeView: View {
         }
     }
 
-    // Home's Debug action and the local game check-in share this in-memory sequence.
-    // These readings never enter authenticated history; game completion retains only a local fixture.
+    // Home's labeled Debug action only. Game check-in must use its accepted server session.
+    // These readings never enter authenticated history or game readiness.
     private func startReading() {
-        guard !phase.isRunning, !deviceFlow.hasActiveSession else { return }
+        guard !isGameCheckIn, !phase.isRunning, !deviceFlow.hasActiveSession else { return }
         isShowingDemo = true
         readings = [0.04, 0.05, 0.09].map { BACReading(value: $0, date: .now) }
         startedAt = nil
@@ -402,12 +398,6 @@ struct HomeView: View {
             try await Task.sleep(for: .milliseconds(240))
             guard runID == currentRun else { return }
             phase = .result
-            if isGameCheckIn {
-                try await Task.sleep(for: .seconds(2))
-                try Task.checkCancellation()
-                guard runID == currentRun, scenePhase == .active else { return }
-                onGameCheckInComplete(completed.value)
-            }
         } catch is CancellationError {
             // Leaving Home discards an incomplete sample.
         } catch {

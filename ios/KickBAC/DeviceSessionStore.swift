@@ -146,6 +146,27 @@ final class DeviceSessionStore {
 
     func retryPolling() { pollID = UUID() }
 
+    // Adopt the party reservation itself; never call legacy arm to manufacture another session.
+    func adoptCheckIn(_ loaded: APITestSession, expectedOwner: String) throws {
+        guard owner == expectedOwner, !isBusy,
+              sessionID == nil || sessionID == loaded.id else { throw FlowError.activeTest }
+        guard loaded.userID == expectedOwner, UUID(uuidString: loaded.id) != nil,
+              DeviceTarget.isValidID(loaded.deviceID),
+              loaded.status != .complete || loaded.measurement != nil else { throw KickBACAPI.APIError.invalidResponse }
+        if let reading = loaded.measurement {
+            guard loaded.status == .complete, reading.sessionID == loaded.id,
+                  reading.deviceID == loaded.deviceID, reading.hasValidAcquisition else { throw KickBACAPI.APIError.invalidResponse }
+        }
+        generation = UUID()
+        targetID = loaded.deviceID
+        device = nil
+        try accept(loaded, id: loaded.id)
+        sessionID = loaded.status.isActive ? loaded.id : nil
+        try persist()
+        message = nil
+        pollID = UUID()
+    }
+
     private func clearMissingSession(_ error: Error) {
         guard let error = error as? KickBACAPI.APIError else { return }
         switch error {

@@ -167,6 +167,34 @@ final class AuthSession {
         try await userRequest({ api, token in try await api.cancelSession(id, accessToken: token) }, owner: { $0.userID })
     }
 
+    func partyWrite(_ write: PartyWrite) async throws -> PartyReply {
+        try await userRequest({ api, token in try await api.partyWrite(write, accessToken: token) }, owner: {
+            if case .checkIn(let checkIn) = $0 { return checkIn.session.userID }
+            return nil
+        })
+    }
+    func parties(offset: Int = 0) async throws -> PartyPage<APIParty> {
+        try await userRequest { try await $0.parties(accessToken: $1, offset: offset) }
+    }
+    func party(_ id: String) async throws -> APIParty {
+        try await userRequest { try await $0.party(id, accessToken: $1) }
+    }
+    func joinParty(code: String? = nil, deviceID: String? = nil) async throws -> APIParty {
+        try await userRequest { try await $0.joinParty(code: code, deviceID: deviceID, accessToken: $1) }
+    }
+    func updateParty(_ id: String, action: String, deviceID: String? = nil) async throws -> APIParty {
+        try await userRequest { try await $0.updateParty(id, action: action, deviceID: deviceID, accessToken: $1) }
+    }
+    func partyGames(_ id: String, offset: Int = 0) async throws -> PartyPage<APIPartyGame> {
+        try await userRequest { try await $0.partyGames(id, accessToken: $1, offset: offset) }
+    }
+    func closePartyGame(_ id: String) async throws -> APIPartyGame {
+        try await userRequest { try await $0.closePartyGame(id, accessToken: $1) }
+    }
+    func checkIns(offset: Int = 0) async throws -> PartyPage<APICheckIn> {
+        try await userRequest { try await $0.checkIns(accessToken: $1, offset: offset) }
+    }
+
     func loadStats() async {
         guard isSignedIn, !isLoadingStats else { return }
         let requestGeneration = generation

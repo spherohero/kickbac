@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct PartyView: View {
+struct PartyPreviewView: View {
     let profile: ProfileStore
     let owner: String?
     let session: AuthSession
@@ -48,6 +48,7 @@ struct PartyView: View {
         .font(.system(.body, design: .rounded))
         .scrollIndicators(.hidden)
         .background(Color("SplashBackground").ignoresSafeArea())
+        .safeAreaInset(edge: .top) { Text("Local party preview · unsaved · this iPhone only").font(.caption).padding(12) }
         .sheet(item: $sheet, onDismiss: {
             if opensTriviaAfterSheet {
                 opensTriviaAfterSheet = false
@@ -279,6 +280,7 @@ private struct PartyEntrySheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     if mode == .create {
+                        Text("Local preview. Party, membership and code are not saved or shared.").font(.footnote).foregroundStyle(.secondary)
                         field("Party name", placeholder: "Friday night", text: $name)
                         if !name.isEmpty && !PartyPreview.validName(name) {
                             Text("Use 1–80 characters on one line.").font(.footnote).foregroundStyle(.secondary)
@@ -296,6 +298,7 @@ private struct PartyEntrySheet: View {
                         .partyPrimaryAction()
                         .disabled(!PartyPreview.validName(name))
                     } else {
+                        Text("Local preview. KICK26 joins only this unsaved example on this iPhone.").font(.footnote).foregroundStyle(.secondary)
                         if mode == .tap {
                             PartyTapIllustration { _ in
                                 preview.previewTap()
@@ -351,6 +354,7 @@ private struct PartyGamePicker: View {
                 VStack(alignment: .leading, spacing: 20) {
                     Text("Choose a game").font(.system(.largeTitle, design: .rounded, weight: .medium))
                         .accessibilityAddTraits(.isHeader)
+                    Text("Local preview · games and scores aren't saved or shared").font(.footnote).foregroundStyle(.secondary)
                     VStack(spacing: typeSize.isAccessibilitySize ? 16 : -56) {
                         ForEach(PartyGame.allCases) { game in
                             Button { selectedGame = game } label: {
@@ -417,6 +421,7 @@ private struct PartyGameDetail: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     PartyGameCard(game: game)
+                    Text("Local preview · games and scores aren't saved or shared").font(.footnote).foregroundStyle(.secondary)
                     Text(game.detail).font(.system(.title3, design: .rounded))
                     Button("Start game", action: onPreview)
                         .partyPrimaryAction()
@@ -436,6 +441,7 @@ private struct PartyInviteSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 28) {
+                    Text("Local preview · KICK26 cannot invite another phone.").font(.footnote).foregroundStyle(.secondary)
                     PartyTapIllustration()
                     Text("Or enter code to join")
                         .font(.system(.subheadline, design: .rounded)).foregroundStyle(.secondary)
@@ -490,5 +496,5 @@ private extension View {
 }
 
 #Preview("Party") {
-    PartyView(profile: ProfileStore(), owner: nil, session: AuthSession(configuration: nil)).preferredColorScheme(.dark)
+    PartyPreviewView(profile: ProfileStore(), owner: nil, session: AuthSession(configuration: nil)).preferredColorScheme(.dark)
 }

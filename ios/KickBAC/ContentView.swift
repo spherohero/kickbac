@@ -30,7 +30,8 @@ struct ContentView: View {
             }
 
             Tab("Party", image: "NavParty", value: .party) {
-                PartyView(profile: profile, owner: session.profileOwner, session: session)
+                PartyView(profile: profile, owner: session.profileOwner, session: session,
+                          deviceFlow: deviceFlow, onSignIn: { showsOnboarding = true })
             }
 
             Tab("Me", image: "NavMe", value: .me) {

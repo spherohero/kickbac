@@ -259,7 +259,7 @@ struct KickBACAPI {
         ], accessToken: accessToken)
     }
 
-    private func get<Response: Decodable>(_ path: String, query: [URLQueryItem] = [],
+    func get<Response: Decodable>(_ path: String, query: [URLQueryItem] = [],
                                           accessToken: String?, method: String = "GET", body: Data? = nil) async throws -> Response {
         if let accessToken, accessToken.isEmpty { throw APIError.unauthorized }
         guard baseURL.scheme == "https", baseURL.host != nil,

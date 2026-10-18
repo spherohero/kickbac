@@ -11,6 +11,7 @@ struct TriviaPodium: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text("The podium").font(.system(.largeTitle, design: .rounded, weight: .bold))
                     .accessibilityAddTraits(.isHeader)
+                Text("Local standings · scores aren't saved or shared").font(.footnote).foregroundStyle(.secondary)
                 if includesExamples {
                     Text("Example roster · local points only").font(.caption).foregroundStyle(.secondary)
                 }

@@ -117,7 +117,7 @@ struct DeviceConnectionView: View {
     }
 }
 
-private struct DeviceQRScanner: UIViewControllerRepresentable {
+struct DeviceQRScanner: UIViewControllerRepresentable {
     let onCode: (String) -> Void
 
     func makeCoordinator() -> Coordinator { Coordinator(onCode: onCode) }

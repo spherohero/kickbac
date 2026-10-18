@@ -4,6 +4,14 @@ This replaces the older local/unpublished-profile handoff. **Backend profile, ph
 
 ### Physical diagnostic follow-up — reconnect failure investigation
 
+- **New physical result:** [DEVICE_SESSION_VERIFICATION.md](DEVICE_SESSION_VERIFICATION.md)
+  records exact flashed runtime `17ed04ba393f8d5e6124c65d0eb07d926db85d43`, app
+  SHA256, actual9heartbeat200/24idle-poll200 continuous serial run and independent
+  advancing persisted heartbeat after helper exit. Serial released. Earlier two
+  reconnect failures and a stale short-helper readback are preserved, not hidden;
+  root cause/reliability remain unestablished. Extra retries were not needed in
+  the successful run; their coverage is synthetic. No ADC/user-arm/upload/native
+  acceptance. Current source checkpoint paragraphs below preceded this run.
 - Owner firmware Bot, `firmware/session-guard-device-verification`, base
   `3fd50c7f2520982696a4f2e4ac095a06e34d1887`; publishing commits/PR record exact
   head/state. Nicholas authorizes exclusive COM3 open/reset/flash/private entry.

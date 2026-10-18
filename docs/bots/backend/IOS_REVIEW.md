@@ -1,5 +1,7 @@
 # Liam iOS integration review — 2cc42da6
 
+> **Historical review, not current assignments or merge verdict.** Liam's branch has advanced beyond this SHA. Read the latest branch/change checkpoint in [the shared handoff](../../LIAM_BACKEND_HANDOFF.md#read-first--agent-sync-and-latest-branchchange-checkpoint) and his current `ios/BACKEND_REVIEW_HANDOFF.md` before assigning work. The newer owner documents describe changes addressing several findings below; they have not received a full fresh backend source review here. At main `307aa69` / client `48f1744`, a new merge-tree dry-run succeeded without the older conflicts. Native acceptance remains separate. The original review below is retained as dated evidence.
+
 ## Scope and verdict
 
 Reviewed published `liam/ios-profile-handoff` at `2cc42da6b6ae41284b12790d100af10c5a095592`, independently reconfirmed as the remote tip. Current remote main at final readback: `672c6a2bce2490c414d8aebd778bfb724783190a`. Parent source/contract inspection and two independent read-only reviews agreed. No iOS files edited, commits made to Liam's branch, SMS sent, or native merge performed.

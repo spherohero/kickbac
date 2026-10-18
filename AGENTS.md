@@ -10,7 +10,7 @@ Backend profile, phone Action source, deployment artifacts, JWKS cache hardening
 
 Use `docs/LIAM_BACKEND_HANDOFF.md` for client catch-up. Liam owns real native login/access-token/profile/history/game acceptance; delegation does not mean those tests passed. Auth0 SMS/grant and separate feedback deployment/binding are configured; do not repeat Twilio approval/funding/setup from stale notes. GitHub CI workflow publication currently requires the saved login's missing workflow scope; do not claim CI ran until remote checks prove it.
 
-Preserve concurrent firmware worktrees; coordinate any pressure-less duration/quality contract change before implementing it. Do not fabricate breath duration, a sober/zero reading on no trigger, or calibrated BAC. No firmware changes are part of this backend delivery.
+Preserve concurrent firmware worktrees; coordinate any pressure-less duration/quality contract change before implementing it. Do not fabricate breath duration, a sober/zero reading on no trigger, or calibrated BAC. The backend delivery itself did not change firmware. The separate diagnostic foundation is documented in `firmware/README.md` and `docs/DEVICE_CONNECTIVITY.md`: actual USB/Wi-Fi/device-auth heartbeat/poll are verified, while sensor/ADC/sampling/uploads remain disabled and physical assembly/duration semantics are still gated.
 
 Figma is STRICTLY READ-ONLY, including comments and creations. Known board: https://www.figma.com/board/XlYEabKISK95kAu1XfxaCB/Swamp-Hacks . Load `swamphacks-planning` for event resources and standing project guidance.
 

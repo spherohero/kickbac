@@ -1,6 +1,6 @@
 # kickBAC | Austin's perfboard wiring guide
 
-**Build specification for review, not a tested sensor assembly.** The XIAO USB-only firmware is flashed and serial-verified. MQ power, divider, ADC and Wi-Fi are NOT physically verified. Confirm actual parts, supply and meter checks below before connecting the ADC. This guide supersedes the earlier mistaken bare-sensor description.
+**Build specification for review, not a tested sensor assembly.** The XIAO now runs the `xiao_device` diagnostic: real USB execution, Wi-Fi/trusted HTTPS, authenticated heartbeat/poll and persisted ongoing heartbeat are verified. MQ power, divider and ADC are NOT physically verified and remain disabled. Confirm actual parts, supply and meter checks below before connecting the ADC. This guide supersedes the earlier mistaken bare-sensor description. Current network/firmware evidence is in [DEVICE_CONNECTIVITY.md](DEVICE_CONNECTIVITY.md); earlier USB-only/PDF status text is historical, not a change to these wiring safeguards.
 
 ## 1. Circuit and exact connections
 
@@ -141,9 +141,9 @@ The connector text above is NET labeling, not physical header order.
 ### D. Controller integration gate — return to Nicholas
 
 1. Power everything OFF; open JP1; remove temporary test wires. Send both-side perfboard photos and measurements below to Nicholas before connecting D0.
-2. After sign-off, install XIAO into correctly oriented sockets, keep JP1 OPEN, attach USB first and verify existing USB-only status. Then power module; repeat voltage checks with common ground established.
+2. After sign-off, install XIAO into correctly oriented sockets, keep JP1 OPEN, attach USB first and verify serial status for the selected diagnostic image. Current `xiao_device` firmware needs private provisioning after reset; an absent USB-only uptime line is not itself a hardware failure. Then power module; repeat voltage checks with common ground established.
 3. Once measurements are accepted, turn module power OFF, then USB OFF. Close JP1 with BOTH supplies OFF. Restart with USB first, then module power. For shutdown, turn module power OFF first, then USB; open JP1 while unpowered before leaving the assembly or changing wiring. Never unplug USB first while the module is driving a connected ADC.
-4. Current flashed firmware has ADC and network disabled. Nicholas must enable a separate serial ADC telemetry image; no readings in the USB-only image is expected. Log actual raw ADC/time, drift/noise and recovery before tuning the trigger. Do not accept a timeout as zero or invent breath duration.
+4. Current flashed `xiao_device` firmware has ADC/sampling/uploads disabled; networking is enabled and verified independently. Nicholas must prepare a separate serial ADC telemetry image after electrical sign-off; no sensor readings in the current diagnostic are expected. Log actual raw ADC/time, drift/noise and recovery before tuning the trigger. Do not accept a timeout as zero or invent breath duration.
 
 ### Austin's report-back checklist
 
@@ -164,6 +164,6 @@ Unexpected heat, current limiting or instability: ___________
 
 Keep sensor heat away from skin/plastic/antenna. Keep electronics dry; do not route wet breath/condensation onto PCB or ESP32. Any mouth-contact path must be detachable, cleanable and hygienic; no shared unsanitized mouthpiece. Do not spray/pour alcohol, use lighter gas or drink for testing. Austin owns fit/ventilation/harness work; Nicholas owns electrical sign-off, firmware and subsequent sensor experiments. Airflow/pressure validation is absent; MQ response alone cannot establish sober breath or actual exhalation duration. No calibrated BAC or safe-to-drive claim.
 
-**Not a contract change:** firmware remains USB-only, API unchanged, no SwiftUI/Figma edits. No manual-timed upload or fabricated breath duration is authorized by this assembly guide. Sensor performance and the completed perfboard still require physical verification.
+**Not a contract change:** existing device heartbeat/poll API is unchanged; no SwiftUI/Figma edits. Firmware is network-enabled but sensor/ADC/sampling/uploads remain disabled. No manual-timed upload or fabricated breath duration is authorized by this assembly guide. Sensor performance and the completed perfboard still require physical verification.
 
 References: Seeed XIAO ESP32-S3 pinout/power/antenna guide https://wiki.seeedstudio.com/xiao_esp32s3_getting_started/ ; Espressif ADC API https://docs.espressif.com/projects/arduino-esp32/en/latest/api/adc.html ; purchased module https://www.amazon.com/dp/B0GW8C1V6N ; actual photo IMG_2204.jpeg; project checkpoint docs/HARDWARE_BRINGUP.md. Follow labels on the actual boards, not an unrelated MQ module diagram.

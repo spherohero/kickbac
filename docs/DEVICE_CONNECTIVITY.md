@@ -164,4 +164,10 @@ three firmware cross-builds. Host core/parser/adapter tests also pass. No new
 physical reflash was needed for documentation/base-only integration; the board's
 already-tested firmware source is unchanged. GitHub-hosted CI is not claimed:
 the saved OAuth credential still lacks workflow-publication scope, as documented
-in the backend handoff. Final independent full-diff review gates main merge.
+in the backend handoff. Independent full-diff review passed with no concrete
+blocking security/logic findings. Its old unmerged-index observation was from
+the review's concurrent snapshot; final local checks confirm no unmerged paths
+and the published synchronized head. Nonblocking follow-up: expand the HTTP/
+clock adapter fixtures beyond success/401 to fault-inject unknown/oversized
+Content-Length, short reads, malformed JSON, Wi-Fi loss and transport errors.
+Those implemented fail-closed paths are not all fixture- or physically exercised.

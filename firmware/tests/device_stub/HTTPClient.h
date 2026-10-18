@@ -8,13 +8,26 @@ static const int HTTPC_DISABLE_FOLLOW_REDIRECTS = 0;
 extern unsigned fixture_posts;
 extern unsigned fixture_gets;
 extern bool fixture_rejected;
+extern bool fixture_begin_ok;
+extern unsigned fixture_begins;
+extern unsigned fixture_ends;
+extern int fixture_status;
+extern int fixture_negative_status;
+extern int fixture_length; // -2 means derive from body; -1 models unknown length.
+extern bool fixture_override_body;
+extern bool fixture_override_heartbeat;
+extern std::string fixture_response_body;
 class HTTPClient {
 public:
     void setConnectTimeout(unsigned value) { assert(value == 7000); }
     void setTimeout(unsigned value) { assert(value == 7000); }
     void setReuse(bool value) { assert(!value); }
     void setFollowRedirects(int value) { assert(value == HTTPC_DISABLE_FOLLOW_REDIRECTS); }
-    bool begin(WiFiClientSecure&, const char* value) { url = value; return true; }
+    bool begin(WiFiClientSecure&, const char* value) {
+        ++fixture_begins;
+        url = value;
+        return fixture_begin_ok;
+    }
     void addHeader(const char* name, const char* value) {
         assert(std::strcmp(name, "Content-Type") == 0);
         assert(std::strcmp(value, "application/json") == 0);
@@ -33,19 +46,26 @@ public:
         char body[256];
         std::snprintf(body, sizeof(body), "{\"device_id\":\"kb-demo-01\",\"online\":true,\"last_seen_at\":\"2026-10-18T00:00:%02u+00:00\"}", fixture_now / 1000U);
         fixture_body = body;
-        return 200;
+        return response(true);
     }
     int GET() {
         assert(url == "https://api.kickbac.vodka/v1/device/session");
         ++fixture_gets;
-        if (!authenticated || fixture_rejected) return 401;
         fixture_body = "{\"device_id\":\"kb-demo-01\",\"active_session\":null}";
-        return 200;
+        if (!authenticated) return fixture_negative_status;
+        return response(false);
     }
-    int getSize() { return static_cast<int>(fixture_body.size()); }
+    int getSize() {
+        return fixture_length == -2 ? static_cast<int>(fixture_body.size()) : fixture_length;
+    }
     WiFiClient* getStreamPtr() { return &stream; }
-    void end() {}
+    void end() { ++fixture_ends; }
 private:
+    int response(bool heartbeat) {
+        if (fixture_override_body && heartbeat == fixture_override_heartbeat)
+            fixture_body = fixture_response_body;
+        return fixture_rejected ? 401 : fixture_status;
+    }
     bool authenticated = false;
     bool json_type = false;
     std::string url;

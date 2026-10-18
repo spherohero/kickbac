@@ -92,7 +92,7 @@ PlatformIO Core6.1.19, espressif32 platform7.1.3, framework `4.20017.260907+sha.
 
 Private helpers are `firmware/tools/provision_wifi.py` and `provision_device.py`; inspect before reuse. They use local masked entry/RAM and the existing secure operator relay, not chat passwords, saved OS profile extraction or new public auth. USB provisioning itself is unencrypted. Never display/commit secrets, response bodies or credential frames. Current device diagnostic clears its bearer and stops on error; reset/reprovision is required. Heartbeat/poll intervals are nominal after completion, not hard-real-time guarantees; production backoff/reconnect remains separate.
 
-Nonblocking review follow-up: expand adapter fixtures for unknown/oversized Content-Length, short reads, malformed JSON, Wi-Fi loss and transport failure. Existing fixture coverage must not be relabeled as physical fault injection.
+Adapter-fault follow-up: `test/device-adapter-faults` (base `e8368eb`) expands host fixtures for both heartbeat and polling: unknown/zero/oversized lengths, partial/zero reads, malformed JSON, wrong identity, begin/transport/HTTP errors, exact768-byte boundary, embedded NUL, Wi-Fi loss and the negative-auth gate. Local host suite, helper lint/format and all three cross-builds pass; scratch-only negative controls detect seven deliberate regressions. See `docs/DEVICE_CONNECTIVITY.md`. Production firmware/API are unchanged; these synthetic results are not physical fault injection, new serial/network execution or acquisition/upload acceptance. Refresh remote PR/CI state before claiming merge readiness.
 
 ## Group and Git discipline
 

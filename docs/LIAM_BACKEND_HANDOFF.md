@@ -1,5 +1,31 @@
 # kickBAC backend handoff — Liam / iOS agents
 
+### Latest Liam UI refinement — Party layout restored
+
+Owner Liam/iOS; `liam/party-setup`, implementation `b55180fcd21a798c1b6017f92e4b7b86145d24a6`, source base
+`75ad558728d78fbbc34fb12496f5532f1cc6060f`. Fetched/read main
+`8f60967d783adddcd02abc0b5e8e54e9935b8d8c`; its firmware communication update
+requires no client action and was not merged during this UI pass. No PR merge,
+branch deletion, backend deployment or teammate notification was performed.
+
+**=== LIAM / iOS IMPACT === NON-BREAKING UI only; contract unchanged.**
+Restored the mint join card, readable full-width primary buttons, compact forms,
+header options and approved overlapping game picker in the live flow. Liam's
+latest request explicitly removes sample/preview/local/unsaved captions from
+Party/Trivia, superseding the earlier UI copy requirement below. Real private
+check-in validation, null BAC/manual acquisition notices and exact request retry
+semantics are unchanged. No new endpoint/schema/payload example or server action.
+
+Unsigned Debug/Release and signed Debug passed; exact staged UI source also
+built independently, excluding preserved concurrent device-link edits. Party
+integration, Trivia, branding and acquisition/session guards passed. `devicectl`
+confirmed install/launch on Liam's iPhone. Only Liam's supplied screenshot was
+visually inspected with his explicit authorization; no fresh capture, computer
+use, Device Hub, native UI/VoiceOver, real party write, physical sensing, NFC or
+shared-gameplay acceptance is claimed. The installed working-tree build also
+includes concurrent device-link edits that are excluded from this UI commit.
+Commands/logs and remaining gates: `ios/PARTY_HANDOFF.md`, `ios/TRIVIA_HANDOFF.md`.
+
 
 ### Latest Liam client integration — deployed-party consumers, local Trivia
 
@@ -30,10 +56,12 @@ retry/deduplication, same-session resume and account isolation. Manual acquisiti
 keeps `breath_duration_ms:null`, actual `sample_duration_ms`, manual notice and null
 BAC. Release never auto-runs a demo sample or uses one to advance a real check-in.
 
-Trivia questions/turns/answers/points/podium remain visibly and accessibly local,
-unsaved and unshared. No result/award is submitted. Member count is server data;
-no public roster/leaderboard is fabricated from private histories. Old Party
-fixtures remain clearly labeled and Debug-only. Existing logos/cards are retained.
+Trivia questions/turns/answers/points/podium remain local, unsaved and unshared.
+Liam's subsequent UI request supersedes the earlier visible-disclosure requirement:
+omit sample/preview/local/unsaved captions from Party/Trivia. No result/award is
+submitted. Member count is server data; no public roster/leaderboard is fabricated
+from private histories. Old Party fixtures remain Debug-only. Approved logos/cards
+are retained and the live flow now reuses the overlapping game picker.
 
 Evidence: public live OpenAPI fetched as33 operations with manual metadata; actual
 Swift retry/session/API/account/history/acquisition fixtures passed, alongside

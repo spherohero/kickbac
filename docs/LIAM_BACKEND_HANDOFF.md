@@ -2,6 +2,38 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+### Device parties / one current party — requested implementation
+
+Owner backend, `backend/device-party-resolve`, base22c1215; frozen contractcdba99b
+was published before implementation. Exact publishing PR/head/check/deployment
+will be recorded with finished source. Nicholas forwarded Liam's requested
+change; this is NOT permission to touch Liam's Mac dirty/untracked app work,
+switch/reset/rebase his branch or merge PR32.
+
+**Additive API, intentional membership/assignment policy change:** replace
+create→operator grant→bind with authenticated `POST /v1/parties/resolve`:
+`{request_id:<persisted UUID>,device_id,name?}`; default name `Party`. Response
+`{action:"created"|"joined",party:<PartyResponse>}`,201new/200join or accepted replay,
+already bound on creation. Existing-party scans retain host/name/code. Same party
+is idempotent; other OPEN membership409 `active_party_conflict` with only own
+current-party context for explicit member leave/host close. All legacy create/
+code/device joins share one-OPEN-user policy; current restoration uses new
+`GET /v1/me/parties/current` (PartyResponse/null), never silently switches.
+
+Delete UI keeps existing `POST /v1/parties/{id}/close` `{}`: verify CLOSED/unbound,
+then clear active view. Open games end/code invalidates/unit released; metadata,
+private measurements/results/check-ins remain. Source will require schema7;
+007preserves every legacy row/duplicate membership until explicit close/leave.
+Fresh liveRO09:53UTC found one account with6OPEN unbound memberships, not the
+reported20. No production cleanup or reading deletion has occurred.
+
+Exact examples/errors/retries/policy/migration plan:
+[DEVICE_PARTY_RESOLVE.md](DEVICE_PARTY_RESOLVE.md), [API.md](API.md),
+[PARTIES.md](PARTIES.md). Public device GET stays read-only, no test/firmware/
+credential/BAC/point change. Client adoption waits for deployed OpenAPI/readback.
+Parent actualHTTP RED observed405 for missing resolve endpoint; worker TDD and
+concurrent HTTP acceptance running. No native NFC/multi-phone claim.
+
 ### Firmware communication runtime — no client action
 
 New firmware-owned explicit mock uploader: `firmware/explicit-mock-uploader`,

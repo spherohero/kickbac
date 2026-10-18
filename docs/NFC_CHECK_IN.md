@@ -16,6 +16,21 @@ The sticker is passive identification. It has no electrical connection to the ES
 
 ## Three separate user intentions
 
+### New Party setup target — atomic resolve, no tag rewrite
+
+For an explicit authenticated Party scan/ID action, call the new
+`POST /v1/parties/resolve` with `{request_id,device_id,name?}`, not
+create-unbound→operator-grant→bind. Stable tag URL stays unchanged. Assigned OPEN
+unit joins that same party; otherwise an idle registered unit gets a new bound
+party whose requester is host, default name `Party`. One OPEN membership per
+subject includes hosts; conflict requires explicit leave/close, no reassignment.
+`GET /v1/me/parties/current` restores current state; host Delete uses existing
+POST/close, preserving history and releasing the unit for a new UUID/code.
+Joining is NOT arming, public GET stays read-only; no NFC entitlement/native or
+firmware change is implied. Exact target/retry/migration details:
+[DEVICE_PARTY_RESOLVE.md](DEVICE_PARTY_RESOLVE.md). Old grant-first setup below
+is historical outside legacy PUT/device; implementation/deployment gates remain.
+
 1. **Host setup:** create party → select “Link breathalyzer” → scan device URL → authenticated, explicit host confirmation → server validates assignment permission and atomically binds current device. Implemented source: `PUT /v1/parties/{party_id}/device` with `{"device_id":"kb-demo-01"}`. Public device IDs are not ownership proof; keep backend operator approval for the demo units, not a secret on the tag. Busy/conflicting units cannot be stolen.
 2. **Membership:** a player may join the currently assigned party using the device locator (or host code). Implemented source: `POST /v1/parties/join` with `{"device_id":"kb-demo-01"}`. Joining never arms.
 3. **Player check-in:** signed-in player deliberately chooses “Start my test” (or enters that scan mode), scans the same URL, and confirms the intended party/game/device. Server creates exactly one exclusive next-test session for the token subject, with party/game association snapshotted in the same transaction. The phone can show whose turn it is and a countdown; the board can acknowledge readiness without receiving a user identity.

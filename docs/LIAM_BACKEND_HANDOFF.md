@@ -147,6 +147,16 @@ concurrent HTTP acceptance running. No native NFC/multi-phone claim.
 
 ### Firmware communication runtime — no client action
 
+New authorized firmware-only restart change: `firmware/persistent-device-auth`,
+base `aa90d4c`; publishing PR/head records exact readiness. Explicit private
+default-No opt-in saves SAME registered bearer; boot restores saved Wi-Fi/auth
+before trusted TLS-gated heartbeat/poll. [AUTONOMOUS_BOOT.md](../firmware/AUTONOMOUS_BOOT.md)
+discloses unverified NVS encryption, block/corruption behavior and RAM-only pending
+outbox limitations. **NON-BREAKING/no app action**: identity/credential/server/API
+fields/examples/session expiry/measurement source unchanged, no app edits or new
+remote-start. Full host/41Python/Ruff/all3builds/focused review pass; physical
+power-cycle/accepted-history reconciliation still requires actual evidence.
+
 Firmware-only saved Wi-Fi change: `firmware/saved-wifi-recovery`, base `22c1215`;
 physical runtime `9b0ca25`, [PR41](https://github.com/spherohero/kickbac/pull/41).
 Actual opt-in NVS save/software-reset restore (bearer-only re-entry) and powered

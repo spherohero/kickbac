@@ -133,6 +133,7 @@ public:
     ~DeviceCredentialFrame() { clear(); }
     bool ready() const { return ready_; }
     const char* token() const { return token_; }
+    bool save_requested() const { return ready_ && save_; }
 
     void clear() {
         volatile char* bytes = token_;
@@ -140,6 +141,7 @@ public:
         position_ = 0;
         last_byte_at_ = 0;
         ready_ = false;
+        save_ = false;
     }
 
     bool expire(std::uint32_t now) {
@@ -156,6 +158,11 @@ public:
         last_byte_at_ = now;
         static const char magic[] = "KBD1";
         if (position_ < 4) {
+            if (position_ == 2 && (value == 'D' || value == 'A')) {
+                save_ = value == 'A';
+                ++position_;
+                return false;
+            }
             position_ = value == static_cast<std::uint8_t>(magic[position_])
                             ? position_ + 1 : (value == 'K' ? 1U : 0U);
             return false;
@@ -176,6 +183,7 @@ private:
     std::size_t position_ = 0;
     std::uint32_t last_byte_at_ = 0;
     bool ready_ = false;
+    bool save_ = false;
 };
 
 }  // namespace kickbac

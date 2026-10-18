@@ -1,5 +1,19 @@
 # kickBAC firmware bot — current startup handoff
 
+## Automatic authenticated restart — new explicit owner authorization
+
+`firmware/persistent-device-auth`, base `aa90d4c`; exact publishing PR/head gives
+state. [AUTONOMOUS_BOOT.md](../firmware/AUTONOMOUS_BOOT.md) defines once-only
+private `--device-only --save-device-auth` default-No consent, identity-bound NVS
+record/readback and autonomous saved-Wi-Fi→trusted TLS→device heartbeat/poll.
+Bearer saving is NOW explicitly authorized; older RAM-only limit below describes
+the preceding image. NVS encryption NOT verified; no eFuse/security-state changes.
+Corrupt/blocked credentials fail closed; auth/schema faults stop and persist a
+block when storage works. No boot arm/upload/ADC/app change. Pending samples stay
+RAM-only: reconcile before reset. Full host/41Python/Ruff/all3builds and focused
+independent review pass. Physical unplug/replug is not established by those tests;
+read exact actual flash/boot/server evidence before declaring it passed.
+
 ## One saved Wi-Fi / lifetime recovery — focused firmware change
 
 Physical update: [PR41](https://github.com/spherohero/kickbac/pull/41) runtime

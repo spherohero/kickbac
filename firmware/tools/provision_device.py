@@ -2,6 +2,7 @@
 
 Uses the existing authorized demo device; does not provision/rotate credentials,
 read OS Wi-Fi profiles, print credentials or write them to a local file.
+Device auth stays in RAM unless explicitly opted into on-device NVS storage.
 """
 
 import argparse
@@ -73,6 +74,7 @@ def safe_line(raw: bytes) -> str | None:
         r"CONNECTIVITY_PASS wifi=1 dhcp=1 dns=1 trusted_https=1 reconnect=1 sensor=disabled uploads=disabled",
         r"NETWORK_READY wifi=1 dhcp=1 dns=1 trusted_https=1 reconnect_test=skipped sensor=disabled uploads=disabled",
         r"wifi_saved state=(?:absent|loaded|stored|invalid|write_failed)",
+        r"device_saved state=(?:absent|loaded|stored|invalid|blocked|write_failed)",
         r"wifi_config state=accepted saved=[01]",
         r"wifi_connect state=started attempt=\d+ timeout_ms=30000",
         r"wifi_connect state=waiting wait_ms=\d+",
@@ -109,9 +111,34 @@ def parse_args(argv=None):
     mode.add_argument(
         "--device-only",
         action="store_true",
-        help="Skip Wi-Fi entry; relay only the existing RAM-only bearer after device_ready.",
+        help="Skip Wi-Fi entry; relay only the existing bearer after device_ready.",
+    )
+    parser.add_argument(
+        "--save-device-auth",
+        action="store_true",
+        help="Ask for explicit consent to store the existing bearer on the ESP in NVS.",
     )
     return parser.parse_args(argv)
+
+
+def confirm_device_auth_storage() -> bool:
+    import tkinter as tk
+    from tkinter import messagebox
+
+    root = tk.Tk()
+    root.withdraw()
+    try:
+        return messagebox.askyesno(
+            "Store existing device auth on this ESP?",
+            "The existing device bearer will be stored on this ESP in NVS. "
+            "NVS storage is not verified encrypted, and USB is not encrypted. "
+            "No new or rotated credential will be created. "
+            "Allow private on-device storage?",
+            parent=root,
+            default=messagebox.NO,
+        )
+    finally:
+        root.destroy()
 
 
 def main() -> int:
@@ -129,6 +156,9 @@ def main() -> int:
     ) != (0x303A, 0x1001, "80:B5:4E:F1:B7:30"):
         print("DEVICE_NOT_VERIFIED: attached target identity mismatch; nothing sent.")
         return 1
+    if args.save_device_auth and not confirm_device_auth_storage():
+        print("DEVICE_CANCELLED: device auth storage not authorized; nothing sent.")
+        return 2
     wifi_packet = bytearray()
     if not args.device_only:
         print(
@@ -161,12 +191,25 @@ def main() -> int:
         network_confirmed = False
         online_heartbeats = 0
         device_sent = False
+        device_stored = False
         while time.monotonic() < deadline:
             line = safe_line(port.readline())
             if line is None:
                 continue
             print(line, flush=True)
             lines.append(line)
+            if args.save_device_auth and device_sent:
+                if line == "device_saved state=stored":
+                    device_stored = True
+                elif line in (
+                    "device_saved state=invalid",
+                    "device_saved state=blocked",
+                    "device_saved state=write_failed",
+                ):
+                    print(
+                        "DEVICE_NOT_VERIFIED: device auth save failed; no retry or reset."
+                    )
+                    return 1
             if wifi_sent and line == "wifi_saved state=write_failed":
                 print(
                     "DEVICE_NOT_VERIFIED: saved Wi-Fi write failed; no bearer forwarded."
@@ -185,6 +228,7 @@ def main() -> int:
                 wifi_sent
                 and wifi_confirmed
                 and network_confirmed
+                and (not args.save_device_auth or (device_sent and device_stored))
                 and line.startswith("device_heartbeat ")
             ):
                 online_heartbeats += 1
@@ -203,11 +247,17 @@ def main() -> int:
                 line.startswith("device_ready ") and not device_sent and wifi_confirmed
             ):
                 device_packet = relay_frame()
+                if args.save_device_auth:
+                    device_packet[:4] = b"KBA1"
                 port.write(device_packet)
                 port.flush()
                 device_packet[:] = b"\0" * len(device_packet)
                 device_sent = True
-            elif line.startswith("DEVICE_PASS ") and device_sent:
+            elif (
+                line.startswith("DEVICE_PASS ")
+                and device_sent
+                and (not args.save_device_auth or device_stored)
+            ):
                 return 0
             elif line.startswith(("CONNECTIVITY_FAIL ", "DEVICE_FAIL ")):
                 return 1

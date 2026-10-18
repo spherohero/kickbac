@@ -121,7 +121,9 @@ class MeasurementUpload(AcquisitionMetadata, Empty):
         if self.breath_duration_ms is None and (
             self.acquisition_method != "manual_timed" or self.sample_duration_ms is None
         ):
-            raise ValueError("Null breath duration requires manual acquisition metadata")
+            raise ValueError(
+                "Null breath duration requires manual acquisition metadata"
+            )
         if self.breath_duration_ms is not None:
             metadata_fields = {"acquisition_method", "sample_duration_ms"}
             supplied = self.model_fields_set & metadata_fields
@@ -130,7 +132,9 @@ class MeasurementUpload(AcquisitionMetadata, Empty):
                 or self.sample_duration_ms is not None
                 or supplied not in (set(), metadata_fields)
             ):
-                raise ValueError("Legacy duration requires omitted or paired-null metadata")
+                raise ValueError(
+                    "Legacy duration requires omitted or paired-null metadata"
+                )
         return self
 
     @field_validator("measured_at", mode="before")

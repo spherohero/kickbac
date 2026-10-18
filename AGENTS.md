@@ -1,5 +1,11 @@
 # kickBAC engineering guidance
 
+## Firmware Bot startup — verified diagnostic foundation
+
+Firmware/ESP32 role: read `docs/FIRMWARE_BOT_STARTUP.md` before substantive work. Creation fields/persona are `docs/bots/firmware/PROFILE.md` and `SOUL.md`; SOUL must be installed into the new Bot's own profile, not assumed active from the repo. Prepared local cwd is `C:/Users/nicho/Desktop/SwampHacks26/kickbac-firmware-bot`. Backend Bot keeps its separate startup/worktree; a group does not share files, credentials or USB access.
+
+PR #10 (`016d5b8`) and merged-main CI verify the USB/Wi-Fi/device-auth foundation, not sensor/ADC/sampling/uploads. Actual XIAO ESP32-S3 and MQ breakout are confirmed; pressure sensor unavailable, DHT11 unproven. Re-enumerate current hardware; Austin's measured supply/divider sign-off and truthful duration coordination remain gates. No-trigger is no result, not zero; do not fabricate breath duration/BAC. Nicholas authorizes focused branch commits/pushes and reviewed/tested ready merges. Preserve peer work and role-specific guidance; this startup supersedes historical unstarted-firmware/public-timeout/no-push notes, not safety or collaboration gates. Orientation alone is not a request to flash, wire, deploy or rewrite the backend/iOS app.
+
 ## Hermes Bots startup and current client status
 
 Nicholas is separating backend/webserver and ESP32 responsibilities into collaborating Hermes Bots. Backend Bot creation fields are in `docs/bots/backend/PROFILE.md`, the profile-scoped SOUL template is `docs/bots/backend/SOUL.md`, and the full current handoff is `docs/bots/backend/START_HERE.md`; read that handoff before backend work. Repository SOUL templates are not automatically loaded by Hermes. Each Bot needs its own profile, explicit working directory and isolated worktree; a group does not synchronize files, credentials or tools. The backend Bot's intended local worktree is `C:/Users/nicho/Desktop/SwampHacks26/kickbac-backend-bot`; do not start it in the dirty historical checkout. Other roles retain their own handoffs and ownership.

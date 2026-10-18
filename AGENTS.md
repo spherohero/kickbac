@@ -1,5 +1,13 @@
 # kickBAC engineering guidance
 
+## Hermes Bots startup and current client status
+
+Nicholas is separating backend/webserver and ESP32 responsibilities into collaborating Hermes Bots. Backend Bot creation fields are in `docs/bots/backend/PROFILE.md`, the profile-scoped SOUL template is `docs/bots/backend/SOUL.md`, and the full current handoff is `docs/bots/backend/START_HERE.md`; read that handoff before backend work. Repository SOUL templates are not automatically loaded by Hermes. Each Bot needs its own profile, explicit working directory and isolated worktree; a group does not synchronize files, credentials or tools. The backend Bot's intended local worktree is `C:/Users/nicho/Desktop/SwampHacks26/kickbac-backend-bot`; do not start it in the dirty historical checkout. Other roles retain their own handoffs and ownership.
+
+Backend/API/TLS/profile/history/games and backend CI are delivered, not pending initial setup. Read current Git/live OpenAPI and `docs/BACKEND_RELEASE_VERIFICATION.md` before relying on snapshots. Liam's published `liam/ios-profile-handoff@2cc42da6` already implements auth/profile/history in source; no new profile API was identified. `docs/bots/backend/IOS_REVIEW.md` records the source-only review: unlabelled fixture BAC on Home including Release, missing connected device/session and game/stats consumers, possible profile-load race, and config/README integration conflicts. Actual native acceptance remains Liam-owned and unverified; do not treat CI/source as an iPhone test or take over his app. Refresh his tip before assigning work.
+
+Use concise actionable group messages with owner, current/proposed contract, branch/commit, evidence level and required acknowledgment. Inform Nicholas of Liam impact before material changes; agreement between Bots does not replace the collaboration gate. Do not put secrets in the group, edit another Bot's profile/worktree, or create acknowledgment loops/unrequested routines. Readback of external effects is required before claiming success. Startup orientation alone does not request implementation or deployment.
+
 Read `docs/PROJECT_BRIEF.md` before substantive work; it is the full user-authored engineering brief. Display name is **kickBAC**. Nicholas owns backend/infrastructure FIRST, then ESP32 firmware; Liam owns SwiftUI. Do not rewrite, redesign, reorganize or overwrite his app. Assume concurrent work.
 
 ## Current delivery scope

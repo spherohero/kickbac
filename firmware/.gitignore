@@ -1,0 +1,7 @@
+/build/
+/.local/
+/.pio/
+/sdkconfig
+/sdkconfig.old
+/secrets.h
+__pycache__/

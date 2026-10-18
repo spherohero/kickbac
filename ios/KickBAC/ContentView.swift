@@ -9,7 +9,8 @@ import SwiftUI
 
 struct ContentView: View {
     #if DEBUG
-    @State private var selectedTab: AppTab = ProcessInfo.processInfo.arguments.contains("--show-profile") ? .me : .home
+    @State private var selectedTab: AppTab = ProcessInfo.processInfo.arguments.contains("--show-party") ? .party
+        : ProcessInfo.processInfo.arguments.contains("--show-profile") ? .me : .home
     #else
     @State private var selectedTab: AppTab = .home
     #endif
@@ -29,7 +30,7 @@ struct ContentView: View {
             }
 
             Tab("Party", image: "NavParty", value: .party) {
-                blankPage
+                PartyView(profile: profile, owner: session.profileOwner, session: session)
             }
 
             Tab("Me", image: "NavMe", value: .me) {
@@ -89,11 +90,6 @@ struct ContentView: View {
             } catch { /* Ignore unrelated URLs, including Auth0 callbacks. */ }
         }
         .preferredColorScheme(.dark)
-    }
-
-    private var blankPage: some View {
-        pageBackground
-            .ignoresSafeArea()
     }
 
     private var pageBackground: Color {

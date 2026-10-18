@@ -296,6 +296,15 @@ has executed the combined 372-test foundation run recorded above.
 
 ## Read first — agent sync and latest branch/change checkpoint
 
+### Local iOS trivia interaction revision — October 18, 2026
+
+- **=== LIAM / iOS IMPACT === NON-BREAKING local client UI/state only.** Owner Liam/iOS, `liam/party-setup`, HEAD/base `4d34436769401b8c1567eb316436705843016a23`; fetched/read main `86adb12b4c1f669aafb1ee5ee1726f6da87454bb`. Uncommitted changes; no new PR, merge, deployment or teammate notification is claimed. Existing endpoints, payloads, auth, timestamps, units, breath duration and fixed 10-point lifetime awards are unchanged. No client action required for existing API consumers.
+- Requested behavior: compact Join/Skip sheet → tap/check-in using Home's gauge → readiness roster → shared question with rotating player wheel turns → locked answer → all-answered/deadline reveal → per-player round awards → next spinner/podium. The rotating spinner supersedes the earlier host-only choice. No scores, BAC or device success are uploaded; no NFC/session is armed. Debug device-success/example controls moved into the labeled options menu.
+- Latest main source implements schema6/33 operations: NFC check-ins merged in [PR #26](https://github.com/spherohero/kickbac/pull/26), merge `67c46916bda95250cdae739fd99e19cde8634667`, with passed main CI as recorded by the backend owner. It is **not deployed**; live OpenAPI still has 17 schema4 operations. Preserve merged parties/check-ins, private history attribution and exact-retry policies. Adopt only after deployment verification; no speculative calls were added here.
+- Liam now permits personal breathalyzers for game check-in. The frozen source contract currently requires the party-assigned device. This needs a coordinated server authorization/association change; removing restrictive UI copy does not implement that permission. Shared roster, rotating turn identity, private answers, authoritative deadlines/all-voted reveal and scoring also need a published game contract. No new wire schema is approved here.
+- Read [the full iOS trivia handoff](../ios/TRIVIA_HANDOFF.md) for current reproduction and source checks. Verification is local state checks and unsigned native builds; no visual, real phone, NFC, sensor, private sharing or multiplayer acceptance is claimed.
+
+
 This is the shared catch-up entry point for Liam and his agent, not a request to redo completed integration. Before work, fetch without changing the active checkout:
 
 ```bash
@@ -450,6 +459,14 @@ Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his bran
 - Deleted local `feat/ios-setup@c5939d5` and `ios@7c87e09`, and their remote branches (`ios@88cd59c`). Before deletion, ancestry checks verified setup in `origin/main@22f0635` and both ios tips in `liam/ios-profile-handoff@3a7fa1c`. No commits were discarded.
 - PR [#22](https://github.com/spherohero/kickbac/pull/22) remains open on `liam/ios-profile-handoff`; main was not merged. This documentation commit records the cleanup on the PR branch.
 - **NON-BREAKING:** no client action; endpoints, schemas, payload examples and app behavior unchanged. Verification: Git ancestry checks, successful remote deletion and local safe branch deletion; no runtime tests needed. PR review/merge remains pending. Nicholas's branches were untouched.
+
+### Liam party UI preview — local follow-up
+
+- Owner: Liam on `liam/ios-profile-handoff`, starting at `3a7fa1c351b05d6e38c01be33cd63e2364160328`; integrated main `22f06354e85ad04afe522e6d870b5bf3bb206af8`. PR [#22](https://github.com/spherohero/kickbac/pull/22) remains the existing integration PR. These are local follow-up changes, not a new publication, merge, or deployment. Nicholas has not been personally messaged.
+- Liam chose **UI preview first; live parties later**. Party now previews create/breathalyzer selection, tap/code join, host game selection, and guest ongoing-game/leaderboard/people views. The ongoing example and fixture code are labeled; no scores/other players are fabricated. Nothing arms a device or writes game results.
+- **NON-BREAKING / current API unchanged.** Existing paths, payloads, access-token ownership, private history/stats, and device/session semantics remain unchanged. No backend implementation/client integration action is required for this preview.
+- Proposed live party identity, device binding, membership/code lifecycle, host role, shared ongoing games and party rankings need a coordinated contract before implementation. Current private game results do not establish those capabilities. Joining must not reserve a breath test or expose private readings. Exact proposed routes/schemas remain undecided; [API.md](API.md) remains authoritative for existing endpoints.
+- [Party handoff](../ios/PARTY_HANDOFF.md) records source files, focused state-check command, manual preview routes, NFC provisioning limits, and acceptance gates. Source checks and signed builds do not prove visual rendering or live cross-phone/NFC/gameplay acceptance.
 
 ### Liam iOS integration — current app and latest backend/docs
 

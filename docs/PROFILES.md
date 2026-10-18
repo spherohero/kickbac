@@ -1,6 +1,6 @@
 # Profile onboarding — additive client contract
 
-Status: **implemented and deployed**, independently verified at https://api.kickbac.vodka/openapi.json after schema3 migration and API restart. Live base: **https://api.kickbac.vodka**. See [PROFILE_VERIFICATION.md](PROFILE_VERIFICATION.md) for actual test/deployment evidence and remaining native-client acceptance. Source is local/uncommitted on `backend/profiles`, not automatically published to main.
+Status: **published, merged and deployed** through [PR #3](https://github.com/spherohero/kickbac/pull/3). Live base: **https://api.kickbac.vodka**; implemented schema: https://api.kickbac.vodka/openapi.json . [PROFILE_VERIFICATION.md](PROFILE_VERIFICATION.md) records the historical schema3 rollout; [BACKEND_RELEASE_VERIFICATION.md](BACKEND_RELEASE_VERIFICATION.md) records the later schema4 release. No unpublished profile-backend blocker remains. Liam's published `liam/ios-profile-handoff` already contains profile save/load/editing in source; actual native acceptance remains Liam-owned and unverified. See [his source review](bots/backend/IOS_REVIEW.md) and the [current handoff](LIAM_BACKEND_HANDOFF.md).
 
 ## What is stored where
 
@@ -72,4 +72,4 @@ PUT atomically replaces name + picture. Sending `profile_picture: null` **clears
 
 ## Forward to Liam
 
-**NON-BREAKING to existing API; new onboarding integration required.** Use current Auth0 login and API access token. After login call `GET /v1/me/profile`; if no name, collect display name + selected JPEG/PNG (phone remains the Auth0 SMS identity). Save both with `PUT /v1/me/profile` and await 200, then restore the saved fields on subsequent login/relaunch. No changes to device/session/history requests. No Twilio secrets or native client secret. See this document and the live `/openapi.json`; don't implement from the earlier assumption that `/v1/me` stores a full profile.
+**NON-BREAKING; existing profile contract, not a request to rebuild published onboarding.** Liam's branch already calls `GET /v1/me/profile` after login/restoration and saves both required fields with `PUT /v1/me/profile`. Preserve that integration, explicit photo-null removal and API-access-token ownership. Actual native save/photo/relaunch/relogin/history/account-isolation acceptance remains Liam-owned; source review is not proof it passed. No device/session/history requests or schemas change here. Phone stays in Auth0; no Twilio secrets or native client secret belong in the app. See the [current handoff](LIAM_BACKEND_HANDOFF.md), [source review](bots/backend/IOS_REVIEW.md) and live `/openapi.json`.

@@ -1,5 +1,7 @@
 # Battery / boost perfboard revision — commissioning hold
 
+> **Historical proposal — not the current parts list.** Nicholas subsequently clarified that components are only placed on perfboard, not soldered or connected, with **no boost converter, no pressure sensor and no installed JP1**. The replacement MQ heater supply/final power topology is not established. Do not use this battery/boost document as authorization to add a converter or wire that obsolete proposal. Continue software-only backend/firmware communication tests independently; actual supply/protection checks apply before powered acquisition, not before host tests.
+
 **PROPOSED ASSEMBLY; NOT ELECTRICALLY SIGNED OFF.** This reconciles Nicholas's
 shared `kickBAC_firmware_hardware_pinout.md` and the practical pad-map in the
 [teammate's shared wiring discussion](https://chatgpt.com/share/6ad43156-0ec0-83ea-8d6e-72c96b086058).

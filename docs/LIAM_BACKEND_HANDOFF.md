@@ -2,6 +2,32 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+### NFC-first product priority — proposed check-in context
+
+Nicholas clarified that the primary slice is host tap-to-link, then player tap
+→ exclusive next measurement → correct person and party/game. Read
+[NFC_CHECK_IN.md](NFC_CHECK_IN.md) before extending generic party/game work.
+The sticker contains one static NDEF HTTPS device URI, for example
+`https://api.kickbac.vodka/d/kb-demo-01`, never a user/party ID or secret.
+
+**Additive / NON-BREAKING proposal, not implemented/deployed:** existing host
+binding, authenticated join and legacy session/device endpoints are preserved.
+A new candidate `POST /v1/parties/{party_id}/check-ins` with
+`{check_in_id,device_id,game_instance_id}` would atomically snapshot party/game
+context while creating the exclusive session; its response wraps the existing
+session shape. Exact retry returns the original attempt even after completion.
+This candidate requires contract freeze/tests before client adoption; it is not
+already provided by game-result measurement linking. Existing physical device
+poll/upload payloads remain unchanged and user/party ownership stays server-side.
+
+Liam owns entitled foreground NFC and/or Universal Link delivery. Current owner
+handoff records Personal Team NFC provisioning limits and no configured Universal
+Links; writing the sticker alone does not make native launch work. QR/manual
+fallback remains. The parent notified Nicholas before this proposal and asked
+the firmware owner for current cadence/acquisition constraints; no claim of peer
+acknowledgment, implemented native routing or physical uploads is made. Raw ADC
+is not BAC; the unapproved duration proposal is not adopted by this change.
+
 ### Direct-chat implementation continuation — PR #26 still draft
 
 - Nicholas moved party/profile implementation into the backend Bot's direct chat;

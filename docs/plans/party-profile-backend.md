@@ -4,6 +4,15 @@
 
 **Goal:** Implement Nicholas's requested authenticated party create/join and richer private profile/game history without replacing existing backend or Liam's app.
 
+**Latest product priority:** Host NFC tap-to-link, then player tap-to-arm the next
+measurement for the authenticated person and party/game, comes before general
+party/game extras. See `docs/NFC_CHECK_IN.md`: static NDEF device URI, explicit
+intents, native entitlement/Universal Link gates, and proposed atomic party
+check-in context. The original tasks below remain useful foundations, but their
+client-linked game result alone does not implement authoritative party context
+at arming time. Freeze/test that additive check-in contract before coding it;
+never silently change firmware metadata or treat tag possession as host approval.
+
 **Architecture:** Keep the existing immutable game ledger and measurement store; add schema5 party/context tables and new additive routes from `docs/PARTIES.md`. Grant hardware-assignment authority through the private backend operator CLI; code or assigned-device joins never arm a measurement. Preserve all existing 17 operation shapes and firmware/iOS sources.
 
 **Tech Stack:** Existing FastAPI, Pydantic, sqlite3, Auth0 verifier, pytest, uv and Ruff; no new dependency, service or paid resource.

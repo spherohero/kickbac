@@ -16,5 +16,5 @@ def test_init_db_reports_actual_persisted_schema(
     main()
     with connect(path) as db:
         version = db.execute("PRAGMA user_version").fetchone()[0]
-    assert version == 4
+    assert version == 5
     assert capsys.readouterr().out == f"Database initialized (schema {version}).\n"

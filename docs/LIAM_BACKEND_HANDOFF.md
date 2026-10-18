@@ -48,10 +48,20 @@ Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his bran
   sent to iOS. Join invitation locators do not prove physical presence. No production
   grant, user write, SMS, device arm, migration or deployment is authorized by publishing
   the design. New join limits are per-subject persisted10/60s, not global anti-abuse.
-- Verification at proposal publication: refreshed main/remote branches/open PRs;
-  inspected actual app/DB/models/games/session/measurement/middleware/error/tests;
-  design links/fences and diff checks. Independent design review pending; no runtime
-  implementation, passing new feature tests or production availability is claimed.
+- Independent design/spec/security review approved test-first implementation at
+  `d9aeb744663cc77a25a1012cf62c9d876b35c451`; firmware Bot separately reports no
+  firmware-interface blocker (contract/source review, not endpoint execution).
+  Clarified fixed join window, immutable cross-route UUID/context retries and the
+  distinction between party-assignment grants and unchanged legacy arming rights.
+- First source slice: additive schema5 migration, populated schema4 old-row/table-SQL
+  preservation, repeated initialization, backup restoration, failed-upgrade rollback
+  and new-table startup checks. Upgrade test observed RED (schema4 versus required5)
+  before implementation, then GREEN. Local Python3.12 backend/deployment run returned
+  **348 passed**, excluding the separate not-yet-implemented reading-summary RED
+  test; Ruff lint and changed-file formatting passed. Feature PR remains draft;
+  party/game endpoints, full integration/CI/native/target-host acceptance and runtime
+  migration/deployment are not claimed complete. Summary is an independent test-first
+  slice in a backend-owned worker worktree, not client work.
 
 ### Backend review of iOS PR #22 and requested profile/party follow-up
 

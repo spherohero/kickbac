@@ -1,6 +1,14 @@
 # kickBAC firmware — USB/Wi-Fi bring-up and local signal experiments
 
-**New source checkpoint (not flashed):**
+**Latest physical checkpoint:**
+[`DEVICE_SESSION_VERIFICATION.md`](../docs/DEVICE_SESSION_VERIFICATION.md) records
+the exact flashed `xiao_device` follow-up at `17ed04b`, USB identity/image hashes,
+actual network/auth9heartbeat/24idle-poll run and independently advancing server
+heartbeat after helper exit. Earlier reconnect failures and stale readback remain
+explicit; no root-cause/reliability claim. Serial released. ADC/sampling/uploads
+remain disabled; unverified electrical protection is not bypassed.
+
+**Earlier source checkpoint (subsequently flashed with the follow-up above):**
 [`FIRMWARE_SESSION_GUARD.md`](../docs/FIRMWARE_SESSION_GUARD.md) records the
 current-base session UUID/expiry retention, fail-closed ticket guard and tested
 immutable RAM retry-byte slot. Host suite/all three cross-builds pass; ADC,

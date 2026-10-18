@@ -1,5 +1,24 @@
 # kickBAC firmware bot — current startup handoff
 
+## Latest physical checkpoint — no-ADC image flashed, real device auth passed
+
+Read [DEVICE_SESSION_VERIFICATION.md](DEVICE_SESSION_VERIFICATION.md). Nicholas
+authorized exclusive COM3 open/reset/flash/private provisioning. Current flashed
+`xiao_device` runtime is `17ed04ba393f8d5e6124c65d0eb07d926db85d43` on
+`firmware/session-guard-device-verification`, base `3fd50c7`. Actual target/image
+hashes, two preserved reconnect failures, a stale short-helper readback, subsequent
+9-heartbeat/24-idle-poll continuous physical pass and independent advancing
+persisted heartbeat after helper exit are documented there. No serial owner left.
+Extra bounded reconnect retries are host-tested but were not needed in the pass;
+root cause of earlier intermittent failures remains unknown. No reliability claim.
+
+Nicholas declines further electrical measurements/photos; assembly correctness
+remains owner-reported, not independently verified. ADC/sampling/uploads stay
+disabled; do not bypass safety or repeat the checklist in a loop. Separate manual
+duration support/deployment/native/real-user measurement acceptance remain gates.
+Earlier “not flashed”/unavailable serial authorization paragraphs below are
+historical checkpoints, superseded by this authorized physical execution.
+
 ## Latest firmware integration checkpoint — session guard, not flashed
 
 Merged [PR #28](https://github.com/spherohero/kickbac/pull/28) at

@@ -2,6 +2,37 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+### Physical diagnostic follow-up — reconnect failure investigation
+
+- **New physical result:** [DEVICE_SESSION_VERIFICATION.md](DEVICE_SESSION_VERIFICATION.md)
+  records exact flashed runtime `17ed04ba393f8d5e6124c65d0eb07d926db85d43`, app
+  SHA256, actual9heartbeat200/24idle-poll200 continuous serial run and independent
+  advancing persisted heartbeat after helper exit. Serial released. Earlier two
+  reconnect failures and a stale short-helper readback are preserved, not hidden;
+  root cause/reliability remain unestablished. Extra retries were not needed in
+  the successful run; their coverage is synthetic. No ADC/user-arm/upload/native
+  acceptance. Current source checkpoint paragraphs below preceded this run.
+- Owner firmware Bot, `firmware/session-guard-device-verification`, base
+  `3fd50c7f2520982696a4f2e4ac095a06e34d1887`; publishing commits/PR record exact
+  head/state. Nicholas authorizes exclusive COM3 open/reset/flash/private entry.
+  Owner reports electrically correct assembly but declines measurements/photos;
+  no electrical sign-off is invented and ADC remains disabled.
+- Original reviewed session-guard image flashed/hash-verified to the known XIAO.
+  Two physical runs passed initial trusted health200, then failed reconnect HTTPS
+  with HTTPClient -1 after successful rejoin/DNS; device auth was not reached.
+  Preserve both failed traces. A small reviewed/tested follow-up adds numeric-only
+  TLS error/elapsed diagnostics and at most three trusted public health attempts
+  after reconnect, one-second waits between failures. All use unchanged trust and
+  body validation; exhaustion remains failure, not a pass. No auth retry change.
+- **NON-BREAKING; no Liam action.** No endpoint, schema, measurement meaning,
+  auth, state, unit or example payload changes. Nominal heartbeat10s/poll2s remains.
+  No ADC/acquisition/upload or app edits. Manual acquisition remains held pending
+  verified backend release; no fabricated duration/BAC or hidden simulator.
+- Full host suite, pinned helper lint/format and all three cross-builds passed;
+  independent no-ADC code review approved. New policy/allowlist tests started RED,
+  then passed. Follow-up physical execution/heartbeat persistence is not yet
+  claimed at this source checkpoint; final evidence will be recorded separately.
+
 ### Manual acquisition implementation — bounded iOS ownership until04:00, not deployed
 
 Nicholas authorizes backend/manual-timed support and necessary iOS changes until

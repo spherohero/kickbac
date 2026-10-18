@@ -103,6 +103,23 @@ int main() {
     assert(fixture_upload_payloads.size() == 4 && mock_upload.state() == kickbac::MockState::Held);
     for (const auto& payload : fixture_upload_payloads) assert(payload == fixture_upload_payloads.front());
     assert(!failed && credential.ready()); // bounded mock failure does NOT kill heartbeat/poll
+    reset_mock_fixture();
+    arm_mock_fixture();
+    fixture_upload_status = -11;
+    trigger_mock();
+    const std::string unresolved = mock_upload.payload();
+    const std::string unresolved_id = mock_upload.measurement_id();
+    fixture_wifi_status = 0;
+    device_probe_loop();
+    assert(!failed && credential.ready());
+    assert(mock_upload.pending() && mock_upload.state() == kickbac::MockState::Held);
+    assert(std::string(mock_upload.payload()) == unresolved && mock_upload.measurement_id() == unresolved_id);
+    fixture_wifi_status = WL_CONNECTED;
+    fixture_upload_status = 201;
+    fixture_now += 2000;
+    device_probe_loop();
+    assert(fixture_upload_payloads.size() == 1); // hotspot return cannot auto-send unresolved sample
+    assert(mock_upload.pending() && std::string(mock_upload.payload()) == unresolved);
     for (const auto& line : fixture_lines) {
         assert(line.find(std::string(43, 'x')) == std::string::npos);
         assert(line.find("{\"measurement_id\"") == std::string::npos); // never dump payload

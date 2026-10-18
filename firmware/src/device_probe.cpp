@@ -10,6 +10,7 @@
 #include "device_probe.hpp"
 #include "network_runtime.hpp"
 #include "session_safety.hpp"
+#include "saved_wifi.hpp"
 #include "tls_root.hpp"
 #if defined(KICKBAC_MOCK_UPLOAD)
 #include <esp_system.h>
@@ -26,6 +27,9 @@ kickbac::SessionFence session_fence;
 kickbac::DeviceRecovery recovery;
 bool failed = false;
 bool negative_checked = false;
+bool negative_retry = false;
+bool wifi_setup_requested = false;
+kickbac::WifiSetupCommand wifi_setup_command;
 bool pass_reported = false;
 unsigned heartbeats = 0;
 unsigned polls = 0;
@@ -48,6 +52,7 @@ std::int64_t utc_upper_ms() {
 }
 
 void stop_probe(const char* stage, int status) {
+    negative_retry = false;
     session_fence.clear();
     recovery.clear();
 #if defined(KICKBAC_MOCK_UPLOAD)
@@ -141,10 +146,33 @@ bool perform_request(bool heartbeat) {
     }
     return true;
 }
+bool perform_negative_check() {
+    char body[769] = {};
+    const int status = request(false, false, body);
+    if (status == 401) {
+        negative_checked = true;
+        negative_retry = false;
+        recovery.clear();
+        Serial.printf("device_auth_negative status=401 rejected=1\n");
+        return true;
+    }
+    if (kickbac::retryable_device_status(status)) {
+        negative_retry = true;
+        request_failed(false, status);
+    } else stop_probe("unauthenticated_poll", status);
+    return false;
+}
+
 #if defined(KICKBAC_MOCK_UPLOAD)
 void service_mock_command() {
     for (unsigned count = 0; count < 32 && Serial.available() > 0; ++count) {
         const int byte = Serial.read();
+        if (byte >= 0 && wifi_setup_command.feed(static_cast<std::uint8_t>(byte))) {
+            wifi_setup_requested = true;
+            mock_command = kickbac::MockCommand{};
+            device_network_lost();
+            return;
+        }
         if (byte < 0 || !mock_command.feed(static_cast<std::uint8_t>(byte),
                                          static_cast<std::uint32_t>(millis()))) continue;
         kickbac::SessionTicket before_poll;
@@ -215,6 +243,25 @@ void report_mock_ready() {
 #endif
 }  // namespace
 
+void device_network_lost() {
+    negative_retry = false;
+    session_fence.clear();
+    recovery.clear();
+#if defined(KICKBAC_MOCK_UPLOAD)
+    mock_upload.hold();
+    const bool pending = mock_upload.pending();
+#else
+    const bool pending = false;
+#endif
+    Serial.printf("device_network state=lost credential=ram_retained pending=%d\n", pending ? 1 : 0);
+}
+
+bool device_take_wifi_setup() {
+    const bool requested = wifi_setup_requested;
+    wifi_setup_requested = false;
+    return requested;
+}
+
 void device_probe_loop() {
     if (failed) return;
     const auto now = static_cast<std::uint32_t>(millis());
@@ -227,25 +274,28 @@ void device_probe_loop() {
         }
         while (Serial.available() > 0) {
             const int value = Serial.read();
+            if (value >= 0 && wifi_setup_command.feed(static_cast<std::uint8_t>(value))) {
+                wifi_setup_requested = true;
+                return;
+            }
             if (value >= 0 && credential.feed(static_cast<std::uint8_t>(value),
-                                              static_cast<std::uint32_t>(millis()))) break;
+                                              static_cast<std::uint32_t>(millis()))) { wifi_setup_command.clear(); break; }
         }
         return;
     }
-    if (WiFi.status() != WL_CONNECTED) { stop_probe("wifi_lost", -1); return; }
+    if (WiFi.status() != WL_CONNECTED) { device_network_lost(); return; }
     if (recovery.active()) {
 #if defined(KICKBAC_MOCK_UPLOAD)
         service_mock_command();
 #endif
-        if (recovery.due(now)) perform_request(recovery.heartbeat());
+        if (recovery.due(now)) {
+            if (negative_retry) perform_negative_check();
+            else perform_request(recovery.heartbeat());
+        }
         return; // No other endpoint may mask/clear a failing endpoint's retry budget.
     }
-    char body[769] = {};
     if (!negative_checked) {
-        const int status = request(false, false, body);
-        if (status != 401) { stop_probe("unauthenticated_poll", status); return; }
-        Serial.printf("device_auth_negative status=401 rejected=1\n");
-        negative_checked = true;
+        if (!perform_negative_check()) return;
     }
     if (heartbeats == 0 || now - last_heartbeat >= 10000U) {
         if (!perform_request(true)) return;

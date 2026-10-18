@@ -16,6 +16,47 @@ git rev-parse origin/main origin/liam/ios-profile-handoff
 
 Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his branch. If main has not been integrated, read these shared docs directly from `origin/main`; do not reset, stash automatically, overwrite local edits or merge blindly. Documentation publication cannot prove an already-running remote agent has read it. Liam/his agent should report the main and client SHAs read when next giving a substantive integration update; no repeated acknowledgment pings or new user-run native tests are requested.
 
+### Liam iOS integration — current app and latest backend/docs
+
+- Owner/branch: Liam, `liam/ios-profile-handoff`. App polish/game-history commit
+  `4e31406`; latest-main integration commit `89e698c`; reviewed source head
+  `550355c824852c5476e021bd6907273c2d6268dd`. Backend/docs base is
+  `22f06354e85ad04afe522e6d870b5bf3bb206af8`. Publication is being prepared in
+  the iOS integration PR; main is not merged or deployed by this work.
+- Branch audit: `feat/ios-setup@c5939d5` is already an ancestor of main. Remote
+  `ios@88cd59c` and local `ios@7c87e09` are ancestors of this integration branch.
+  One PR includes all of that client work. No branches were deleted; no firmware
+  branch was modified. Recheck remote heads before any later cleanup.
+- **NON-BREAKING / existing contracts unchanged.** The client consumes native
+  SMS auth, private profile/history, device/session state, stats and
+  `GET /v1/me/game-results?limit=50&offset=0` with the API access token. See the
+  canonical examples below and [API.md](API.md). No new path, payload, identity,
+  timestamp, duration, unit, scoring rule or backend runtime change is introduced.
+- App behavior: consistent `KickBAC` display/launch/Welcome branding; full-square
+  camera/crop without the masked blur; approved Home gauge retained; profile
+  header/settings simplified; reading statistics open history; game statistics
+  open private Recent games; Cancel is hidden while sampling.
+- Nicholas follow-ups: [account deletion](../ios/ACCOUNT_DELETION_HANDOFF.md) and
+  [party groups/per-game check-ins](../ios/RECENT_GAMES_HANDOFF.md). These remain
+  requests, not implemented backend functionality. Delete account is informational;
+  missing party/check-in data is shown unavailable. Gameplay/submission stay separate.
+- Review: no actionable documented-standard breaches or confirmed spec regressions.
+  One inherited limitation remains by Liam's explicit choice: Home Avg/Max summarize
+  loaded history pages; with over 50 real estimates today, loading more can alter
+  those values. Track complete-day aggregation as follow-up while preserving Home.
+- Verification: all eight iOS Swift check executables, branding checks and Auth0 SDK
+  fixtures passed; signed Debug build with Xcode-beta passed using
+  `/tmp/kickbac-profile-build`. Combined backend/deployment tests: **338 passed**;
+  Ruff lint/format and isolated HTTP simulator passed. Auth0 Action fixtures:
+  **78 passed**. Backend HTTP/actual C++ decoder fixtures: **2 passed**, with pinned
+  ArduinoJson 6.21.6 headers. Local backend runtime was Python 3.14; Action runtime
+  Node 26, separate from hosted Python 3.11/3.12 and Node 22 CI.
+- Evidence limits: builds/fixtures are not visual, physical-sensor or live game-history
+  acceptance. Liam reported login/profile working; that report is not an independent
+  agent reproduction. No real SMS, account deletion, live game submission, backend
+  deployment, or screen inspection was performed during integration review. Hosted
+  backend/firmware workflows filter paths; an iOS/docs-only PR may have no CI jobs.
+
 ### Actual-app phone login troubleshooting
 
 - Owner/branch/base: backend Bot, `docs/phone-login-troubleshooting`, based on

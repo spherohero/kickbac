@@ -2,9 +2,9 @@
 
 ## Status for Nicholas
 
-Liam requested a Recent games page reached from Games played, Wins, or Points. He wants party names as section headings and game rows with a square image, outcome, awarded points, and that game's breathalyzer check-in. He assigned missing backend fields to a handoff for Nicholas. This handoff is local and has not been sent or published.
+Liam requested a Recent games page reached from Games played, Wins, or Points. He wants party names as section headings and game rows with a square image, outcome, awarded points, and that game's breathalyzer check-in. He assigned missing backend fields to a handoff for Nicholas. This request is prepared for publication with the iOS integration PR; it has not been separately messaged.
 
-Reviewed main: `22f06354e85ad04afe522e6d870b5bf3bb206af8`; client base: `170ad17a08f43232e8ca2ea3650999261b6e080b` on `liam/ios-profile-handoff`, plus uncommitted iOS edits. The fetched shared handoff, API/game docs, and live OpenAPI describe generic game results without a party or linked measurement. The arbitrary `data` object is not an authoritative party record.
+Reviewed main: `22f06354e85ad04afe522e6d870b5bf3bb206af8`; client base: `170ad17a08f43232e8ca2ea3650999261b6e080b` on `liam/ios-profile-handoff`, with app changes saved in `4e31406` and latest main integrated in `89e698c`. The fetched shared handoff, API/game docs, and live OpenAPI describe generic game results without a party or linked measurement. The arbitrary `data` object is not an authoritative party record.
 
 ## Existing client integration
 

@@ -33,3 +33,7 @@ No new profile/auth/session/stats endpoint is needed. Coordinate the real SMS lo
 ## Pending account deletion
 
 Liam requested account deletion; the current backend has no deletion operation. Settings displays an unavailable message without changing the account. [ACCOUNT_DELETION_HANDOFF.md](ACCOUNT_DELETION_HANDOFF.md) records the requirements for Nicholas. No deletion endpoint or live deletion acceptance is claimed.
+
+## Integration review checkpoint
+
+Current app edits are committed in `4e31406`; backend/docs main `22f0635` was merged into this client branch in `89e698c`, preserving Nicholas's sources. `550355c` hides Cancel during sampling. All iOS checks, signed Debug build, 338 combined backend/deployment tests, Ruff checks, the isolated HTTP simulator, 78 Auth0 Action fixtures and two backend/C++ decoder fixtures passed locally. Source reviews found no confirmed spec regressions or actionable documented-standard breaches. Home's daily Avg/Max still depend on loaded history pages; Liam explicitly kept the approved Home and requested a follow-up for complete-day aggregation. These results do not establish live game-history, physical sensing or visual acceptance. The shared handoff records the branch/contract checkpoint; no main merge or branch deletion is claimed.

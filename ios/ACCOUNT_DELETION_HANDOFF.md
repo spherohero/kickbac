@@ -2,9 +2,9 @@
 
 ## Status
 
-Liam requested permanent account deletion from Settings and assigned backend implementation to Nicholas. This document is prepared locally; it has not been sent or published. No deletion request has been made and no account data has been changed.
+Liam requested permanent account deletion from Settings and assigned backend implementation to Nicholas. This request is prepared for publication with the iOS integration PR; it has not been separately messaged. No deletion request has been made and no account data has been changed.
 
-Reviewed upstream main: `22f06354e85ad04afe522e6d870b5bf3bb206af8`. Client branch: `liam/ios-profile-handoff`, base `170ad17a08f43232e8ca2ea3650999261b6e080b`, with uncommitted iOS edits. The fetched handoff, API documentation, backend source, and live `https://api.kickbac.vodka/openapi.json` expose no account-deletion operation.
+Reviewed upstream main: `22f06354e85ad04afe522e6d870b5bf3bb206af8`. Client branch: `liam/ios-profile-handoff`, base `170ad17a08f43232e8ca2ea3650999261b6e080b`, with app changes saved in `4e31406` and latest main integrated in `89e698c`. The fetched handoff, API documentation, backend source, and live `https://api.kickbac.vodka/openapi.json` expose no account-deletion operation.
 
 ## Requested backend capability
 

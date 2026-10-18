@@ -2,6 +2,33 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+### Firmware session ownership guard — not flashed; no client change
+
+- Owner: firmware Bot, `firmware/session-ownership-guard`, base
+  `86adb12b4c1f669aafb1ee5ee1726f6da87454bb`. Publishing PR/commits record exact
+  head/state; no merge, deployment, flash or physical/native acceptance implied.
+- **NON-BREAKING; no Liam action.** Exact retained server UUID/expiry, stale/lost/
+  expired-session acquisition fencing and transport-neutral immutable pending
+  bytes are documented in [FIRMWARE_SESSION_GUARD.md](FIRMWARE_SESSION_GUARD.md).
+  Current versus proposed API is identical: endpoints, payload examples in
+  [API.md](API.md)/[NFC_CHECK_IN.md](NFC_CHECK_IN.md), fields, states, auth, units,
+  errors and nominal 10 s heartbeat / 2 s device polling remain unchanged.
+- Host suite and all three XIAO cross-builds pass; actual adapter retention/idle
+  fencing and clock-rollback/new-ticket regression are synthetic fixtures. USB
+  identity was freshly matched and existing private registered credential hash
+  verified read-only without sending credentials to USB. New source not flashed.
+- ADC/sampling/uploads remain OFF. Newer owner reports complete/electrically
+  correct assembly, but actual minimal measured protection and exclusive serial
+  access were not available in this unattended delivery. No setup redo requested.
+- Separate truthful acquisition support remains coordinated, not implemented by
+  this patch: nullable duration/manual mode is BREAKING and requires Nicholas's
+  exact decision, backend deployed acceptance and Liam's nullable decode/notice.
+  Do not convert ADC to BAC or claim confirmed breath. No app source is edited.
+- Reproduce: `bash firmware/test_host.sh` and pinned PlatformIO commands in
+  [the checkpoint](FIRMWARE_SESSION_GUARD.md#verification-executed). Next gates:
+  accepted electrical report, exclusive serial/private provisioning, protected
+  ADC traces, deployed truthful contract and real same-session private readback.
+
 ### NFC check-ins merged — main CI verified; NOT deployed
 
 This is the current checkpoint; older implementation/proposal entries below are

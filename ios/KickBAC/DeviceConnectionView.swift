@@ -42,8 +42,10 @@ struct DeviceConnectionView: View {
                         }
                         if flow.hasActiveSession {
                             Text(flow.test?.status == .sampling ? "The device is sampling." : "Waiting for the device.")
-                            Button("Cancel test", role: .destructive) {
-                                Task { await flow.cancel { try await session.cancelSession($0) } }
+                            if flow.test?.status == .armed {
+                                Button("Cancel test", role: .destructive) {
+                                    Task { await flow.cancel { try await session.cancelSession($0) } }
+                                }
                             }
                             if flow.message != nil {
                                 Button("Reload test status") { flow.retryPolling() }

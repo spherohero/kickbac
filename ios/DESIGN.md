@@ -40,6 +40,7 @@ The approved Home screen is the visual reference for the main app. Preserve its 
 - Use Apple Design and Emil Design Engineering for interface decisions. Use native SwiftUI before adding custom machinery.
 - Give immediate press feedback. Keep occasional state transitions around 150 to 250 ms, without decorative looping motion.
 - Retain existing auth, camera, history, and account behavior while polishing the interface.
+- Hide Cancel while a breath sample is running. Device tests may be cancelled while armed and waiting, before sampling starts.
 
 ## Verification
 

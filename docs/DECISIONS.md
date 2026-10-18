@@ -1,5 +1,11 @@
 # Architectural decisions
 
+## Minimal profile onboarding (additive)
+- **Choice:** keep SMS phone/verified login in Auth0; store only display name and a bounded, sanitized JPEG in a private SQLite profile keyed by the validated subject. Add `GET`/`PUT /v1/me/profile`; preserve `/v1/me`, auth and all device/session/history contracts. Schema 003 adds profiles without rewriting historical migrations/data.
+- **Why:** Nicholas confirmed the only onboarding fields are phone, picture and name. This closes the actual app-persistence gap without inventing demographics, a second identity authority or another cloud service. Inline bounded Base64 JSON is a low-volume demo tradeoff, not a design for bulk media.
+- **Security:** owner is token-derived; no client phone/user ID accepted. Validate/normalize photos rather than trusting MIME/file names, strip metadata, cap bytes/pixels/body streams, and include profile data in private SQLite snapshots. Public profile lookup, account linking, phone changes and account deletion are not added.
+- **Client coordination:** NON-BREAKING existing routes; Liam integrates the two new profile requests and image conversion/size limits as documented in `PROFILES.md`. No SwiftUI files changed. API deployment and native acceptance remain explicit verification gates.
+
 ## First vertical slice
 - **Choice:** FastAPI, SQLite, synchronous transactional writes, one API process, HTTP polling. Users are verified external identity subjects; no speculative profile table.
 - **Why:** quickest reliable authenticated association -> simulator measurement -> private history path. One low-volume shared demo unit does not require distributed workers or realtime infrastructure.

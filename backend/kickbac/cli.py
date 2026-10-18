@@ -42,7 +42,7 @@ def main():
     try:
         if args.command == "init-db":
             initialize(path)
-            print("Database initialized (schema 2).")
+            print("Database initialized (schema 3).")
         else:
             provision_device(path, args.device_id, args.credential_file)
             print(

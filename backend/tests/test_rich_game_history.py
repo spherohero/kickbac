@@ -22,6 +22,10 @@ def test_all_history_paginates_legacy_and_parties_after_leave(party_world):
     ).json()
     c.post("/v1/me/game-results", headers=u["alice"], json=result_body())
     second_party = str(uuid4())
+    assert (
+        c.post(f"/v1/parties/{party}/close", headers=u["alice"], json={}).status_code
+        == 200
+    )
     with connect(path) as db:
         db.execute(
             "INSERT INTO parties VALUES (?,'auth0|alice','Same name','BCDEFGHJ',?,'OPEN',NULL)",

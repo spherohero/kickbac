@@ -1,5 +1,44 @@
 # Architectural decisions
 
+## Private App readings, separate from device measurements
+
+- **Choice:** own authenticated App reading ledger/resource, preserving original
+  local UUID/value/client aware time/actual hold duration and immutable
+  `app_generated` source.201/200exact-replay/409changed, private page+snapshot
+  count/latest; no fabricated device/session/ADC/BAC or point award.
+- **Why:** cloud persistence/cross-phone reload must not impersonate firmware,
+  replace unavailable physical estimates, overwrite local-only records or mark
+  Synced without a matching server receipt. Existing user Auth0 subject owns rows.
+- **Limits:** finite numeric0..1, strict duration1..60000ms, aware ISO timestamps,
+ 32KiB streamed JSON,60new saves/minute/replay exempt; values remain generated,
+  not clinical/physical evidence.008migration follows007 and preserves old data.
+- **Client:** Liam owns durable account-scoped outbox/dedupe/relaunch/retry and
+  explicit guest assignment. No app changes by backend. Exact target APP_READINGS.md;
+  source/CI/deployment/actual multi-phone acceptance remain separate.
+
+## Atomic device-party setup and one current OPEN party
+
+- **Choice:** additive authenticated POST/parties/resolve and GET/me/parties/current;
+  one transaction resolves existing OPEN party or creates name/code/host/member/
+  binding together, default `Party`. No per-user grant for this path; legacy
+  explicit PUT/device grant remains outside it.
+- **Why:** create-then-bind accumulated unusable parties; static NFC unit/code
+  must converge to one actual party without rewriting tags/transferring hosts or
+  changing test ownership. Joining never arms.
+- **Policy:** one OPEN membership per opaque subject across every create/join,
+  host included; authorized409 context, no silent leave/switch. UUID/canonical
+  request ledger makes timeout/restart/closed-party retries safe; current read is
+  a persisted read-only snapshot.
+- **Migration:**007 future SQL guards preserve every old object/row/BLOB/hash,
+  including legacy duplicates; no arbitrary winner/auto-close/delete for an index.
+  Users explicitly close/leave extras. Backup/private-copy preservation trial
+  before activation; source/CI/production/native acceptance are separate.
+- **Delete:** existing retry-safe host close ends games/invalidates invitation/
+  releases binding/current membership, retains metadata/private histories. No purge.
+- **Rejected:** UI-only membership hiding, code-only escape after linking failure,
+  granting all users/provisioning unknown devices, unit/host takeover, new game
+  engine or firmware/measurement contract changes.
+
 ## Party persistence and NFC-first context
 
 - **Choice:** additive schema5 party/membership/operator-grant/device-binding/game

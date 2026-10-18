@@ -1,5 +1,19 @@
 # kickBAC firmware bot — current startup handoff
 
+## Next transport experiment — tested source, NOT flashed
+
+Read [TRANSPORT_STAGE_EXPERIMENT.md](TRANSPORT_STAGE_EXPERIMENT.md). Branch
+`firmware/transport-stage-diagnostic`, base `a0bd77b`, adds public HTTPS numeric
+UTC/monotonic boundaries and ONE separate payload-free TCP443 control only after
+first reconnect failure. Host suite/Ruff/all3cross-builds pass; independent scoped
+review approved. Separate TCP experiment is not instrumentation/proof of the
+original TLS connection, and DNS+connect have separate bounds. No new serial,
+private entry, flash, packet capture, authenticated retry recovery or ADC/upload.
+Explicit502/live-ticket host fixtures confirm existing terminal latch mechanism,
+not attribution of the actual rollout request to this board. Await ONE coordinated
+bounded source-filtered host observation/no-deploy window before physical repeat.
+Last flashed17ed04b and latest unresolved offline state below remain unchanged.
+
 ## Latest physical checkpoint — no-ADC image flashed, real device auth passed
 
 **Latest state supersedes the earlier pass:** at07:56:14UTC heartbeat was stale

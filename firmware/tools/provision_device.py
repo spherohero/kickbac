@@ -70,6 +70,7 @@ def safe_line(raw: bytes) -> str | None:
         r"probe_wifi (?:joined|rejoined)=1 dhcp=1 rssi_dbm=-?\d+ channel=\d+",
         r"probe_https attempt=\d+ status=-?\d+ trusted_tls=[01] health_ok=[01]",
         r"probe_https_error attempt=\d+ tls_code=-?\d+ duration_ms=\d+",
+        r"probe_transport stage=(?:HTTPS|TCP) attempt=\d+ phase=(?:BEGIN|END) monotonic_ms=\d+ utc_s=\d+ status=-?\d+ duration_ms=\d+",
         r"CONNECTIVITY_PASS wifi=1 dhcp=1 dns=1 trusted_https=1 reconnect=1 sensor=disabled uploads=disabled",
         r"CONNECTIVITY_FAIL stage=[a-z_]+ sensor=disabled uploads=disabled",
         r"device_ready credential_relay=ram_only sensor=disabled uploads=disabled",

@@ -67,6 +67,8 @@ class DeviceProvisionTests(unittest.TestCase):
             b"device_ready credential_relay=" + b"x" * 43,
             b"device_poll token=" + b"x" * 43,
             b"probe_wifi joined=1 ssid=fixture-private-network",
+            b"probe_transport stage=TCP attempt=2 phase=END monotonic_ms=1 utc_s=0 status=0 duration_ms=7000 private=fixture",
+            b"probe_transport stage=TCP attempt=2 phase=END monotonic_ms=1 utc_s=fixture-private status=0 duration_ms=7000",
         ]:
             self.assertIsNone(self.module.safe_line(line))
 
@@ -74,6 +76,9 @@ class DeviceProvisionTests(unittest.TestCase):
         for line in [
             "device_auth_negative status=401 rejected=1",
             "probe_https_error attempt=2 tls_code=-1 duration_ms=7001",
+            "probe_transport stage=HTTPS attempt=2 phase=BEGIN monotonic_ms=100 utc_s=1792300000 status=0 duration_ms=0",
+            "probe_transport stage=HTTPS attempt=2 phase=END monotonic_ms=7101 utc_s=1792300007 status=-1 duration_ms=7001",
+            "probe_transport stage=TCP attempt=2 phase=END monotonic_ms=14101 utc_s=1792300014 status=0 duration_ms=7000",
             "device_heartbeat number=1 status=200 online=1 last_seen_at=2026-10-18T00:30:01.123456+00:00",
             "device_poll number=1 status=200 active_state=IDLE actions=disabled",
             "DEVICE_PASS identity=kb-demo-01 heartbeats=3 polls=7 online_refresh=1 ongoing=1 uploads=disabled",

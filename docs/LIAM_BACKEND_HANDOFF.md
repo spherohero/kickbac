@@ -4,6 +4,18 @@ This replaces the older local/unpublished-profile handoff. **Backend profile, ph
 
 ### Latest ownership — Liam controls all remaining iOS work
 
+Firmware-only next-test checkpoint: `firmware/transport-stage-diagnostic`, base
+`a0bd77bcb79766f91de6746e0ab02fa992f4b337`; publishing PR/head records source state.
+[TRANSPORT_STAGE_EXPERIMENT.md](TRANSPORT_STAGE_EXPERIMENT.md) defines tested
+UTC/monotonic public-health boundaries and one separate payload-free TCP control.
+**NON-BREAKING/no Liam action**: methods/fields/examples/auth/states/units/cadence
+are unchanged; no app edits or API meaning change. Explicit502 fault fixtures
+prove existing fence/credential-clearing terminal behavior, not a new recovery.
+Host suite/Ruff/all3cross-builds pass and scoped independent review approved; NOT
+flashed/physically exercised. No further private-entry/capture started. Next gate
+is one backend-coordinated bounded source-filtered observation/no-deploy window.
+Last device observation remains offline, ADC/uploads disabled. All iOS stays Liam's.
+
 Nicholas's newer direction: Liam is back and controls the rest of the app.
 This **ends** the temporary backend-led iOS implementation, including the
 previously lifted04:00 cutoff below. Backend stopped client worker

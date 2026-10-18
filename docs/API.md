@@ -15,8 +15,13 @@ Approved primary login is **phone number + SMS OTP through Auth0/Twilio, not SMS
 
 ## Private reading summary
 
-**Additive local implementation; not yet deployed.** With this slice the local
-API has 18 operations; the live 17-operation release above is unchanged.
+**Additive local implementation; not yet deployed.** The combined party/profile
+branch currently has 31 operations on schema5; the live 17-operation release above
+is unchanged. Party create/join/binding/game/context/history routes are documented
+in [PARTIES.md](PARTIES.md) and remain under review. NFC-specific ARM-time context
+is a separate proposal in [NFC_CHECK_IN.md](NFC_CHECK_IN.md), not an implemented
+endpoint. Existing 17 operations and 23 component schemas are frozen by an
+executable compatibility fixture captured from public HTTPS OpenAPI.
 
 `GET /v1/me/reading-summary` uses the existing user API access token, with no
 request body or pagination/filter parameters. Example for an empty account:

@@ -1,5 +1,30 @@
 # Backend release verification — games, profiles and private history
 
+## Local party/profile implementation — not a production release
+
+Draft [PR #26](https://github.com/spherohero/kickbac/pull/26) has been integrated
+locally on backend-owned `backend/party-profile-completion`, with worker commits
+cherry-picked into the complete application and both routers registered. Current
+local surface is 31 operations/schema5. Existing production runtime/checkpoint
+below remains unchanged; **no production migration, deployment, user writes or
+sensor enablement occurred**.
+
+Parent execution of the combined source passed **447 tests**, including
+backend/deployment suites and six real-loopback HTTP party/history/streaming
+acceptance cases. Ruff lint, 65-file formatting, compilation, `git diff --check`
+and the original explicit simulator passed. Two additional parent concurrency
+checks passed: simultaneous join-limit exhaustion across three app instances,
+and an arm transaction holding the write lock while a competing reassignment
+waits then rejects `device_busy`. These are local fixture results, not native,
+Auth0 delivery, physical sensor or target-host acceptance. Independent core/game
+reviews and new exact-head CI are still required before ready/merge claims.
+
+Migration005/reading-summary slices at `73d66be` independently passed spec and
+security/correctness review, including populated backups/restores and a WAL
+snapshot probe. Executable compatibility checks preserve the existing live 17
+operations, 23 schemas and authentication definitions. NFC party/game context
+at arming is **not yet implemented**; see [NFC_CHECK_IN.md](NFC_CHECK_IN.md).
+
 ## Live checkpoint
 
 **Current final runtime:** `/opt/kickbac/releases/games-1e9d830-20261018T005743Z`, activated **2026-10-18T00:57:57.865903+00:00**, source **`1e9d83070cf4096283246078cb9a9193519a13ec`**, merged [PR #8](https://github.com/spherohero/kickbac/pull/8), main merge `58c3a0bcef5afd9aa8d0a040f0ccdba7310dd529`. ArchiveSHA256 `537d0840f298a2620ea4912bc0a31bf1d1ec3e755805fb25297669b517eba462`;31 manifest entries verified after activation. Effective process working directory matches this release; runtime/lock/migration/deployment hashes match published main. Fresh trusted public health200/OpenAPI17 and all6 missing-auth profile/game/stats/history requests were read back; all rejected401 as intended. Initial schema4 rollout below is retained as migration evidence.

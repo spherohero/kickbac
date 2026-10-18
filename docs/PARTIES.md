@@ -1,6 +1,21 @@
-# Parties and richer private profile history — implementation contract candidate
+# Parties and richer private profile history — local implementation under review
 
-**Status: proposed, not implemented or deployed.** Owner: backend Bot, branch `backend/party-profile-contract`, base `dd19b404210517b1b0c8b8f8a1809ba988bb250d`. Nicholas authorized continuing the profile/party requirements. Existing live API remains the 17-operation schema4 contract until a tested release is actually deployed. This document becomes an implemented contract only after review, tests and explicit status update; live OpenAPI remains authoritative for production availability.
+**Status: implemented locally, under independent review; NOT deployed.** Owner:
+backend Bot, integration branch `backend/party-profile-completion`, publishing
+branch `backend/party-profile-contract` in [draft PR #26](https://github.com/spherohero/kickbac/pull/26),
+based on main `dd19b404210517b1b0c8b8f8a1809ba988bb250d`. The combined local
+application currently exposes 31 operations on schema5. Its real-loopback
+party→join→game→simulator upload→completion→private history/restart acceptance
+passes. Existing live API remains the 17-operation schema4 release until a
+backed-up, target-verified release is deployed. Exact head CI/review/merge and
+production deployment are separate gates.
+
+**NFC-first follow-up:** the host-binding/member/game storage below does not yet
+implement authoritative party/game association at arming time. Nicholas explicitly
+confirmed player tap before measurement to arm that person's next test. See
+[NFC_CHECK_IN.md](NFC_CHECK_IN.md) for the proposed additive retry-safe check-in
+operation and native provisioning gates. Do not present client-selected result
+links as implemented NFC attribution.
 
 ## === LIAM / iOS IMPACT ===
 

@@ -2,6 +2,19 @@
 
 Status: **LIVE at https://api.kickbac.vodka**, published and merged in [PR #7](https://github.com/spherohero/kickbac/pull/7). Explicit backed-up schema3→4 upgrade, staged target-host HTTP/profile/game/restart/migration checks and public17-operation contract verification passed. All14 earlier operations/18 component schemas are unchanged. See [BACKEND_RELEASE_VERIFICATION.md](BACKEND_RELEASE_VERIFICATION.md) and [LIAM_BACKEND_HANDOFF.md](LIAM_BACKEND_HANDOFF.md). Real native token/profile/history/game acceptance remains Liam-owned and unverified.
 
+## Local party/context additions — not deployed
+
+The combined source in draft [PR #26](https://github.com/spherohero/kickbac/pull/26)
+adds host-controlled parties/device assignment/game instances, one own completion
+per instance, explicit owned measurement links, and `GET /v1/me/game-history`.
+Read [PARTIES.md](PARTIES.md) for the exact contract. Generic live routes and their
+five-field requests/responses below stay unchanged; party results share the same
+immutable ledger and fixed 10-point award. Rich history returns explicit null
+context for legacy rows, not guessed party/placement/BAC. All accepted readings
+remain in ordinary private history. These source additions are under independent
+review, not production availability, NFC ARM-time attribution, shared gameplay,
+anti-cheat, a public leaderboard or native acceptance.
+
 ## Figma scope inspected read-only
 
 Board: https://www.figma.com/board/XlYEabKISK95kAu1XfxaCB/Swamp-Hacks . Current `Party lofi` section `78:227` shows code join/create, a party room, a game picker with **Trivia** and **Pictionary**, and a leaderboard affordance. `Me lofi` section `83:227` shows **Games played**, **Wins**, **Points**, **Parties** and **Reading history — Private**. Table `23:184` describes games earning points and excludes manually scored games.

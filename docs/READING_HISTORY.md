@@ -2,6 +2,17 @@
 
 Every **accepted completed test** is persisted in SQLite `measurements`, linked to its unique session/device and the session's verified Auth0 subject. The private profile uses the same subject. History is not stored in the mutable name/photo fields, and does not depend on creating the profile first. No extra user table or duplicate history store is needed.
 
+## Exact summary and game-use readings — local addition, not deployed
+
+`GET /v1/me/reading-summary` supplies an owner-scoped exact SQL count and latest
+saved measurement in one read-only snapshot; details in
+[API.md](API.md#private-reading-summary). It includes ordinary, game-use and
+simulator readings independently of profile existence or loaded pages. The new
+party result context references an existing owned measurement; it does not
+remove it from this history, create a second reading, award test points or make
+its unavailable BAC numeric. NFC ARM-time context is still proposed separately
+in [NFC_CHECK_IN.md](NFC_CHECK_IN.md). Existing live history below is unchanged.
+
 ## === LIAM / iOS IMPACT ===
 
 **NON-BREAKING — existing API; explicit integration for Me → Reading history.**

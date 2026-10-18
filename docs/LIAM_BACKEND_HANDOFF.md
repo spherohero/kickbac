@@ -2,6 +2,39 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+### Integrated party/profile source — review checkpoint, not deployed
+
+- Owner: backend Bot; integration `backend/party-profile-completion`, publishing
+  `backend/party-profile-contract` in [PR #26](https://github.com/spherohero/kickbac/pull/26).
+  Base remains main `dd19b404210517b1b0c8b8f8a1809ba988bb250d`; combined router/race
+  checkpoint is `802f5c4`. Worker source is cherry-picked and parent-executed,
+  not accepted solely from worker summaries. PR remains draft; no merge/deployment.
+- **Additive / NON-BREAKING:** 31 local operations/schema5; all existing 17 public
+  operations, 23 component schemas and security definitions pass the immutable
+  compatibility fixture. Exact new methods/payloads/errors/examples are in
+  [PARTIES.md](PARTIES.md); current production remains schema4/17 operations.
+  Liam retains current UI and integration until deployment availability. No iOS
+  or firmware source changes, production grants, user writes, SMS or arming.
+- Implemented locally: host create/read/membership lifecycle; code/device join and
+  persisted attempt limits; operator-granted binding and busy-session fences;
+  host game instances; atomic own result/context with one award; rich all-game
+  history; SQL reading summary. Parent combined Python 3.12 run passed **447 tests**
+  including six actual loopback HTTP acceptance cases, Ruff lint/65-file formatting,
+  compilation and the original simulator. Two further parent cross-app race tests
+  passed (join limit; arm-before-rebind). Independent core/game review is in progress.
+- NFC ARM-time authoritative context is still the next implementation, not proved
+  by existing result-link history. Nicholas confirmed tap before measurement to
+  arm for the specific user, then live app status. Initial app updates use session
+  polling and accepted server completion, not fabricated or preaccepted results.
+  Native entitlement/routing and truthful physical acquisition remain separate.
+- Reproduce from `backend/` with `PYTHONPATH` unset:
+  `uv run --locked --python 3.12 pytest -q tests ../deploy/ubuntu/tests integration/test_party_http.py`,
+  `uv run --locked ruff check . ../deploy/ubuntu`,
+  `uv run --locked ruff format --check . ../deploy/ubuntu`,
+  `uv run --locked python -m compileall -q kickbac ../deploy/ubuntu`,
+  `uv run --locked python -m kickbac.simulator`.
+  New CI explicitly executes party HTTP acceptance rather than only collecting unit tests.
+
 ### NFC-first product priority — proposed check-in context
 
 Nicholas clarified that the primary slice is host tap-to-link, then player tap

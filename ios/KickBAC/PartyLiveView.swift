@@ -24,63 +24,16 @@ struct PartyView: View {
     @State private var gameContext: APIPartyGame?
     @State private var showsTrivia = false
     @State private var opensTrivia = false
+    @FocusState private var entryFocused: Bool
     @Environment(\.scenePhase) private var scenePhase
     private enum Destination: String, Identifiable {
-        case create, join, deviceJoin, bind, invite, history, reading, gameInvite, preview
+        case create, join, deviceJoin, bind, invite, history, reading, gameInvite, games, preview
         var id: Self { self }
     }
     private var locked: Bool { store.isBusy || store.pending != nil }
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    if !session.isSignedIn {
-                        Text("Sign in to create or join a party.")
-                        Button("Sign in", action: onSignIn).buttonStyle(.glassProminent)
-                    } else {
-                        if let pending = store.pending {
-                            Text("Saved \(pending.kind == .checkIn ? "check-in" : pending.kind == .game ? "game session" : "party creation") request. Retry to recover the same request; a timeout may already have been accepted.")
-                                .font(.footnote).foregroundStyle(.secondary)
-                            Button("Retry saved request") { Task { await submit(nil); await loadContext() } }.disabled(store.isBusy)
-                            if store.canDiscardPending {
-                                Text("The server rejected this attempt. Discard it to change the request.").font(.footnote)
-                                Button("Discard rejected request") { store.discardRejectedRequest() }.disabled(store.isBusy)
-                            }
-                        }
-                        if let message = error ?? store.message { Text(message).font(.footnote).foregroundStyle(.secondary) }
-                        if let party = store.party {
-                            room(party)
-                        } else {
-                            Text("Party").font(.system(.largeTitle, design: .rounded, weight: .medium))
-                            Button("Create a party") { open(.create) }.buttonStyle(.glassProminent).disabled(locked)
-                            Button("Join with code") { open(.join) }.buttonStyle(.glass).disabled(locked)
-                            Button("Join by QR or device link") { open(.deviceJoin) }.disabled(locked)
-                            Text("NFC isn't available in this build. Use a party code, QR code or printed device ID. Joining never starts a test.")
-                                .font(.footnote).foregroundStyle(.secondary)
-                            ForEach(parties) { party in
-                                Button {
-                                    Task { _ = await store.update(expectedID: party.id) { try await session.party(party.id) }; await loadContext() }
-                                } label: {
-                                    HStack { Text(party.name); Spacer(); Text(party.state == "OPEN" ? "Open" : "Closed").foregroundStyle(.secondary) }
-                                }.disabled(locked)
-                            }
-                            if moreParties { Button("Load more parties") { Task { await loadParties(more: true) } } }
-                        }
-                        Button("My check-ins") { open(.history) }
-                    }
-                    #if DEBUG
-                    Button("Local party preview · unsaved") { open(.preview) }.font(.footnote)
-                    #endif
-                }
-                .padding(24).frame(maxWidth: 480).frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .background(Color("SplashBackground").ignoresSafeArea())
-            .refreshable { await refresh() }
-            .toolbar {
-                if store.party != nil { ToolbarItem(placement: .topBarTrailing) { Button("Back") { store.switchOwner(nil); store.switchOwner(owner); Task { await loadParties() } } } }
-            }
-        }
+        page
         .font(.system(.body, design: .rounded)).tint(.primary).preferredColorScheme(.dark)
         .sheet(item: $destination, onDismiss: {
             if opensTrivia { opensTrivia = false; showsTrivia = true }
@@ -100,11 +53,11 @@ struct PartyView: View {
         .confirmationDialog("Start your test?", isPresented: $showsStartTest, titleVisibility: .visible) {
             Button("Start my test") { Task { if await startCheckIn(game: nil) { open(.reading) } } }
         } message: {
-            Text("Reserve \(store.party?.deviceID ?? "the assigned device") for your account for up to 60 seconds. This is a party-only check-in. The operator starts acquisition separately over USB; breath is not validated.")
+            Text("Reserve the breathalyzer for your test for up to 60 seconds. The operator starts the reading separately.")
         }
-        .confirmationDialog("Close this party?", isPresented: $showsClose, titleVisibility: .visible) {
-            Button("Close party", role: .destructive) { Task { await changeParty(action: "close", clear: true) } }
-        } message: { Text("This closes its open game session and releases its device. Existing private check-ins remain saved.") }
+        .confirmationDialog("End this party?", isPresented: $showsClose, titleVisibility: .visible) {
+            Button("End party", role: .destructive) { Task { await changeParty(action: "close", clear: true) } }
+        } message: { Text("This ends the party and any game in progress.") }
         .task(id: owner) {
             store.switchOwner(owner); history.switchOwner(owner)
             parties = []; games = []; device = nil; trivia = nil; gameContext = nil; showsTrivia = false; destination = nil
@@ -117,68 +70,225 @@ struct PartyView: View {
         }
     }
 
-    @ViewBuilder private func room(_ party: APIParty) -> some View {
-        Text(party.name).font(.system(.largeTitle, design: .rounded, weight: .medium))
-        Text("\(party.memberCount) members · \(party.state == "OPEN" ? "Open" : "Closed")").foregroundStyle(.secondary)
-        Text("Member names and shared scores aren't available yet.").font(.footnote).foregroundStyle(.secondary)
-        if let code = party.joinCode {
-            Button { open(.invite) } label: { LabeledContent("Party code", value: code) }.buttonStyle(.glass)
-        }
-        if party.state == "OPEN" {
-            if let id = party.deviceID {
-                Text("Breathalyzer: \(id)").font(.subheadline)
-                if let device { Text(device.online ? "Device online" : "Device offline · a test may time out").font(.footnote).foregroundStyle(.secondary) }
-                Button("Start my test") { showsStartTest = true }.buttonStyle(.glassProminent).disabled(locked || deviceFlow.hasActiveSession)
-            } else {
-                Text("No breathalyzer linked. A host with operator approval must link one before check-in.").font(.footnote)
-            }
-            if deviceFlow.hasActiveSession {
-                Button("View my current test") { open(.reading) }
-            }
-            if party.isHost {
-                Button("Link breathalyzer") { open(.bind) }.disabled(locked)
-                if party.deviceID != nil { Button("Unlink breathalyzer") { Task { await changeParty(action: "unbind") } }.disabled(locked) }
-            }
-            Text("Local games").font(.title2.bold())
-            Text("Game sessions are saved on the server. Questions, turns, scores and standings are local to this iPhone and aren't saved or shared.")
-                .font(.footnote).foregroundStyle(.secondary)
-            ForEach(games.filter { $0.state == "OPEN" }) { game in
-                HStack(spacing: 12) {
-                    PartyGameIcon(game: game.gameID == "pictionary" ? .pictionary : .trivia)
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(game.gameID.capitalized).font(.headline)
-                        if game.gameID == "trivia" {
-                            Button(trivia != nil && gameContext?.id == game.id ? "Return to local Trivia" : "Play local Trivia") {
-                                if trivia != nil && gameContext?.id == game.id {
-                                    if trivia?.phase == .invitation { open(.gameInvite) }
-                                    else { showsTrivia = true }
-                                } else {
-                                    gameContext = game; trivia = TriviaPreview(); open(.gameInvite)
-                                }
-                            }.disabled(locked)
-                        } else { Text("Gameplay unavailable").font(.footnote) }
-                        if party.isHost {
-                            Button("Close game session") { Task {
-                                do { _ = try await session.closePartyGame(game.id); await loadContext() }
-                                catch { self.error = PartyStore.failure(error) }
-                            } }.disabled(locked)
+    private var page: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 32) {
+                HStack(alignment: .top, spacing: 16) {
+                    Text(store.party?.name ?? "Party")
+                        .font(.system(.largeTitle, design: .rounded, weight: .medium))
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .accessibilityAddTraits(.isHeader)
+                    options
+                }
+                if let message = error ?? store.message {
+                    Text(message).font(.footnote).foregroundStyle(.secondary)
+                }
+                if store.isBusy {
+                    ProgressView().frame(maxWidth: .infinity)
+                } else if store.pending != nil {
+                    VStack(spacing: 12) {
+                        Button("Try again") { Task { await submit(nil); await loadContext() } }
+                            .partySecondaryAction()
+                        if store.canDiscardPending {
+                            Button("Change request") { store.discardRejectedRequest() }.frame(minHeight: 44)
                         }
                     }
                 }
+                if session.isSignedIn {
+                    if let party = store.party { room(party) }
+                    else { entry }
+                    Button { open(.history) } label: {
+                        HStack(spacing: 14) {
+                            Image("ReadingClock").resizable().scaledToFit().frame(width: 22, height: 22)
+                            Text("My check-ins").font(.system(.headline, design: .rounded))
+                            Spacer(minLength: 8)
+                            Image("ProfileChevron").resizable().scaledToFit().frame(width: 16, height: 16)
+                        }.frame(maxWidth: .infinity, minHeight: 56).contentShape(.rect)
+                    }.buttonStyle(ProfilePressStyle())
+                } else {
+                    Text("Sign in to create or join a party.").foregroundStyle(.secondary)
+                    Button("Sign in", action: onSignIn).partyPrimaryAction()
+                }
             }
-            if party.isHost && !games.contains(where: { $0.state == "OPEN" }) {
-                Button("Create Trivia session") { Task {
-                    do { await submit(try PartyWrite.game(partyID: party.id)); await loadContext() }
-                    catch { self.error = PartyStore.failure(error) }
-                } }.disabled(locked)
+            .frame(maxWidth: 480)
+            .padding(.horizontal, 24).padding(.top, 12).padding(.bottom, 32)
+            .frame(maxWidth: .infinity)
+        }
+        .scrollIndicators(.hidden)
+        .background(Color("SplashBackground").ignoresSafeArea())
+        .refreshable { await refresh() }
+    }
+
+    private var entry: some View {
+        VStack(alignment: .leading, spacing: 32) {
+            Button { open(.deviceJoin) } label: {
+                VStack(alignment: .leading, spacing: 28) {
+                    HStack {
+                        Image("PartyNFC").resizable().scaledToFit().frame(width: 36, height: 36)
+                        Spacer(minLength: 8)
+                        Image("ProfileChevron").resizable().scaledToFit().frame(width: 22, height: 22)
+                    }.accessibilityHidden(true)
+                    Text("Join a party").font(.system(.title, design: .rounded, weight: .medium))
+                }
+                .padding(24).frame(maxWidth: .infinity, minHeight: 164, alignment: .leading)
+                .foregroundStyle(.black)
+                .background(Color(red: 0.68, green: 0.84, blue: 0.80), in: .rect(cornerRadius: 28))
+                .contentShape(.rect(cornerRadius: 28))
             }
-            if party.isHost {
-                Button("Close party", role: .destructive) { showsClose = true }.disabled(locked)
-            } else {
-                Button("Leave party", role: .destructive) { Task { await changeParty(action: "leave", clear: true) } }.disabled(locked)
+            .buttonStyle(ProfilePressStyle()).disabled(locked)
+            .accessibilityHint("Join using a breathalyzer QR code or device link.")
+            GlassEffectContainer(spacing: 12) {
+                VStack(spacing: 12) {
+                    Button("Join with code") { open(.join) }.partySecondaryAction().disabled(locked)
+                    Button("Create a party") { open(.create) }.partyPrimaryAction().disabled(locked)
+                }
+            }
+            if !parties.isEmpty {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Your parties").font(.system(.title2, design: .rounded, weight: .medium))
+                    ForEach(parties) { party in
+                        Button {
+                            Task { _ = await store.update(expectedID: party.id) { try await session.party(party.id) }; await loadContext() }
+                        } label: {
+                            HStack(spacing: 12) {
+                                Text(party.name).font(.headline)
+                                Spacer(minLength: 8)
+                                if party.state != "OPEN" { Text("Ended").font(.subheadline).foregroundStyle(.secondary) }
+                                Image("ProfileChevron").resizable().scaledToFit().frame(width: 16, height: 16)
+                            }.frame(maxWidth: .infinity, minHeight: 52).contentShape(.rect)
+                        }.buttonStyle(ProfilePressStyle()).disabled(locked)
+                    }
+                    if moreParties { Button("Load more parties") { Task { await loadParties(more: true) } }.frame(minHeight: 44) }
+                }
             }
         }
-        Button("Refresh party") { Task { await refresh() } }.disabled(store.isBusy)
+    }
+
+    private var options: some View {
+        Menu {
+            Button("Refresh") { Task { await refresh() } }.disabled(store.isBusy)
+            if let party = store.party {
+                Button("All parties") { store.switchOwner(nil); store.switchOwner(owner); Task { await loadParties() } }.disabled(store.isBusy)
+                if party.state == "OPEN" {
+                    if party.isHost {
+                        Button("Link breathalyzer") { open(.bind) }.disabled(locked)
+                        if party.deviceID != nil {
+                            Button("Unlink breathalyzer") { Task { await changeParty(action: "unbind") } }.disabled(locked)
+                        }
+                        ForEach(games.filter { $0.state == "OPEN" }) { game in
+                            Button("End \(game.gameID.capitalized)", role: .destructive) { Task { await endGame(game) } }.disabled(locked)
+                        }
+                        Button("End party", role: .destructive) { showsClose = true }.disabled(locked)
+                    } else {
+                        Button("Leave party", role: .destructive) { Task { await changeParty(action: "leave", clear: true) } }.disabled(locked)
+                    }
+                }
+            }
+            #if DEBUG
+            Button("Party layout") { open(.preview) }
+            #endif
+        } label: {
+            Image("ProfileSettings").resizable().scaledToFit().frame(width: 22, height: 22)
+                .accessibilityHidden(true)
+        }
+        .buttonStyle(.glass).buttonBorderShape(.circle).controlSize(.large).fixedSize()
+        .accessibilityLabel("Party options")
+    }
+
+    @ViewBuilder private func room(_ party: APIParty) -> some View {
+        if let code = party.joinCode {
+            Button { open(.invite) } label: {
+                HStack(spacing: 12) {
+                    Text("Party code").foregroundStyle(.secondary)
+                    Spacer(minLength: 8)
+                    Text(code).fontWeight(.medium).monospaced()
+                    Image("ProfileChevron").resizable().scaledToFit().frame(width: 16, height: 16)
+                }.frame(maxWidth: .infinity, minHeight: 28)
+            }
+            .buttonStyle(.glass).buttonBorderShape(.roundedRectangle(radius: 18)).controlSize(.large)
+        }
+        if party.state == "OPEN" {
+            if !games.filter({ $0.state == "OPEN" }).isEmpty {
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Ongoing games").font(.system(.title2, design: .rounded, weight: .medium))
+                    ForEach(games.filter { $0.state == "OPEN" }) { game in ongoingGame(game) }
+                }
+            }
+            if party.isHost {
+                if party.deviceID == nil {
+                    Button("Link breathalyzer") { open(.bind) }.partyPrimaryAction().disabled(locked)
+                } else if !games.contains(where: { $0.state == "OPEN" }) {
+                    Button("Start a game") { open(.games) }.partyPrimaryAction().disabled(locked)
+                }
+            }
+            if party.deviceID != nil {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack(spacing: 12) {
+                        Text("Breathalyzer").font(.headline)
+                        Spacer(minLength: 8)
+                        if let device { Text(device.online ? "Online" : "Offline").font(.subheadline).foregroundStyle(.secondary) }
+                    }
+                    if deviceFlow.hasActiveSession {
+                        Button("View my test") { open(.reading) }.partySecondaryAction()
+                    } else {
+                        Button("Start my test") { showsStartTest = true }.partySecondaryAction().disabled(locked)
+                    }
+                }
+            } else if !party.isHost {
+                Text("Waiting for a breathalyzer").foregroundStyle(.secondary)
+            }
+        } else {
+            Text("Party ended").foregroundStyle(.secondary)
+        }
+        VStack(alignment: .leading, spacing: 20) {
+            HStack {
+                Text("People").font(.system(.title2, design: .rounded, weight: .medium))
+                Spacer(minLength: 8)
+                Text("\(party.memberCount)").font(.subheadline).monospacedDigit().foregroundStyle(.secondary)
+            }
+            HStack(spacing: 16) {
+                ProfileAvatar(photoData: owner != nil && profile.owner == owner ? profile.profile.photoData : nil, side: 56)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(playerName).font(.headline)
+                    Text(party.isHost ? "Host" : "Member").font(.subheadline).foregroundStyle(.secondary)
+                }
+            }.accessibilityElement(children: .combine)
+        }
+    }
+
+    private var playerName: String {
+        owner != nil && profile.owner == owner && !profile.profile.name.isEmpty ? profile.profile.name : "Player"
+    }
+
+    private func ongoingGame(_ game: APIPartyGame) -> some View {
+        Button {
+            if trivia != nil && gameContext?.id == game.id {
+                if trivia?.phase == .invitation { open(.gameInvite) }
+                else { showsTrivia = true }
+            } else {
+                gameContext = game; trivia = TriviaPreview(); open(.gameInvite)
+            }
+        } label: {
+            HStack(spacing: 16) {
+                PartyGameIcon(game: game.gameID == "pictionary" ? .pictionary : .trivia)
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(game.gameID.capitalized).font(.system(.title3, design: .rounded, weight: .medium))
+                    Text(game.gameID != "trivia" ? "Coming soon" : trivia != nil && gameContext?.id == game.id ? "Return to game" : "Join game")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                }.frame(maxWidth: .infinity, alignment: .leading)
+                Image("ProfileChevron").resizable().scaledToFit().frame(width: 16, height: 16)
+            }
+            .padding(20).frame(maxWidth: .infinity)
+            .background(.white.opacity(0.06), in: .rect(cornerRadius: 24))
+            .contentShape(.rect(cornerRadius: 24))
+        }
+        .buttonStyle(ProfilePressStyle()).disabled(locked || game.gameID != "trivia")
+    }
+
+    private func endGame(_ game: APIPartyGame) async {
+        do { _ = try await session.closePartyGame(game.id); await loadContext() }
+        catch { self.error = PartyStore.failure(error) }
     }
 
     @ViewBuilder private func sheet(_ target: Destination) -> some View {
@@ -187,8 +297,16 @@ struct PartyView: View {
             #if DEBUG
             PartyPreviewView(profile: profile, owner: owner, session: session)
             #else
-            Text("Local preview unavailable")
+            EmptyView()
             #endif
+        case .games:
+            PartyGamePicker(onStart: { game in
+                guard game == .trivia, let party = store.party else { return }
+                Task {
+                    do { await submit(try PartyWrite.game(partyID: party.id)); await loadContext() }
+                    catch { self.error = PartyStore.failure(error) }
+                }
+            }, availableGames: [.trivia])
         case .gameInvite:
             TriviaInvitationSheet {
                 trivia?.join(); opensTrivia = true; destination = nil
@@ -206,7 +324,6 @@ struct PartyView: View {
         case .history:
             NavigationStack {
                 List {
-                    Text("Private check-ins · only your own sessions and readings").font(.footnote)
                     ForEach(history.page?.items ?? []) { item in
                         VStack(alignment: .leading, spacing: 8) {
                             Text(item.session.createdAt).font(.caption).foregroundStyle(.secondary)
@@ -234,49 +351,72 @@ struct PartyView: View {
                     .refreshable { await loadHistory() }
                     .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { destination = nil } } }
             }.task { await loadHistory() }
-        default:
-            NavigationStack {
-                Form {
+        default: entrySheet(target)
+        }
+    }
+
+    private func entrySheet(_ target: Destination) -> some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 28) {
                     if target == .invite {
-                        Text("Share this server-issued code to invite people.").font(.footnote)
-                        Text(store.party?.joinCode ?? "Code unavailable").font(.largeTitle).monospaced().textSelection(.enabled)
-                        Text("NFC isn't configured. Joining with this code doesn't start a test.").font(.footnote)
+                        VStack(spacing: 20) {
+                            Text("Party code").font(.subheadline).foregroundStyle(.secondary)
+                            Text(store.party?.joinCode ?? "—")
+                                .font(.system(.largeTitle, design: .rounded, weight: .medium)).monospaced()
+                                .textSelection(.enabled)
+                                .frame(maxWidth: .infinity).padding(.vertical, 24)
+                        }.frame(maxWidth: .infinity)
+                        if let code = store.party?.joinCode {
+                            ShareLink(item: code) { Text("Share code") }.partyPrimaryAction()
+                        }
                     } else {
                         let label = target == .create ? "Party name" : target == .join ? "Party code" : "Device link or ID"
-                        Text(label).font(.subheadline)
-                        TextField(label, text: $input, prompt: Text(target == .create ? "Friday night" : target == .join ? "Eight-character code" : "Official link or printed ID"))
-                            .textInputAutocapitalization(target == .create ? .sentences : target == .join ? .characters : .never)
-                            .autocorrectionDisabled()
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text(label).font(.system(.subheadline, design: .rounded, weight: .medium))
+                            TextField(label, text: $input, prompt: Text(target == .create ? "Friday night" : target == .join ? "Eight-character code" : "Link or printed ID"))
+                                .focused($entryFocused)
+                                .textFieldStyle(.plain)
+                                .textInputAutocapitalization(target == .create ? .sentences : target == .join ? .characters : .never)
+                                .autocorrectionDisabled()
+                                .padding(18).background(.white.opacity(0.06), in: .rect(cornerRadius: 18))
+                        }
                         if target == .bind || target == .deviceJoin {
-                            Text("NFC isn't available. Enter the printed ID or scan its QR code. Linking requires a backend operator grant; the app cannot grant permission.")
-                                .font(.footnote)
                             if DataScannerViewController.isSupported && DataScannerViewController.isAvailable {
-                                Button("Scan QR code") { showsScanner = true }
+                                Button("Scan QR code") { entryFocused = false; showsScanner = true }.partySecondaryAction()
                             }
                         }
-                        if let message = error ?? store.message { Text(message).font(.footnote) }
+                        if let message = error ?? store.message { Text(message).foregroundStyle(.secondary).font(.footnote) }
                         if store.pending != nil {
-                            Button("Retry saved request") { Task {
+                            Button("Try again") { Task {
                                 await submit(nil)
                                 if store.pending == nil { destination = nil; await loadContext() }
-                            } }.disabled(store.isBusy)
+                            } }.partySecondaryAction().disabled(store.isBusy)
                             if store.canDiscardPending {
-                                Button("Discard rejected request") { store.discardRejectedRequest() }.disabled(store.isBusy)
+                                Button("Change request") { store.discardRejectedRequest() }.frame(minHeight: 44)
                             }
                         }
-                        Button(target == .create ? "Create party" : target == .bind ? "Confirm link" : "Join party") { Task { await submitForm(target) } }
-                            .disabled(locked || input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                        Button(target == .create ? "Create party" : target == .bind ? "Link breathalyzer" : "Join party") {
+                            entryFocused = false
+                            Task { await submitForm(target) }
+                        }.partyPrimaryAction().disabled(locked || input.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
-                }.navigationTitle(target == .create ? "Create a party" : target == .bind ? "Link breathalyzer" : target == .invite ? "Invite people" : "Join a party")
-                    .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { destination = nil } } }
-                    .sheet(isPresented: $showsScanner) {
-                        NavigationStack {
-                            DeviceQRScanner { input = $0; showsScanner = false }
-                                .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { showsScanner = false } } }
-                        }
-                    }
+                }
+                .padding(24).frame(maxWidth: 480).frame(maxWidth: .infinity)
+            }
+            .scrollDismissesKeyboard(.interactively)
+            .background(Color("SplashBackground").ignoresSafeArea())
+            .navigationTitle(target == .create ? "Create a party" : target == .bind ? "Link breathalyzer" : target == .invite ? "Invite people" : "Join a party")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { destination = nil } } }
+            .sheet(isPresented: $showsScanner) {
+                NavigationStack {
+                    DeviceQRScanner { input = $0; showsScanner = false }
+                        .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Cancel") { showsScanner = false } } }
+                }
             }
         }
+        .font(.system(.body, design: .rounded)).preferredColorScheme(.dark)
     }
 
     private var matchingCheckIn: APICheckIn? {

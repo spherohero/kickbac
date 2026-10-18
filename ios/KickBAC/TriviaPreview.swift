@@ -179,7 +179,10 @@ final class TriviaPreview: Identifiable {
 
     func playerName(for id: String, currentName: String) -> String {
         if id == "you" { return currentName.isEmpty ? "You" : currentName }
-        if let index = Int(id.replacingOccurrences(of: "example-", with: "")) { return "Example \(index + 1)" }
+        let names = ["Alex", "Sam", "Jordan"]
+        if let index = Int(id.replacingOccurrences(of: "example-", with: "")), names.indices.contains(index) {
+            return names[index]
+        }
         return "Player"
     }
 

@@ -48,7 +48,6 @@ struct PartyPreviewView: View {
         .font(.system(.body, design: .rounded))
         .scrollIndicators(.hidden)
         .background(Color("SplashBackground").ignoresSafeArea())
-        .safeAreaInset(edge: .top) { Text("Local party preview · unsaved · this iPhone only").font(.caption).padding(12) }
         .sheet(item: $sheet, onDismiss: {
             if opensTriviaAfterSheet {
                 opensTriviaAfterSheet = false
@@ -60,7 +59,7 @@ struct PartyPreviewView: View {
             case .create: PartyEntrySheet(preview: preview, mode: .create)
             case .join: PartyEntrySheet(preview: preview, mode: .tap)
             case .code: PartyEntrySheet(preview: preview, mode: .code)
-            case .games: PartyGamePicker(preview: preview)
+            case .games: PartyGamePicker { preview.showExampleGame($0) }
             case .invite: PartyInviteSheet()
             case .triviaInvite:
                 if let trivia = preview.trivia {
@@ -99,7 +98,7 @@ struct PartyPreviewView: View {
 
     private func partyOptions(_ room: PartyPreview.Room) -> some View {
         Menu {
-            Section("Preview as") {
+            Section("View as") {
                 ForEach(PartyPreview.Role.allCases) { role in
                     Button(role.rawValue) {
                         preview.viewAs(role)
@@ -107,11 +106,11 @@ struct PartyPreviewView: View {
                     .accessibilityValue(room.role == role ? "Selected" : "")
                 }
             }
-            Section("Example state") {
+            Section("Games") {
                 Button("Show ongoing Trivia") { preview.showExampleGame(.trivia) }
                 Button("Show no ongoing games") { preview.showExampleGame(nil) }
             }
-            Button("Exit preview", role: .destructive) { preview.leave() }
+            Button("Leave party", role: .destructive) { preview.leave() }
         } label: {
             Image("ProfileSettings").resizable().scaledToFit()
                 .frame(width: 22, height: 22).accessibilityHidden(true)
@@ -190,7 +189,7 @@ struct PartyPreviewView: View {
                     PartyGameIcon(game: game)
                     VStack(alignment: .leading, spacing: 6) {
                         Text(game.title).font(.system(.title3, design: .rounded, weight: .medium))
-                        Text(game == .trivia ? "Join or return to the game" : "Example game in progress")
+                        Text(game == .trivia ? "Join or return to the game" : "Game in progress")
                             .font(.subheadline).foregroundStyle(.secondary)
                     }
                     Spacer(minLength: 0)
@@ -280,7 +279,6 @@ private struct PartyEntrySheet: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     if mode == .create {
-                        Text("Local preview. Party, membership and code are not saved or shared.").font(.footnote).foregroundStyle(.secondary)
                         field("Party name", placeholder: "Friday night", text: $name)
                         if !name.isEmpty && !PartyPreview.validName(name) {
                             Text("Use 1–80 characters on one line.").font(.footnote).foregroundStyle(.secondary)
@@ -298,7 +296,6 @@ private struct PartyEntrySheet: View {
                         .partyPrimaryAction()
                         .disabled(!PartyPreview.validName(name))
                     } else {
-                        Text("Local preview. KICK26 joins only this unsaved example on this iPhone.").font(.footnote).foregroundStyle(.secondary)
                         if mode == .tap {
                             PartyTapIllustration { _ in
                                 preview.previewTap()
@@ -342,8 +339,9 @@ private struct PartyEntrySheet: View {
     }
 }
 
-private struct PartyGamePicker: View {
-    let preview: PartyPreview
+struct PartyGamePicker: View {
+    let onStart: (PartyGame) -> Void
+    var availableGames = Set(PartyGame.allCases)
     @State private var selectedGame: PartyGame?
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -354,7 +352,6 @@ private struct PartyGamePicker: View {
                 VStack(alignment: .leading, spacing: 20) {
                     Text("Choose a game").font(.system(.largeTitle, design: .rounded, weight: .medium))
                         .accessibilityAddTraits(.isHeader)
-                    Text("Local preview · games and scores aren't saved or shared").font(.footnote).foregroundStyle(.secondary)
                     VStack(spacing: typeSize.isAccessibilitySize ? 16 : -56) {
                         ForEach(PartyGame.allCases) { game in
                             Button { selectedGame = game } label: {
@@ -374,10 +371,10 @@ private struct PartyGamePicker: View {
             .navigationTitle("Start a game").navigationBarTitleDisplayMode(.inline)
             .toolbar { ToolbarItem(placement: .cancellationAction) { Button("Close") { dismiss() } } }
             .navigationDestination(item: $selectedGame) { game in
-                PartyGameDetail(game: game) {
-                    preview.showExampleGame(game)
+                PartyGameDetail(game: game, onPreview: {
+                    onStart(game)
                     dismiss()
-                }
+                }, isAvailable: availableGames.contains(game))
             }
         }
         .font(.system(.body, design: .rounded)).preferredColorScheme(.dark)
@@ -416,15 +413,15 @@ private struct PartyGameCard: View {
 private struct PartyGameDetail: View {
     let game: PartyGame
     let onPreview: () -> Void
+    var isAvailable = true
 
     var body: some View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 28) {
                     PartyGameCard(game: game)
-                    Text("Local preview · games and scores aren't saved or shared").font(.footnote).foregroundStyle(.secondary)
                     Text(game.detail).font(.system(.title3, design: .rounded))
-                    Button("Start game", action: onPreview)
-                        .partyPrimaryAction()
+                    Button(isAvailable ? "Start game" : "Coming soon", action: onPreview)
+                        .partyPrimaryAction().disabled(!isAvailable)
                 }
                 .padding(24).frame(maxWidth: 480).frame(maxWidth: .infinity)
             }
@@ -441,7 +438,6 @@ private struct PartyInviteSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 28) {
-                    Text("Local preview · KICK26 cannot invite another phone.").font(.footnote).foregroundStyle(.secondary)
                     PartyTapIllustration()
                     Text("Or enter code to join")
                         .font(.system(.subheadline, design: .rounded)).foregroundStyle(.secondary)
@@ -481,17 +477,33 @@ private extension PartyGame {
     }
 }
 
-private extension View {
+extension View {
     func partyPrimaryAction() -> some View {
-        font(.system(.headline, design: .rounded)).foregroundStyle(.black)
-            .buttonStyle(.glassProminent).buttonBorderShape(.capsule).controlSize(.extraLarge).tint(.white)
-            .buttonSizing(.flexible)
+        buttonStyle(PartyPrimaryActionStyle())
     }
 
     func partySecondaryAction() -> some View {
         font(.system(.headline, design: .rounded))
             .buttonStyle(.glass).buttonBorderShape(.capsule).controlSize(.extraLarge)
             .buttonSizing(.flexible)
+    }
+}
+
+private struct PartyPrimaryActionStyle: ButtonStyle {
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.isEnabled) private var isEnabled
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(.headline, design: .rounded))
+            .foregroundStyle(.black)
+            .padding(.horizontal, 20)
+            .frame(maxWidth: .infinity, minHeight: 54)
+            .background(.white, in: .capsule)
+            .contentShape(.capsule)
+            .scaleEffect(configuration.isPressed && !reduceMotion ? 0.97 : 1)
+            .opacity(!isEnabled ? 0.45 : configuration.isPressed ? 0.85 : 1)
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
     }
 }
 

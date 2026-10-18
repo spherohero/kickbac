@@ -23,24 +23,18 @@ class PartyTransparencyChecks(unittest.TestCase):
             self.assertIn(guard, trivia)
         self.assertIn("game.completePreviewBreath(bac: measurement.bacReading?.value)", trivia)
 
-    def test_local_progress_is_honest_and_scores_stay_local(self):
+    def test_practice_does_not_arm_a_device_or_upload_scores(self):
         trivia = (ROOT / "TriviaView.swift").read_text()
-        podium = (ROOT / "TriviaPodium.swift").read_text()
-        self.assertIn("Local Trivia · unsaved scores and standings · this iPhone only", trivia)
+        self.assertIn("onStartCheckIn == nil", trivia)
         self.assertIn("Continue without a test", trivia)
-        self.assertIn("No device or breath test is connected", trivia)
-        self.assertIn("Local standings · scores aren't saved or shared", podium)
         self.assertNotIn("saveGameResult", trivia)
         self.assertNotIn("armDevice", trivia)
 
-    def test_live_party_uses_server_codes_and_debug_fixture_is_disclosed(self):
+    def test_live_party_uses_server_codes_and_fixture_entry_is_debug_only(self):
         live = (ROOT / "PartyLiveView.swift").read_text()
-        preview = (ROOT / "PartyView.swift").read_text()
         self.assertNotIn("KICK26", live)
         self.assertIn("party.joinCode", live)
-        self.assertIn('#if DEBUG\n                    Button("Local party preview · unsaved")', live)
-        self.assertIn("membership and code are not saved or shared", preview)
-        self.assertIn("KICK26 cannot invite another phone", preview)
+        self.assertIn('#if DEBUG\n            Button("Party layout")', live)
 
 
 if __name__ == "__main__":

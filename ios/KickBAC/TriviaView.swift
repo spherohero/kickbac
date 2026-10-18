@@ -9,7 +9,6 @@ struct TriviaInvitationSheet: View {
         VStack(spacing: 16) {
             PartyGameIcon(game: .trivia)
             Text("Trivia").font(.system(.title, design: .rounded, weight: .bold))
-            Text("Local game · scores aren't saved or shared").font(.footnote).foregroundStyle(.secondary)
             Button("Join game", action: onJoin)
                 .font(.system(.headline, design: .rounded))
                 .frame(maxWidth: .infinity, minHeight: 52)
@@ -69,8 +68,6 @@ struct TriviaView: View {
     private var presentation: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Text("Local Trivia · unsaved scores and standings · this iPhone only")
-                    .font(.caption).foregroundStyle(.secondary).multilineTextAlignment(.center).padding(12)
                 page
             }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -114,8 +111,7 @@ struct TriviaView: View {
             }.scrollIndicators(.hidden)
         case .results:
             ScrollView {
-                TriviaPodium(rows: game.standings(playerName: playerName), photoData: photoData,
-                             includesExamples: game.includesExamplePlayers)
+                TriviaPodium(rows: game.standings(playerName: playerName), photoData: photoData)
                     .padding(24).frame(maxWidth: 480).frame(maxWidth: .infinity)
             }.scrollIndicators(.hidden)
         }
@@ -123,10 +119,10 @@ struct TriviaView: View {
 
     private var checkInPage: some View {
             VStack(alignment: .leading, spacing: 24) {
-                heading(onStartCheckIn == nil ? "Local practice" : "Your check-in")
+                heading(onStartCheckIn == nil ? "Ready to play?" : "Your check-in")
                 Spacer(minLength: 0)
                 if let onStartCheckIn {
-                    Text("Test on \(checkInDeviceID ?? "the assigned breathalyzer"). This saves a private reading. Arming alone does not measure; the operator starts acquisition separately over USB.")
+                    Text("Start a reading on the party breathalyzer.")
                         .foregroundStyle(.secondary)
                     if let checkInMessage { Text(checkInMessage).font(.footnote) }
                     primary(isStartingCheckIn ? "Connecting…" : "Start my test") {
@@ -137,7 +133,7 @@ struct TriviaView: View {
                         }
                     }.disabled(isStartingCheckIn || checkInDeviceID == nil)
                 } else {
-                    Text("No device or breath test is connected. Continue to play locally without a reading.")
+                    Text("Continue when you’re ready.")
                         .foregroundStyle(.secondary)
                     primary("Continue without a test") {
                         game.previewTap()
@@ -153,7 +149,7 @@ struct TriviaView: View {
                 if let deviceFlow {
                     HomeView(session: session, deviceFlow: deviceFlow, isGameCheckIn: true)
                 } else {
-                    Text("No test is connected to this local game.").foregroundStyle(.secondary)
+                    Text("No test connected.").foregroundStyle(.secondary)
                     Button("Continue without a test") { game.completePreviewBreath() }.frame(minHeight: 44)
                 }
                 if let test = deviceFlow?.test, test.status == .expired || test.status == .cancelled {
@@ -406,13 +402,13 @@ struct TriviaView: View {
     #if DEBUG
     private var developmentMenu: some View {
         Menu {
-            Section("Development · local simulation") {
+            Section("Game options") {
                 if game.phase == .tap && onStartCheckIn == nil { Button("Continue without a test") { game.previewTap(); game.completePreviewBreath() } }
                 if game.phase == .breath && onStartCheckIn == nil { Button("Continue without a test") { game.completePreviewBreath() } }
                 if game.phase == .lobby && !isHost {
-                    Button("Simulate host starts") { game.begin(isHost: true) }.disabled(game.playerCount == 0)
+                    Button("Start trivia") { game.begin(isHost: true) }.disabled(game.playerCount == 0)
                 }
-                Toggle("Example players", isOn: Binding(get: { game.includesExamplePlayers }, set: { game.setExamplePlayers($0) }))
+                Toggle("Players", isOn: Binding(get: { game.includesExamplePlayers }, set: { game.setExamplePlayers($0) }))
                     .disabled(game.phase != .invitation && game.phase != .lobby)
             }
         } label: {

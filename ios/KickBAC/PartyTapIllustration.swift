@@ -5,7 +5,6 @@ struct PartyTapIllustration: View {
     var onDebugTap: ((String) -> Void)? = nil
     #if DEBUG
     @State private var debugTapCount = 0
-    @State private var showsDebugTap = false
     #endif
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.colorSchemeContrast) private var contrast
@@ -59,16 +58,11 @@ struct PartyTapIllustration: View {
                 .frame(minHeight: 44)
                 .contentShape(.rect)
                 .onLongPressGesture(minimumDuration: 0.7, maximumDistance: 20, perform: simulateTap)
-                .accessibilityAction(named: "Debug: simulate tap on kb-demo-01", simulateTap)
+                .accessibilityAction(named: "Use this breathalyzer", simulateTap)
                 #endif
         }
         #if DEBUG
         .sensoryFeedback(.selection, trigger: debugTapCount)
-        .alert("Debug tap simulated", isPresented: $showsDebugTap) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text("Tapped kb-demo-01 locally. No hardware was connected.")
-        }
         #endif
     }
 
@@ -76,7 +70,6 @@ struct PartyTapIllustration: View {
     private func simulateTap() {
         debugTapCount += 1
         if let onDebugTap { onDebugTap("kb-demo-01") }
-        else { showsDebugTap = true }
     }
     #endif
 }

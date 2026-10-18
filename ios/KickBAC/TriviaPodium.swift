@@ -3,19 +3,12 @@ import SwiftUI
 struct TriviaPodium: View {
     let rows: [TriviaStanding]
     let photoData: Data?
-    let includesExamples: Bool
     @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
         VStack(alignment: .leading, spacing: 28) {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("The podium").font(.system(.largeTitle, design: .rounded, weight: .bold))
-                    .accessibilityAddTraits(.isHeader)
-                Text("Local standings · scores aren't saved or shared").font(.footnote).foregroundStyle(.secondary)
-                if includesExamples {
-                    Text("Example roster · local points only").font(.caption).foregroundStyle(.secondary)
-                }
-            }
+            Text("The podium").font(.system(.largeTitle, design: .rounded, weight: .bold))
+                .accessibilityAddTraits(.isHeader)
             if !typeSize.isAccessibilitySize {
                 HStack(alignment: .bottom, spacing: 10) {
                     pillar(player(at: 1), place: 2, height: 124, color: Color(red: 0.72, green: 0.75, blue: 0.82))

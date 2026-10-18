@@ -1,5 +1,7 @@
 # kickBAC | Austin's perfboard wiring guide
 
+> **Revision boundary:** This document specifies the original USB-powered XIAO / separate regulated external 5 V supply with JP1. Nicholas's later group attachment proposes **LiPo + switched boost, no installed JP1** on isolated-pad perfboard. Read [the battery/boost commissioning hold and updated checklist](BATTERY_BOOST_COMMISSIONING.md) for that revision; this older guide does not approve it. In the no-JP1 proposal, keep the XIAO ADC connection physically isolated using a removable disconnected lead or socket isolation during tests. Battery/protection, boost bounds, charge/load paths and actual assembly remain unverified.
+
 **Build specification for review, not a tested sensor assembly.** The XIAO now runs the `xiao_device` diagnostic: real USB execution, Wi-Fi/trusted HTTPS, authenticated heartbeat/poll and persisted ongoing heartbeat are verified. MQ power, divider and ADC are NOT physically verified and remain disabled. Confirm actual parts, supply and meter checks below before connecting the ADC. This guide supersedes the earlier mistaken bare-sensor description. Current network/firmware evidence is in [DEVICE_CONNECTIVITY.md](DEVICE_CONNECTIVITY.md); earlier USB-only/PDF status text is historical, not a change to these wiring safeguards.
 
 ## 1. Circuit and exact connections

@@ -1,8 +1,13 @@
 # kickBAC API contract — v0
 
-Status: **LIVE at https://api.kickbac.vodka**,33 operations, explicitly migrated schema6. Profiles, generic private game results/stats and per-person reading history are published and deployed. See [release verification](BACKEND_RELEASE_VERIFICATION.md), [client handoff](LIAM_BACKEND_HANDOFF.md), [games/points](GAMES.md) and [reading history](READING_HISTORY.md). Profile source is published in merged [PR #3](https://github.com/spherohero/kickbac/pull/3); see `PROFILE_VERIFICATION.md` for the earlier deployment evidence. Display name **kickBAC**. REST JSON uses snake_case, opaque UUID session/measurement/result IDs, a provisioned device slug, and ISO 8601 UTC timestamps (`Z` or `+00:00`). Users are opaque verified Auth0 `sub` strings, not client-chosen IDs. No certified BAC or safe-to-drive interpretation is provided.
+Status: **LIVE at https://api.kickbac.vodka**,35 operations, explicitly migrated schema7. Profiles, generic private game results/stats and per-person reading history are published and deployed. See [release verification](BACKEND_RELEASE_VERIFICATION.md), [client handoff](LIAM_BACKEND_HANDOFF.md), [games/points](GAMES.md) and [reading history](READING_HISTORY.md). Profile source is published in merged [PR #3](https://github.com/spherohero/kickbac/pull/3); see `PROFILE_VERIFICATION.md` for the earlier deployment evidence. Display name **kickBAC**. REST JSON uses snake_case, opaque UUID session/measurement/result IDs, a provisioned device slug, and ISO 8601 UTC timestamps (`Z` or `+00:00`). Users are opaque verified Auth0 `sub` strings, not client-chosen IDs. No certified BAC or safe-to-drive interpretation is provided.
 
-## Device-party resolve and one-current-party policy — implementation target
+## Device-party resolve and one-current-party policy — deployed
+
+Activated2026-10-18T10:29:53UTC from immutable768e992, PR40merge9d52390.
+Target/public contract/old-row preservation verified; see
+[release proof](BACKEND_RELEASE_VERIFICATION.md). Lower source-target and
+live33/schema6 sentences in this implementation section are historical.
 
 Nicholas approved Liam's device-based join-or-create request. Frozen contract:
 [DEVICE_PARTY_RESOLVE.md](DEVICE_PARTY_RESOLVE.md). New authenticated
@@ -107,6 +112,8 @@ mean unavailable, not a zero-reading account. No other operation shape changes.
 | POST | `/v1/parties/{party_id}/close` | party host | close a party under its lifecycle rules |
 | GET | `/v1/parties/{party_id}` | party member | private party snapshot |
 | GET | `/v1/me/parties` | user | own paginated party history |
+| POST | `/v1/parties/resolve` | user | atomic registered-device join-or-create; persisted request UUID |
+| GET | `/v1/me/parties/current` | user | sole OPEN party or null; authorized legacy conflict |
 | GET | `/v1/me/game-history` | user | own game ledger with exact nullable party/game/measurement context |
 | POST | `/v1/party-games/{game_instance_id}/results` | party member | one retry-safe own client-reported completion |
 | GET | `/v1/parties/{party_id}/games` | party member | party game-instance history |

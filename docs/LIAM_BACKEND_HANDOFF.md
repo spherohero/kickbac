@@ -2,6 +2,36 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+### Frozen NFC check-in implementation contract — not live
+
+Independent core and game/history reviews passed spec and quality/privacy checks
+with no blocking findings; parent combined verification is recorded below. The
+NFC design review approved atomic arming context after freezing exact policies in
+[NFC_CHECK_IN.md](NFC_CHECK_IN.md#frozen-check-in-contract--approved-for-test-first-implementation-not-live).
+
+**Additive / NON-BREAKING to legacy routes.** New `POST /v1/parties/{party_id}/check-ins`
+accepts required `check_in_id` UUID and `device_id`, optional `game_instance_id`
+UUID/null (omission=null; explicitly party-only, no automatic current-game choice).
+Returns `{check_in_id,party_id,game_instance_id,session}` with unchanged session
+shape;201 new/200 exact retry with current status/result and original ID/expiry.
+New owner-private `GET /v1/me/check-ins?limit=50&offset=0` returns paginated wrappers,
+including after leave/close and without game completion. Same32KiB write cap,
+no-store/error envelope; migration006/schema6 preserves populated schema5.
+
+Liam: persist exact attempt UUID/payload before requesting, consume accepted
+session via existing polling, never silently rearm on repeated URL/scan delivery,
+and use an explicit new attempt only after deliberate user action. Existing
+ordinary active session is409busy, never retroactively relabeled as party context.
+Game close/member leave retain an accepted session/context; upload stays subject
+to existing owner/device/expiry checks, while a new late game completion remains
+rejected. New result measurement links cannot cross the check-in's party/game;
+party-only cannot later become game-specific (422). Exact accepted result retries
+remain replayable. Existing firmware polling/upload payloads are unchanged.
+
+The parent reported this exact POST+GET impact to Nicholas before implementation.
+No native NFC, rawADC-to-BAC, acquisition-duration revision, hardware enablement or
+production deployment is approved or claimed by this contract freeze.
+
 ### Integrated party/profile source — review checkpoint, not deployed
 
 - Owner: backend Bot; integration `backend/party-profile-completion`, publishing

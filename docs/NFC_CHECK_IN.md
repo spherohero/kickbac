@@ -26,9 +26,12 @@ A plain background scan does not select one of these intentions securely. Preser
 
 **Proposed additive / NON-BREAKING to existing routes and payloads.** Native NFC/link handling and party check-in consumers are new client work owned by Liam. Keep his existing auth/profile/history/device consumers intact. The parent notified Nicholas before writing this proposal; no app source is edited here.
 
-### Proposed check-in operation (not adopted or live)
+### Frozen check-in contract — approved for test-first implementation, not live
 
-Candidate route:
+The independent design review approved this approach after the policies below
+were made explicit. Nicholas confirmed tap-before-measurement arming. This is an
+additive backend operation, not approval of new acquisition semantics, native
+entitlements, physical execution or production deployment.
 
 ```http
 POST /v1/parties/{party_id}/check-ins
@@ -38,13 +41,78 @@ Content-Type: application/json
 {"check_in_id":"11111111-1111-4111-8111-111111111111","device_id":"kb-demo-01","game_instance_id":"22222222-2222-4222-8222-222222222222"}
 ```
 
-For a party-only check, `game_instance_id` can be null. No client-supplied owner, BAC, award or timestamp. Persist `check_in_id` and exact payload once per deliberate attempt; accepted retry returns the same session even after it completes/expires, never starts the next person's test.
+Require UUID `check_in_id` and strict registered-device slug `device_id`; optional
+UUID `game_instance_id` defaults to null. Null explicitly means party-only, never
+“whichever game is current.” Reject unknown fields; streamed POST maximum32768
+bytes, including absent/false Content-Length. All new success/errors are no-store.
+No client-supplied owner, BAC, award or timestamps. Persist UUID/exact payload
+before sending, account-scoped across retries/relaunch.
 
-Candidate response wrapper: `{check_in_id,party_id,game_instance_id,session}`; `session` retains the existing session shape and can continue to be polled through the existing owner-only session route. New acceptance 201 / identical retry 200. Foreign IDs/nonmembership 404, changed accepted payload 409 `idempotency_conflict`, concurrent occupied device 409 `device_busy`, invalid party/game lifecycle 409 `invalid_state`; full limits/OpenAPI/examples must be frozen and tested before code. Do not implement against this candidate path until the shared contract is finalized.
+Response is `{check_in_id,party_id,game_instance_id,session}`. Its `session` is the
+unchanged existing `SessionResponse`; poll `GET /v1/sessions/{session_id}` for live
+status and accepted result.201 first acceptance /200 exact accepted retry. The
+session ID/context/expiry never change; status/measurement reflect its current
+server state, not an immutable first-response snapshot.
 
-In one serialized SQL transaction, check retry ownership/payload first, validate OPEN party/current device assignment/optional OPEN game membership and snapshotted device, enforce unchanged device exclusivity and expiry, and create the session plus immutable check-in context. Never silently attach an already-existing ordinary session to a party/game. A new deliberate attempt after expiry uses a new UUID; an automatic retry must retain the old one. Close, rebind, leave and upload races need an explicit tested policy that preserves an accepted session's original owner/context without transferring its next reading.
+Use one `BEGIN IMMEDIATE` transaction shared with legacy arming/upload/lifecycle
+serialization. Capture server time after acquiring the lock; expire sessions at
+`expires_at <= now`. Retry lookup comes before membership/current-state checks.
+For new IDs require active token-subject membership, OPEN party, registered device
+and exact current binding. Optional game must belong to that party, be OPEN and
+have a non-null device snapshot equal to this device. Reject ANY active session,
+even the same owner's ordinary session/check-in, with409 `device_busy`; never
+attach, relabel, return as newly accepted, or extend it. Insert one fresh
+server-generated60-second ARMED session and immutable check-in context atomically.
+Expected domain rejections may preserve lazy expiry but must precede business
+inserts; unexpected failure rolls back both inserts.
 
-The eventual device upload references only its server-issued session ID. The backend derives user plus party/game through the saved context, preserving one existing measurement row in private history. Game result/points remain separate; taking a check never awards points. Publishing a BAC to other party members is NOT included: readings stay private unless a separate explicit sharing policy is approved.
+Retries: original owner+route party+normalized payload returns original attempt
+through COMPLETE/CANCELLED/EXPIRED, leaving, game/party close or later reassignment.
+Foreign accepted ID is404. Same-owner changed accepted content is409
+`idempotency_conflict`; under another party path return404 unless the subject has
+at least historical membership there, before returning a conflict. Never move
+context. Rejected attempts do not consume a retry ID. No new ID after ambiguous
+transport failure. A genuinely new deliberate attempt after expiry needs a new ID.
+Unknown/nonmember/unavailable assigned device is404; non-OPEN lifecycle or
+incompatible game/device snapshot is409 `invalid_state`; malformed input422;
+body overflow413. Legacy session/auth errors otherwise unchanged.
+
+Add **`GET /v1/me/check-ins?limit=50&offset=0`**, default50/limit1..100,
+offset>=0 (overflow-safe). Same `{items,limit,offset,has_more}` envelope; items are
+check-in wrappers above, ordered by session `created_at DESC,check_in_id DESC`.
+Read only token-owned rows regardless of present membership/lifecycle, with
+current session/optional accepted measurement. Use one read-only SQL snapshot;
+never lazily expire or mutate from this GET. No other-player readings or roster.
+
+Migration **006**, schema6: add `party_check_ins` with primary check-in UUID,
+unique session FK, party FK, nullable game-instance FK, token-derived owner,
+device FK and owner/history index. Preserve migration005 and populated schema5
+rows; test schema4→5→6, populated5→6, repeated initialization, failed-upgrade
+rollback and full populated online backup/restore/startup.
+
+Lifecycle policy:
+- Party close/device unbind or rebind retain active-device409 fences.
+- Member leave/game close remain allowed; accepted session/context remain valid.
+- Upload after leave/game close uses existing session ownership/expiry only.
+- New game result after leave/game close remains rejected; check-in does not
+  reserve a later completion write or reopen gameplay. Private reading/context
+  persists even without an accepted completion.
+- Legacy arm may return the owner's existing party-check-in session without
+  adding context. Legacy nonmember arming remains unchanged; assignment is not
+  an exclusive arming permission.
+
+For a new party result with a measurement, resolve its session's check-in. If
+present, require EXACT party and game-instance equality with the result target;
+party-only cannot be promoted to game-specific context. Mismatch422
+`validation_error`. Ordinary non-check-in measurements keep existing eligibility
+rules. Accepted result retries precede these checks. No duplicate measurement or
+points; taking a test never awards game participation points. Legacy arbitrary
+`data` is not authoritative. Readings remain private unless a separately approved
+sharing policy is implemented; this does not expose BAC to other party members.
+
+The device upload still references only its server-issued session ID. Backend
+SQL derives owner and immutable party/game context without firmware knowing either.
+
 
 ### Native launch prerequisite
 

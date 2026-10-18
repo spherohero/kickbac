@@ -2,6 +2,28 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+### Firmware communication runtime — no client action
+
+Flashed/runtime source `49e8d5a4dfc41b193fffdc2cfa9f857d98e900aa`; actualCOM3
+capture heartbeat12..28/idle poll31..73. Startup/PASS marker missed, observer
+returned1 for missing marker, not a captured network failure. Independent
+post-helper persisted heartbeat advanced08:50:19.816042→08:50:35.474722UTC with
+age0.749303/5.572119s, schema6. This supersedes old offline checkpoint for that
+bounded observation, not a soak guarantee. Serial released. No app work requested.
+
+Firmware owner `firmware/operational-connectivity`, base `a0bd77b`; publishing PR/
+commit records head/state. Normal `xiao_device` boot keeps its initial trusted
+connection instead of requiring intentional disconnect/rejoin. `xiao_wifi` retains
+that separate diagnostic; its failure is NOT claimed fixed. Device transport/
+500/502/503/504 faults immediately invalidate acquisition tickets, then retry only
+that endpoint up to3times with2/4/8s waits. Auth/schema/identity faults and exhaustion
+remain fail-closed. Original session expiry/pending bytes are not reassigned.
+**NON-BREAKING/no app action**: endpoints, payload examples in API.md, states,
+auth, units and successful nominal10s/2s cadence unchanged; no iOS edits. Host
+suite/Ruff/all3cross-builds pass; independent focused review approved no-ADC flash.
+Source/physical result above; no fabricated startup/network/fault-recovery claim.
+ADC/sampling/uploads remain off; communication is the only task here.
+
 ### Latest ownership — Liam controls all remaining iOS work
 
 Nicholas's newer direction: Liam is back and controls the rest of the app.

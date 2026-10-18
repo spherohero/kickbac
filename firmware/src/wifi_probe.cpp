@@ -8,6 +8,7 @@
 
 #include <cstdint>
 #include "tls_root.hpp"
+#include "network_runtime.hpp"
 #include "wifi_diagnostic.hpp"
 #if defined(KICKBAC_DEVICE_DIAGNOSTIC)
 #include "device_probe.hpp"
@@ -118,30 +119,41 @@ void fail(const char* stage) {
     Serial.printf("CONNECTIVITY_FAIL stage=%s sensor=disabled uploads=disabled\n", stage);
 }
 
+bool deliberate_reconnect_test() {
+    // Exercise one real software disconnection/reassociation, not a claimed power-cycle.
+    if (!WiFi.disconnect(false, false)) { fail("disconnect_request"); return false; }
+    const auto started = millis();
+    while (WiFi.status() == WL_CONNECTED && millis() - started < 3000U) delay(20);
+    if (WiFi.status() == WL_CONNECTED) { fail("disconnect_not_observed"); return false; }
+    Serial.printf("probe_disconnect observed=1\n");
+    WiFi.begin();  // Reuse the same RAM-only SDK network config.
+    if (!wait_joined()) { fail("reassociation_or_dhcp"); return false; }
+    Serial.printf("probe_wifi rejoined=1 dhcp=1 rssi_dbm=%d channel=%d\n", WiFi.RSSI(), WiFi.channel());
+    if (!resolve_backend() || !kickbac::reconnect_health_probe(
+            [](unsigned attempt) { return check_https(attempt); },
+            []() { delay(1000); })) { fail("reconnect_https"); return false; }
+    Serial.printf("CONNECTIVITY_PASS wifi=1 dhcp=1 dns=1 trusted_https=1 reconnect=1 sensor=disabled uploads=disabled\n");
+    return true;
+}
+
 void run_probe() {
     Serial.printf("probe_join state=started credentials=ram_only\n");
     WiFi.begin(provisioning.ssid(), provisioning.password());
-    provisioning.clear();  // SDK has copied the config; do not retain a second copy.
+    provisioning.clear();
     if (!wait_joined()) { fail("association_or_dhcp"); return; }
     Serial.printf("probe_wifi joined=1 dhcp=1 rssi_dbm=%d channel=%d\n", WiFi.RSSI(), WiFi.channel());
     if (!resolve_backend()) { fail("dns"); return; }
     if (!sync_clock()) { fail("time_sync"); return; }
     if (!check_https(1)) { fail("https"); return; }
-
-    // Exercise one real software disconnection/reassociation, not a claimed power-cycle.
-    if (!WiFi.disconnect(false, false)) { fail("disconnect_request"); return; }
-    const auto started = millis();
-    while (WiFi.status() == WL_CONNECTED && millis() - started < 3000U) delay(20);
-    if (WiFi.status() == WL_CONNECTED) { fail("disconnect_not_observed"); return; }
-    Serial.printf("probe_disconnect observed=1\n");
-    WiFi.begin();  // Reuse the same RAM-only SDK network config.
-    if (!wait_joined()) { fail("reassociation_or_dhcp"); return; }
-    Serial.printf("probe_wifi rejoined=1 dhcp=1 rssi_dbm=%d channel=%d\n", WiFi.RSSI(), WiFi.channel());
-    if (!resolve_backend() || !kickbac::reconnect_health_probe(
-            [](unsigned attempt) { return check_https(attempt); },
-            []() { delay(1000); })) { fail("reconnect_https"); return; }
-    Serial.printf("CONNECTIVITY_PASS wifi=1 dhcp=1 dns=1 trusted_https=1 reconnect=1 sensor=disabled uploads=disabled\n");
-    network_proven = true;
+#if defined(KICKBAC_OPERATIONAL_NETWORK)
+    const bool operational = true;
+#else
+    const bool operational = false;
+#endif
+    network_proven = kickbac::finish_network_boot(operational, deliberate_reconnect_test);
+    if (operational && network_proven) {
+        Serial.printf("NETWORK_READY wifi=1 dhcp=1 dns=1 trusted_https=1 reconnect_test=skipped sensor=disabled uploads=disabled\n");
+    }
 }
 }  // namespace
 

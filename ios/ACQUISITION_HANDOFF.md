@@ -1,5 +1,14 @@
 # Manual acquisition client compatibility
 
+
+## Current Liam adoption and native evidence
+
+Branch `liam/party-setup`, implementation `c06192f73e5c2755f4961aa6c65e0c47811ad81f`, integrates main `a0bd77bcb79766f91de6746e0ab02fa992f4b337` via `de47523` while retaining `ef08fa8`. The older worker/platform limitations below are historical. Actual Swift acquisition/device/API/history/retry fixtures passed on Liam's Mac; final unsigned Release and signed Debug builds passed with Xcode-beta, reusing /tmp/kickbac-profile-build. Install and launch on Liam's connected iPhone were confirmed by devicectl. This is not rendering, native NFC, physical sensor or real-account acceptance.
+
+Party check-ins adopt the server-returned session into the same DeviceSessionStore as Home. Exact UUID/body persistence and owner/session/acquisition fences prevent a local demo or unrelated Home measurement from satisfying a game check-in. Manual nullable metadata/notice and null BAC are preserved in Home and private check-in history. See PARTY_HANDOFF.md for current consumer contracts, tests and outstanding gates. No API/firmware/acquisition semantics changed.
+
+## Historical worker checkpoint
+
 Owner: bounded backend/iOS worker, branch `ios/manual-acquisition-notice`, isolated
 worktree `kickbac-ios-acquisition-worker`; base Liam `0e5a6e4c87e650d5ea40090d7d232e9807d9dc2f`.
 No push, merge, deployment, installation or native acceptance is claimed.

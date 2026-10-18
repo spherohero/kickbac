@@ -34,14 +34,27 @@ jobs:
           xcrun swiftc --version
       - name: Execute Swift acquisition decoding fixtures
         run: |
-          xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/KickBACAPI.swift ios/checks/AcquisitionChecks.swift -o "$RUNNER_TEMP/kickbac-acquisition-checks"
+          xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/KickBACAPI.swift ios/KickBAC/PartyAPI.swift ios/checks/AcquisitionChecks.swift -o "$RUNNER_TEMP/kickbac-acquisition-checks"
           "$RUNNER_TEMP/kickbac-acquisition-checks" ios/checks/fixtures/acquisition.json
       - name: Execute Swift exact-session fixtures
         run: |
-          xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/KickBACAPI.swift ios/KickBAC/DeviceSessionStore.swift ios/checks/DeviceSessionChecks.swift -o "$RUNNER_TEMP/kickbac-device-checks"
+          xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/KickBACAPI.swift ios/KickBAC/PartyAPI.swift ios/KickBAC/DeviceSessionStore.swift ios/checks/DeviceSessionChecks.swift -o "$RUNNER_TEMP/kickbac-device-checks"
           "$RUNNER_TEMP/kickbac-device-checks"
-      - name: Compile unsigned simulator app
+      - name: Execute party retry and local-boundary checks
+        # Session transport fixtures use synthetic credentials and never arm the live API.
+        run: |
+          xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/PracticeReadingStore.swift ios/checks/PracticeReadingChecks.swift -o "$RUNNER_TEMP/kickbac-practice-checks"
+          "$RUNNER_TEMP/kickbac-practice-checks"
+          xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/KickBACAPI.swift ios/KickBAC/PartyAPI.swift ios/KickBAC/DeviceSessionStore.swift ios/KickBAC/PartyStore.swift ios/checks/PartyIntegrationChecks.swift -o "$RUNNER_TEMP/kickbac-party-integration-checks"
+          "$RUNNER_TEMP/kickbac-party-integration-checks"
+          xcrun swiftc ios/KickBAC/TriviaPreview.swift ios/checks/TriviaChecks.swift -o "$RUNNER_TEMP/kickbac-trivia-checks"
+          "$RUNNER_TEMP/kickbac-trivia-checks"
+          xcrun swiftc ios/KickBAC/TriviaPreview.swift ios/checks/NearbyTriviaChecks.swift -o "$RUNNER_TEMP/kickbac-nearby-trivia-checks"
+          "$RUNNER_TEMP/kickbac-nearby-trivia-checks"
+          python3 ios/checks/PartyTransparencyChecks.py
+      - name: Compile unsigned Debug and Release simulator app
         run: |
           xcodebuild -project ios/KickBAC.xcodeproj -scheme KickBAC -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/kickbac-native-build" CODE_SIGNING_ALLOWED=NO build -quiet
+          xcodebuild -project ios/KickBAC.xcodeproj -scheme KickBAC -configuration Release -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/kickbac-native-build" CODE_SIGNING_ALLOWED=NO build -quiet
       - name: Check tests left tracked sources unchanged
         run: git diff --exit-code

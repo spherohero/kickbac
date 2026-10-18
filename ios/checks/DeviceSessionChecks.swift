@@ -7,6 +7,26 @@ struct DeviceSessionChecks {
         let printed = try DeviceTarget.parse("kb-demo-01", baseURL: base)
         let linked = try DeviceTarget.parse("https://api.kickbac.vodka/d/kb-demo-01", baseURL: base)
         precondition(printed == "kb-demo-01" && linked == printed)
+        let shortcut = DeviceTarget.shortcutURL(for: printed)!
+        let shortcutTarget = try DeviceTarget.parseAppLink(shortcut, baseURL: base)
+        let publicTarget = try DeviceTarget.parseAppLink(URL(string: "https://api.kickbac.vodka/d/kb-demo-01")!, baseURL: base)
+        precondition(shortcutTarget == printed && publicTarget == printed)
+        precondition(DeviceTarget.shortcutURL(for: "../other") == nil)
+        let onlineUnit = APIDevice(id: printed, state: "AVAILABLE", online: true, lastSeenAt: nil)
+        let offlineUnit = APIDevice(id: printed, state: "AVAILABLE", online: false, lastSeenAt: nil)
+        precondition(onlineUnit.connectionLabel == "kb-demo-01 connected")
+        precondition(offlineUnit.connectionLabel == "kb-demo-01 found · offline")
+        precondition(!offlineUnit.connectionLabel.contains("connected"))
+        for input in ["com.liam.KickBAC://device/kb-demo-01?arm=true",
+                      "com.liam.KickBAC://device/kb-demo-01#arm", "com.liam.KickBAC://device:443/kb-demo-01",
+                      "com.liam.KickBAC://user@device/kb-demo-01", "com.liam.KickBAC://device/kb-demo-01/extra",
+                      "com.liam.KickBAC://device/%6Bb-demo-01", "com.liam.KickBAC://device/../other",
+                      "com.liam.KickBAC://other/kb-demo-01", "other.app://device/kb-demo-01",
+                      "com.liam.KickBAC://dev-c87oxm4dkbyatvrn.us.auth0.com/ios/com.liam.KickBAC/callback",
+                      "http://api.kickbac.vodka/d/kb-demo-01", "https://evil.example/d/kb-demo-01"] {
+            do { _ = try DeviceTarget.parseAppLink(URL(string: input)!, baseURL: base); preconditionFailure("Accepted an unrelated/unsafe app link") }
+            catch DeviceTarget.TargetError.invalid { }
+        }
         for input in ["https://evil.example/d/kb-demo-01", "http://api.kickbac.vodka/d/kb-demo-01",
                       "https://api.kickbac.vodka@evil.example/d/kb-demo-01", "https://api.kickbac.vodka/d/%2Fother",
                       "https://api.kickbac.vodka/d/kb-demo-01?next=evil", "../other", "https://api.kickbac.vodka:444/d/kb-demo-01"] {
@@ -17,8 +37,77 @@ struct DeviceSessionChecks {
         let directory = FileManager.default.temporaryDirectory.appending(path: "kickbac-device-\(UUID())")
         defer { try? FileManager.default.removeItem(at: directory) }
         let flow = DeviceSessionStore(directory: directory)
-        try flow.select("kb-demo-01", baseURL: base)
+        try flow.select(shortcutTarget, baseURL: base)
+        precondition(flow.targetID == printed && flow.owner == nil && flow.test == nil && !flow.hasActiveSession,
+                     "Opening a tag must only identify a device before sign-in")
         flow.switchOwner("sms|owner-a")
+        precondition(flow.targetID == printed && flow.test == nil, "Device target must survive sign-in without arming")
+
+        let scanDirectory = directory.appending(path: "scan")
+        let scanFlow = DeviceSessionStore(directory: scanDirectory)
+        var arms = 0
+        await scanFlow.startFromScan(printed, baseURL: base,
+            resolve: { _ in preconditionFailure("Looked up a scan without sign-in") },
+            fetch: { _ in preconditionFailure() }, create: { _ in preconditionFailure() })
+        scanFlow.switchOwner("sms|owner-a")
+        await scanFlow.startFromScan(printed, baseURL: base,
+            resolve: { _ in DeviceResolution(deviceID: printed) },
+            fetch: { _ in APIDevice(id: printed, state: "AVAILABLE", online: false, lastSeenAt: nil) },
+            create: { _ in preconditionFailure("Armed an offline scanned device") })
+        precondition(!scanFlow.hasActiveSession && scanFlow.message?.contains("offline") == true)
+        await scanFlow.startFromScan(printed, baseURL: base,
+            resolve: { _ in DeviceResolution(deviceID: "wrong-unit") },
+            fetch: { _ in preconditionFailure("Fetched after mismatched resolver") },
+            create: { _ in preconditionFailure("Armed a mismatched resolver") })
+        precondition(!scanFlow.hasActiveSession)
+        await scanFlow.startFromScan(printed, baseURL: base,
+            resolve: { _ in DeviceResolution(deviceID: printed) },
+            fetch: { _ in
+                scanFlow.switchOwner("sms|owner-b")
+                return APIDevice(id: printed, state: "AVAILABLE", online: true, lastSeenAt: nil)
+            }, create: { _ in preconditionFailure("A scan crossed an account switch") })
+        precondition(!scanFlow.hasActiveSession && scanFlow.owner == "sms|owner-b")
+        scanFlow.switchOwner("sms|owner-a")
+        await scanFlow.startFromScan(printed, baseURL: base,
+            resolve: { _ in DeviceResolution(deviceID: printed) },
+            fetch: { _ in APIDevice(id: printed, state: "AVAILABLE", online: true, lastSeenAt: nil) },
+            create: { id in
+                precondition(id == printed)
+                arms += 1
+                return session(.armed)
+            })
+        precondition(arms == 1 && scanFlow.hasActiveSession)
+        let scanSession = scanFlow.sessionID
+        await scanFlow.startFromScan(printed, baseURL: base,
+            resolve: { _ in preconditionFailure("Repeated tap resolved instead of resuming") },
+            fetch: { _ in preconditionFailure() }, create: { _ in preconditionFailure("Repeated tap rearmed") })
+        await scanFlow.startFromScan("other-unit", baseURL: base,
+            resolve: { _ in preconditionFailure() }, fetch: { _ in preconditionFailure() },
+            create: { _ in preconditionFailure("Different tag replaced an active test") })
+        precondition(scanFlow.sessionID == scanSession && scanFlow.targetID == printed && arms == 1)
+        scanFlow.resetCompletedTest()
+        precondition(scanFlow.sessionID == scanSession && scanFlow.test?.status == .armed,
+                     "Test again cleared an active reservation")
+        await scanFlow.poll(fetch: { _ in session(.complete, measurement: reading()) }, onComplete: { })
+        precondition(scanFlow.test?.status == .complete && !scanFlow.hasActiveSession)
+        scanFlow.resetCompletedTest()
+        precondition(scanFlow.test == nil && scanFlow.device == nil && scanFlow.targetID == nil
+                     && scanFlow.message == nil && scanFlow.owner == "sms|owner-a" && arms == 1,
+                     "Test again must clear the display and wait for a fresh tap without arming")
+        let resetRestored = DeviceSessionStore(directory: scanDirectory)
+        resetRestored.switchOwner("sms|owner-a")
+        precondition(!resetRestored.hasActiveSession, "Reset restored the finished test as pending")
+        let nextSessionID = UUID().uuidString.lowercased()
+        await scanFlow.startFromScan(printed, baseURL: base,
+            resolve: { _ in DeviceResolution(deviceID: printed) },
+            fetch: { _ in APIDevice(id: printed, state: "AVAILABLE", online: true, lastSeenAt: nil) },
+            create: { _ in
+                arms += 1
+                return session(.armed, id: nextSessionID)
+            })
+        precondition(arms == 2 && scanFlow.sessionID == nextSessionID && scanFlow.sessionID != scanSession,
+                     "Fresh tap after Test again must start a new session")
+
         await inspect(flow)
         precondition(flow.device?.online == false) // Offline and available are independent.
         for status in [APITestSession.Status.armed, .sampling] {
@@ -108,8 +197,9 @@ struct DeviceSessionChecks {
         })
     }
 
-    private static func session(_ status: APITestSession.Status, owner: String = "sms|owner-a", measurement: APIMeasurement? = nil) -> APITestSession {
-        APITestSession(id: "3b0c0a9e-2604-4b78-a487-3fd8fa1d4a4b", deviceID: "kb-demo-01", userID: owner,
+    private static func session(_ status: APITestSession.Status, owner: String = "sms|owner-a", measurement: APIMeasurement? = nil,
+                                id: String = "3b0c0a9e-2604-4b78-a487-3fd8fa1d4a4b") -> APITestSession {
+        APITestSession(id: id, deviceID: "kb-demo-01", userID: owner,
                        status: status, createdAt: "2026-10-17T23:00:00Z", expiresAt: "2026-10-17T23:01:00Z",
                        completedAt: nil, measurement: measurement)
     }

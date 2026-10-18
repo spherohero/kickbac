@@ -145,7 +145,7 @@ nonisolated struct APIMeasurement: Decodable, Identifiable, Sendable {
 
     var sourceTitle: String {
         switch source {
-        case "simulator": "Simulated sensor reading"
+        case "simulator": "Test reading"
         case "device": "Device sensor reading"
         default: "Unknown reading source"
         }
@@ -259,7 +259,7 @@ struct KickBACAPI {
         ], accessToken: accessToken)
     }
 
-    private func get<Response: Decodable>(_ path: String, query: [URLQueryItem] = [],
+    func get<Response: Decodable>(_ path: String, query: [URLQueryItem] = [],
                                           accessToken: String?, method: String = "GET", body: Data? = nil) async throws -> Response {
         if let accessToken, accessToken.isEmpty { throw APIError.unauthorized }
         guard baseURL.scheme == "https", baseURL.host != nil,
@@ -279,6 +279,10 @@ struct KickBACAPI {
         if response.statusCode == 401 { throw APIError.unauthorized }
         guard (200...299).contains(response.statusCode) else {
             if let envelope = try? JSONDecoder().decode(ErrorEnvelope.self, from: data) {
+                if response.statusCode == 409, envelope.error.code == "active_party_conflict",
+                   let parties = envelope.error.currentParties, let more = envelope.error.hasMore {
+                    throw APIError.activePartyConflict(parties: parties, hasMore: more)
+                }
                 throw APIError.server(status: response.statusCode, code: envelope.error.code)
             }
             throw APIError.http(response.statusCode)
@@ -287,7 +291,12 @@ struct KickBACAPI {
     }
 
     private struct ErrorEnvelope: Decodable {
-        struct Detail: Decodable { let code: String }
+        struct Detail: Decodable {
+            let code: String
+            let currentParties: [APIParty]?
+            let hasMore: Bool?
+            enum CodingKeys: String, CodingKey { case code; case currentParties = "current_parties", hasMore = "has_more" }
+        }
         let error: Detail
     }
 
@@ -295,10 +304,12 @@ struct KickBACAPI {
         case unauthorized, invalidRequest, invalidResponse
         case http(Int)
         case server(status: Int, code: String)
+        case activePartyConflict(parties: [APIParty], hasMore: Bool)
 
         var errorDescription: String? {
             let status: Int?
             switch self {
+            case .activePartyConflict: return "End or leave your previous party before joining another."
             case .unauthorized: return "Please sign in again."
             case .invalidRequest, .invalidResponse: return "Couldn't read your profile. Please try again."
             case .http(let value), .server(let value, _): status = value

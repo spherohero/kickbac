@@ -95,6 +95,32 @@ final class DeviceSessionStore {
         }
     }
 
+    // The user's configured NFC automation is an explicit start-test action.
+    // Resolve and authenticate first; repeated scans resume the same active test.
+    func startFromScan(_ id: String, baseURL: URL,
+                       resolve: (String) async throws -> DeviceResolution,
+                       fetch: (String) async throws -> APIDevice,
+                       create: (String) async throws -> APITestSession) async {
+        guard let expectedOwner = owner else { return }
+        if hasActiveSession {
+            if targetID == id { retryPolling() }
+            else { message = FlowError.activeTest.localizedDescription }
+            return
+        }
+        guard !isBusy else { return }
+        do {
+            try select(id, baseURL: baseURL)
+            await inspect(resolve: resolve, fetch: { try await fetch($0) })
+            guard !Task.isCancelled, owner == expectedOwner, targetID == id,
+                  let device, message == nil else { return }
+            guard device.online else {
+                message = "The breathalyzer is offline. Tap again when it is connected."
+                return
+            }
+            await arm(create: create)
+        } catch { message = failureMessage(error) }
+    }
+
     func poll(fetch: (String) async throws -> APITestSession, onComplete: () async -> Void) async {
         guard let id = sessionID, !isBusy else { return }
         let requestGeneration = generation
@@ -146,6 +172,37 @@ final class DeviceSessionStore {
 
     func retryPolling() { pollID = UUID() }
 
+    func resetCompletedTest() {
+        guard !isBusy, !hasActiveSession, test?.status == .complete else { return }
+        generation = UUID()
+        pollID = UUID()
+        targetID = nil
+        device = nil
+        test = nil
+        message = nil
+    }
+
+    // Adopt the party reservation itself; never call legacy arm to manufacture another session.
+    func adoptCheckIn(_ loaded: APITestSession, expectedOwner: String) throws {
+        guard owner == expectedOwner, !isBusy,
+              sessionID == nil || sessionID == loaded.id else { throw FlowError.activeTest }
+        guard loaded.userID == expectedOwner, UUID(uuidString: loaded.id) != nil,
+              DeviceTarget.isValidID(loaded.deviceID),
+              loaded.status != .complete || loaded.measurement != nil else { throw KickBACAPI.APIError.invalidResponse }
+        if let reading = loaded.measurement {
+            guard loaded.status == .complete, reading.sessionID == loaded.id,
+                  reading.deviceID == loaded.deviceID, reading.hasValidAcquisition else { throw KickBACAPI.APIError.invalidResponse }
+        }
+        generation = UUID()
+        targetID = loaded.deviceID
+        device = nil
+        try accept(loaded, id: loaded.id)
+        sessionID = loaded.status.isActive ? loaded.id : nil
+        try persist()
+        message = nil
+        pollID = UUID()
+    }
+
     private func clearMissingSession(_ error: Error) {
         guard let error = error as? KickBACAPI.APIError else { return }
         switch error {
@@ -196,7 +253,7 @@ final class DeviceSessionStore {
     private func isPermanent(_ error: Error) -> Bool {
         guard let error = error as? KickBACAPI.APIError else { return false }
         switch error {
-        case .unauthorized, .invalidRequest, .invalidResponse: return true
+        case .unauthorized, .invalidRequest, .invalidResponse, .activePartyConflict: return true
         case .http(let status), .server(let status, _): return [401, 404, 409, 410, 422].contains(status)
         }
     }

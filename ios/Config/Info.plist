@@ -4,7 +4,11 @@
 <dict>
 	<key>CFBundleDisplayName</key>
 	<string>KickBAC</string>
-	<key>NSCameraUsageDescription</key>
+	<key>NSLocalNetworkUsageDescription</key>
+    <string>Connect with people in your party to play Trivia together.</string>
+    <key>NSBonjourServices</key>
+    <array><string>_kickbac-trivia._tcp</string></array>
+    <key>NSCameraUsageDescription</key>
 	<string>Take a profile photo or scan a KickBAC device QR code.</string>
 	<key>UIAppFonts</key>
 	<array>

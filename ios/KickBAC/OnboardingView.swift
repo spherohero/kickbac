@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct OnboardingView: View {
+    let onComplete: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
     @Environment(AuthSession.self) private var session
     @Environment(ProfileStore.self) private var profileStore
@@ -23,7 +24,8 @@ struct OnboardingView: View {
     @State private var profileLoadFailed = false
     @FocusState private var focusedStep: Step?
 
-    init() {
+    init(onComplete: (() -> Void)? = nil) {
+        self.onComplete = onComplete
         #if DEBUG
         // Exercise text entry in Simulator without repeating the birthday step.
         if ProcessInfo.processInfo.arguments.contains("--test-onboarding-fields") {
@@ -73,7 +75,7 @@ struct OnboardingView: View {
                         if session.isSignedIn { Task { await loadSavedProfile() } }
                         else { profileLoadFailed = false; move(to: .phone) }
                     }
-                    Button("Close") { dismiss() }
+                    if session.isSignedIn { Button("Close", action: finish) }
                 }
                 .padding(24)
                 .foregroundStyle(.black)
@@ -576,7 +578,7 @@ struct OnboardingView: View {
                     try await profileStore.save(name: name, photoData: data) { name, picture in
                         try await session.saveProfile(name: name, photoData: picture)
                     }
-                    dismiss()
+                    finish()
                 } catch {
                     self.error = error.localizedDescription
                     showsSaveError = true
@@ -602,12 +604,18 @@ struct OnboardingView: View {
             return
         }
         if profileStore.remoteState == .saved {
-            dismiss()
+            finish()
         } else {
             name = profileStore.profile.name
             photo = profileStore.profile.photoData.flatMap { UIImage(data: $0) }
             move(to: .name)
         }
+    }
+
+    private func finish() {
+        guard session.isSignedIn else { return }
+        if let onComplete { onComplete() }
+        else { dismiss() }
     }
 
     private func requestCode(to number: String) {

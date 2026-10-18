@@ -6,6 +6,7 @@ struct DeviceConnectionView: View {
     let session: AuthSession
     let flow: DeviceSessionStore
     let onSignIn: () -> Void
+    let onParty: (String, Bool) -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var input = ""
     @State private var inputError: String?
@@ -56,9 +57,22 @@ struct DeviceConnectionView: View {
                             Button("Sign in to continue", action: onSignIn).disabled(session.isBusy)
                         } else if flow.device != nil {
                             Button("Arm test") { showsConfirmation = true }
+                            Button("Join its party") { onParty(target, false) }
+                            Button("Link to my party") { onParty(target, true) }
                         }
                         if flow.isBusy { ProgressView("Connecting") }
                     } header: { Text(flow.hasActiveSession ? "Current test" : "Confirm device") }
+                }
+
+                if let target = flow.targetID, let url = DeviceTarget.shortcutURL(for: target) {
+                    Section("NFC tap setup") {
+                        Text("In Shortcuts, create an NFC automation, scan this sticker, and add Open URLs with this link. Choose Run Immediately.")
+                            .font(.footnote).foregroundStyle(.secondary)
+                        Text(url.absoluteString).font(.footnote).textSelection(.enabled)
+                        Button("Copy automation link") { UIPasteboard.general.url = url }
+                        Text("Keep the sticker's existing HTTPS device URL. This automation opens device confirmation; it never starts a test by itself.")
+                            .font(.footnote).foregroundStyle(.secondary)
+                    }
                 }
 
                 if let message = inputError ?? flow.message {
@@ -93,7 +107,7 @@ struct DeviceConnectionView: View {
             }
         }
         .font(.system(.body, design: .rounded)).tint(.primary).preferredColorScheme(.dark)
-        .task {
+        .task(id: flow.targetID) {
             input = flow.targetID ?? ""
             if flow.targetID != nil && !flow.hasActiveSession { inspect() }
         }
@@ -117,7 +131,7 @@ struct DeviceConnectionView: View {
     }
 }
 
-private struct DeviceQRScanner: UIViewControllerRepresentable {
+struct DeviceQRScanner: UIViewControllerRepresentable {
     let onCode: (String) -> Void
 
     func makeCoordinator() -> Coordinator { Coordinator(onCode: onCode) }

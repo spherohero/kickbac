@@ -3,15 +3,20 @@ import SwiftUI
 struct HomeView: View {
     let session: AuthSession
     let deviceFlow: DeviceSessionStore
-    var onConnect: () -> Void = { }
-    var onOnboarding: () -> Void = { }
+    var onRetryTest: () -> Void = { }
+    var isGameCheckIn = false
+    var checkInSessionID: String? = nil
+    var nfcReadingID: UUID? = nil
+    var onNFCReadingConsumed: () -> Void = { }
+    var onPracticeComplete: ((PracticeReading) -> Void)? = nil
+    @Environment(PracticeReadingStore.self) private var practice
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
     @Environment(\.colorSchemeContrast) private var contrast
     @Environment(\.dynamicTypeSize) private var typeSize
     @State private var readings: [BACReading] = []
-    @State private var isShowingDemo = false
+    @State private var isShowingPractice = false
     @State private var reading: BACReading?
     @State private var phase: ReadingPhase = .ready
     @State private var startedAt: Date?
@@ -19,17 +24,25 @@ struct HomeView: View {
     @State private var resultReveal: CGFloat = 0
     @State private var completionFeedback = 0
     @State private var stopFeedback = 0
+    @State private var isHolding = false
+    @State private var sampledDuration = 0.01
+    @State private var practiceError: String?
+    @State private var readingTrigger: AppReadingTrigger = .touch
+    @State private var practiceWasCancelled = false
 
-    private let preparationDuration = 2.0
     private let sampleDuration = 6.0
     private var summary: DailyBACSummary {
-        DailyBACSummary(readings: isShowingDemo ? readings : (session.history?.items.compactMap(\.bacReading) ?? []))
+        DailyBACSummary(readings: isShowingPractice || isGameCheckIn ? readings : (session.history?.items.compactMap(\.bacReading) ?? []))
     }
-    private var displayReading: BACReading? { isShowingDemo ? reading : deviceFlow.test?.measurement?.bacReading }
-    private var visibleReveal: CGFloat { isShowingDemo ? resultReveal : (displayReading == nil ? 0 : 1) }
+    private var displayedTest: APITestSession? {
+        guard !isGameCheckIn || deviceFlow.test?.id == checkInSessionID else { return nil }
+        return deviceFlow.test
+    }
+    private var displayReading: BACReading? { isShowingPractice ? reading : displayedTest?.measurement?.bacReading }
+    private var visibleReveal: CGFloat { isShowingPractice ? resultReveal : (displayReading == nil ? 0 : 1) }
     private var visiblePhase: ReadingPhase {
-        guard !isShowingDemo else { return phase }
-        switch deviceFlow.test?.status {
+        guard !isShowingPractice else { return phase }
+        switch displayedTest?.status {
         case .armed: return .preparing
         case .sampling: return .sampling
         case .complete: return .result
@@ -40,47 +53,28 @@ struct HomeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack {
-                Spacer(minLength: 8)
-                Button(deviceFlow.hasActiveSession ? "View test" : "Connect") {
-                    exitDemo()
-                    onConnect()
-                }
-                .buttonStyle(.glass).controlSize(.large)
-                #if DEBUG
-                GlassEffectContainer(spacing: 8) {
-                    HStack(spacing: 8) {
-                        Button("Demo", action: startReading)
-                            .disabled(visiblePhase.isRunning)
-                            .accessibilityLabel("Demo reading").accessibilityIdentifier("homeDemoButton")
-                        Button("Onboarding") {
-                            interruptReading()
-                            onOnboarding()
-                        }
-                        .accessibilityIdentifier("onboardingButton")
-                    }
-                    .font(.system(.caption, design: .rounded, weight: .medium))
-                    .buttonStyle(.glass)
-                    .buttonBorderShape(.capsule)
-                    .controlSize(.large)
-                }
-                #endif
-            }
-            .frame(minHeight: 44).padding(.horizontal, 24).padding(.top, 12)
-
-            if isShowingDemo {
+            if !isGameCheckIn {
                 HStack {
-                    Text("Simulated demo · not a measured BAC")
-                    Spacer(minLength: 4)
-                    Button("Exit demo", action: exitDemo)
+                    Spacer(minLength: 8)
+                    if !isShowingPractice, deviceFlow.message != nil {
+                        Button("Retry") {
+                            if deviceFlow.hasActiveSession { deviceFlow.retryPolling() }
+                            else { onRetryTest() }
+                        }
+                        .buttonStyle(.glass).controlSize(.large).disabled(deviceFlow.isBusy)
+                    }
+                    if deviceFlow.isBusy { ProgressView().accessibilityLabel("Starting your test") }
                 }
-                .font(.system(.caption, design: .rounded)).padding(.horizontal, 24).padding(.top, 8)
-                .accessibilityIdentifier("homeDemoNotice")
-            } else if let message = deviceFlow.message {
+                .frame(minHeight: 44).padding(.horizontal, 24).padding(.top, 12)
+            } else {
+                Color.clear.frame(height: 56).accessibilityHidden(true)
+            }
+
+            if let message = practiceError ?? (isGameCheckIn && displayedTest == nil ? nil : deviceFlow.message) ?? practice.message {
                 Text(message).font(.footnote).foregroundStyle(.secondary).padding(.horizontal, 24)
             }
 
-            if !isShowingDemo, let measurement = deviceFlow.test?.measurement,
+            if !isShowingPractice, let measurement = displayedTest?.measurement,
                let notice = measurement.acquisitionNotice {
                 Text(notice)
                     .font(.system(.footnote, design: .rounded))
@@ -95,16 +89,16 @@ struct HomeView: View {
                 let gaugeSide = max(0, min(geometry.size.width - 64, 300, geometry.size.height - 220))
                 VStack(spacing: 0) {
                     Spacer(minLength: 8)
-                    metric(isShowingDemo ? "Demo avg BAC" : "Avg BAC", value: summary.average, size: metricSize)
+                    metric("Avg BAC", value: summary.average, size: metricSize)
                     Spacer(minLength: 14)
 
-                    TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !isShowingDemo || visiblePhase != .sampling)) { timeline in
+                    TimelineView(.animation(minimumInterval: 1.0 / 60, paused: !isShowingPractice || visiblePhase != .sampling)) { timeline in
                         gauge(progress: progress(at: timeline.date))
                     }
                     .frame(width: gaugeSide, height: gaugeSide)
 
                     Spacer(minLength: 14)
-                    metric(isShowingDemo ? "Demo max BAC" : "Max BAC", value: summary.high, size: metricSize * 0.92)
+                    metric("Max BAC", value: summary.high, size: metricSize * 0.92)
                     Spacer(minLength: 20)
                 }
                 .padding(.horizontal, 24)
@@ -112,14 +106,35 @@ struct HomeView: View {
             }
         }
         .font(.system(.body, design: .rounded))
-        .safeAreaInset(edge: .bottom, spacing: 0) { readingControls }
-        .background(background.ignoresSafeArea())
-        .task(id: runID) { await runDemoReading() }
-        .onDisappear { interruptReading() }
-        .onChange(of: scenePhase) {
-            if scenePhase != .active { interruptReading() }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: 0) {
+                if !practiceWasCancelled { readingControls }
+                if isGameCheckIn, isShowingPractice, (phase == .sampling || phase == .stopping) {
+                    Button("Cancel test", action: cancelPracticeReading).frame(minHeight: 44)
+                }
+            }
         }
-        .onChange(of: session.generation) { exitDemo() }
+        .background(background.ignoresSafeArea())
+        .task(id: runID) { await runPracticeReading() }
+        .onChange(of: nfcReadingID, initial: true) {
+            guard nfcReadingID != nil else { return }
+            startReading(trigger: .nfc)
+            onNFCReadingConsumed()
+        }
+        .onDisappear {
+            if isGameCheckIn { exitPractice() }
+            else { interruptReading() }
+        }
+        .onChange(of: scenePhase) {
+            if scenePhase != .active {
+                if isGameCheckIn { exitPractice() }
+                else { interruptReading() }
+            }
+        }
+        .onChange(of: session.generation) { exitPractice() }
+        .onChange(of: deviceFlow.hasActiveSession) {
+            if deviceFlow.hasActiveSession, readingTrigger != .nfc { exitPractice() }
+        }
         .sensoryFeedback(.success, trigger: completionFeedback)
         .sensoryFeedback(.warning, trigger: stopFeedback)
         .sensoryFeedback(.selection, trigger: visiblePhase) { _, next in next == .sampling }
@@ -140,7 +155,7 @@ struct HomeView: View {
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(isShowingDemo ? "Simulated demo. " : "Loaded real readings today. ")\(title)")
+        .accessibilityLabel("\(isShowingPractice ? "App readings. " : "Loaded device readings today. ")\(title)")
         .accessibilityValue(value.map { $0.formatted(.number.precision(.fractionLength(2))) } ?? "No BAC estimates available")
     }
 
@@ -173,7 +188,7 @@ struct HomeView: View {
             }
             .padding(8)
         }
-        .accessibilityElement(children: .ignore)
+        .accessibilityElement(children: .contain)
         .accessibilityLabel("Breath reading")
         .accessibilityValue(gaugeAccessibilityValue(progress: progress))
         .accessibilityIdentifier("homeBACGauge")
@@ -227,7 +242,7 @@ struct HomeView: View {
             if let reading = displayReading {
                 VStack(spacing: 20) {
                     if !typeSize.isAccessibilitySize {
-                        Text(reading.band.title)
+                        Text(isShowingPractice ? "App reading" : reading.band.title)
                             .font(.system(.subheadline, design: .rounded, weight: .semibold))
                             .foregroundStyle(reading.band.color)
                             .multilineTextAlignment(.center)
@@ -243,7 +258,7 @@ struct HomeView: View {
                 .animation(.easeOut(duration: visibleReveal == 0 ? 0.12 : 0.22), value: visibleReveal)
                 .offset(y: reduceMotion ? -8 : -4 - 4 * visibleReveal)
             }
-            if !isShowingDemo, let measurement = deviceFlow.test?.measurement, displayReading == nil {
+            if !isShowingPractice, let measurement = displayedTest?.measurement, displayReading == nil {
                 VStack(spacing: 10) {
                     Text(measurement.sourceTitle)
                         .font(.system(.headline, design: .rounded))
@@ -253,23 +268,75 @@ struct HomeView: View {
                 }
                 .multilineTextAlignment(.center)
             }
+            Button(action: practiceTap) {
+                Circle().fill(.clear).frame(width: side * 0.78, height: side * 0.78)
+                    .contentShape(.circle)
+            }
+            .buttonStyle(.plain)
+            .disabled(deviceFlow.hasActiveSession || deviceFlow.isBusy || !practice.canSave)
+            .highPriorityGesture(DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    if !isHolding { isHolding = true; startReading() }
+                }
+                .onEnded { _ in
+                    isHolding = false
+                    if readingTrigger == .touch { finishPractice() }
+                })
+            .accessibilityLabel("App reading")
+            .accessibilityHint("Hold for a random demo reading; release to save. Tap the NFC tag for a simulated 0.00 reading.")
+            .accessibilityValue(gaugeAccessibilityValue(progress: progress))
         }
         .frame(width: side * 0.78)
-        .allowsHitTesting(false)
     }
 
     private var readingControls: some View {
-        TimelineView(.animation(minimumInterval: 0.05, paused: !isShowingDemo || visiblePhase != .sampling)) { timeline in
+        let layout = typeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(spacing: 12))
+            : AnyLayout(HStackLayout(spacing: 12))
+        return GlassEffectContainer(spacing: 12) {
+            layout {
+                readingDuration
+                if canTestAgain {
+                    Button("Test again", action: prepareForNextTest)
+                        .font(.system(.headline, design: .rounded))
+                        .buttonStyle(.glass).buttonBorderShape(.capsule).controlSize(.large)
+                        .frame(minHeight: 54)
+                        .fixedSize(horizontal: !typeSize.isAccessibilitySize, vertical: true)
+                        .accessibilityHint("Resets the circle. Tap the breathalyzer's NFC tag to start a new test.")
+                        .accessibilityIdentifier("homeTestAgainButton")
+                }
+            }
+        }
+        .padding(12)
+        .padding(.horizontal, 20)
+        .padding(.top, 12)
+        .padding(.bottom, 16)
+    }
+
+    private var canTestAgain: Bool {
+        !isGameCheckIn && !deviceFlow.isBusy && !deviceFlow.hasActiveSession
+            && (isShowingPractice ? phase == .result : deviceFlow.test?.status == .complete)
+    }
+
+    private func prepareForNextTest() {
+        guard canTestAgain else { return }
+        withAnimation(.easeOut(duration: 0.2)) {
+            deviceFlow.resetCompletedTest()
+            exitPractice()
+        }
+    }
+
+    private var readingDuration: some View {
+        TimelineView(.animation(minimumInterval: 0.05, paused: !isShowingPractice || visiblePhase != .sampling)) { timeline in
             HStack(spacing: 10) {
-                Image("ReadingClock").resizable().scaledToFit().frame(width: 20, height: 20)
-                    .accessibilityHidden(true)
-                if isShowingDemo {
-                    Text("Demo · \(elapsedTime(at: timeline.date), format: .number.precision(.fractionLength(2))) s").monospacedDigit()
-                } else if let measurement = deviceFlow.test?.measurement {
-                    Text(measurement.durationText).monospacedDigit()
-                        .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+                if isShowingPractice, visiblePhase != .ready {
+                    Image("ReadingClock").resizable().scaledToFit().frame(width: 20, height: 20)
+                        .accessibilityHidden(true)
+                    Text("\(visiblePhase == .sampling ? max(0, sampleDuration - elapsedTime(at: timeline.date)) : sampledDuration, format: .number.precision(.fractionLength(2))) s")
+                        .monospacedDigit()
                 } else {
-                    Text(deviceFlow.hasActiveSession ? "Waiting for a reading" : "No active test")
+                    Text(readingStatus)
+                        .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                 }
             }
             .font(.system(.title3, design: .rounded, weight: .medium))
@@ -283,108 +350,128 @@ struct HomeView: View {
         }
         .glassEffect(reduceTransparency || contrast == .increased ? .identity : .regular, in: .capsule)
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Reading duration")
+        .accessibilityLabel(isShowingPractice && visiblePhase == .sampling ? "Time remaining" : (isShowingPractice && visiblePhase != .ready ? "Reading duration" : "Reading status"))
         .accessibilityValue(timerAccessibilityValue)
-        .padding(12)
-        .padding(.horizontal, 20)
-        .padding(.top, 12)
-        .padding(.bottom, 16)
+    }
+
+    private var readingStatus: String {
+        if isShowingPractice { return "Connect a breathalyzer" }
+        switch displayedTest?.status {
+        case .armed: return "Waiting for the breathalyzer"
+        case .sampling: return "Taking a reading"
+        case .complete: return displayedTest?.measurement?.durationText ?? "Duration unavailable"
+        default: return "Connect a breathalyzer"
+        }
     }
 
     private var timerAccessibilityValue: String {
-        if !isShowingDemo {
-            if let measurement = deviceFlow.test?.measurement { return measurement.durationAccessibilityValue }
-            return deviceFlow.hasActiveSession ? "Waiting for a device reading" : "No active test"
+        if isShowingPractice, visiblePhase != .ready {
+            if visiblePhase == .sampling { return "Countdown in progress" }
+            return "\(sampledDuration.formatted(.number.precision(.fractionLength(2)))) seconds"
         }
-        return switch visiblePhase {
-        case .ready: "Ready"
-        case .preparing: "Starting in two seconds"
-        case .sampling: "Reading in progress"
-        case .stopping, .revealing, .result: "6 seconds"
-        }
+        return readingStatus
     }
 
     private func progress(at date: Date) -> Double {
-        guard isShowingDemo else { return 0 }
+        guard isShowingPractice else { return 0 }
         guard visiblePhase == .sampling, let startedAt else { return visiblePhase == .stopping || visiblePhase.showsResult ? 1 : 0 }
         return min(max(date.timeIntervalSince(startedAt) / sampleDuration, 0), 1)
     }
 
     private var instruction: String {
-        if !isShowingDemo {
-            switch deviceFlow.test?.status {
-            case .armed: return "Armed · awaiting operator start"
+        if practiceWasCancelled { return "Test cancelled" }
+        if !isShowingPractice {
+            switch displayedTest?.status {
+            case .armed: return "Waiting for the breathalyzer"
             case .sampling: return "Sensor acquisition · breath not validated"
             case .complete: return "Your saved reading"
             case .cancelled: return "Test cancelled"
             case .expired: return "Test expired"
-            default: return "Connect a device"
+            default: return "Tap your phone to the breathalyzer"
             }
         }
         return switch visiblePhase {
-        case .ready: "Demo reading"
+        case .ready: "Tap your phone to the breathalyzer"
         case .preparing: "Start blowing"
-        case .sampling: "Keep blowing"
-        case .stopping: "Stop blowing"
-        case .revealing, .result: "Your reading"
+        case .sampling: readingTrigger == .nfc ? "Keep blowing" : "Release to finish"
+        case .stopping: "Finishing reading"
+        case .revealing, .result: "App reading"
         }
     }
 
-    // Debug-only entry point; these readings never enter authenticated history.
-    private func startReading() {
-        guard !phase.isRunning, !deviceFlow.hasActiveSession else { return }
-        isShowingDemo = true
-        readings = [0.04, 0.05, 0.09].map { BACReading(value: $0, date: .now) }
-        startedAt = nil
-        withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .smooth(duration: 0.24)) {
-            resultReveal = 0
-            phase = .preparing
-        }
+    private func practiceTap() {
+        guard !phase.isRunning else { return }
+        startReading()
+        finishPractice()
+    }
+
+    private func startReading(trigger: AppReadingTrigger = .touch) {
+        guard !phase.isRunning, practice.canSave,
+              trigger == .nfc || (!deviceFlow.hasActiveSession && !deviceFlow.isBusy) else { return }
+        readingTrigger = trigger
+        practiceWasCancelled = false
+        isShowingPractice = true
+        practiceError = nil
+        readings = practice.readings.map(\.reading)
+        reading = nil
+        startedAt = .now
+        sampledDuration = 0.01
+        resultReveal = 0
+        phase = .sampling
+        runID = UUID()
+    }
+
+    private func finishPractice() {
+        guard isShowingPractice, phase == .sampling, let startedAt else { return }
+        sampledDuration = min(sampleDuration, max(0.01, Date.now.timeIntervalSince(startedAt)))
+        phase = .stopping
+        stopFeedback += 1
         runID = UUID()
     }
 
     private func elapsedTime(at date: Date) -> Double {
-        if phase == .sampling { return sampleDuration * progress(at: date) }
-        return phase == .stopping || phase.showsResult ? sampleDuration : 0
+        if phase == .sampling, let startedAt { return min(sampleDuration, max(0, date.timeIntervalSince(startedAt))) }
+        return phase == .stopping || phase.showsResult ? sampledDuration : 0
     }
 
-    private func runDemoReading() async {
-        guard isShowingDemo, let currentRun = runID, phase == .preparing else { return }
+    private func runPracticeReading() async {
+        guard isShowingPractice, let currentRun = runID else { return }
         do {
-            try await Task.sleep(for: .seconds(preparationDuration))
+            if phase == .sampling {
+                try await Task.sleep(for: .seconds(sampleDuration))
+                guard !Task.isCancelled, runID == currentRun else { return }
+                finishPractice()
+                return
+            }
+            guard phase == .stopping else { return }
+            try await Task.sleep(for: .milliseconds(450))
             try Task.checkCancellation()
-            guard runID == currentRun else { return }
-            startedAt = .now
-            phase = .sampling
-            try await Task.sleep(for: .seconds(sampleDuration))
-            try Task.checkCancellation()
-            guard runID == currentRun else { return }
-            phase = .stopping
-            stopFeedback += 1
-            // Keep the stop cue visible before revealing the result.
-            try await Task.sleep(for: .seconds(1))
-            try Task.checkCancellation()
-            guard runID == currentRun else { return }
-            // Demo only. Replace this sample with a completed hardware measurement.
-            let completed = BACReading(value: 0.08, date: .now)
+            guard runID == currentRun, readingTrigger == .nfc || !deviceFlow.hasActiveSession else { return }
+            let sample = try practice.save(value: readingTrigger.makeValue(),
+                                           duration: sampledDuration)
+            let completed = sample.reading
             reading = completed
             phase = .revealing
-            withAnimation(.easeOut(duration: 0.22)) { readings.append(completed) }
-            withAnimation(reduceMotion ? .easeOut(duration: 0.15) : .smooth(duration: 0.24)) {
-                resultReveal = 1
-            }
+            withAnimation(.easeOut(duration: 0.22)) { readings.append(completed); resultReveal = 1 }
             completionFeedback += 1
             try await Task.sleep(for: .milliseconds(240))
             guard runID == currentRun else { return }
             phase = .result
+            if let onPracticeComplete {
+                try await Task.sleep(for: .milliseconds(1200))
+                guard runID == currentRun else { return }
+                onPracticeComplete(sample)
+            }
         } catch is CancellationError {
-            // Leaving Home discards an incomplete sample.
+            // Navigation/backgrounding cancels an unfinished practice reading.
         } catch {
+            practiceError = practice.message ?? "Couldn't save this reading."
             interruptReading()
         }
     }
 
     private func interruptReading() {
+        isHolding = false
         guard phase.isRunning else { return }
         runID = nil
         startedAt = nil
@@ -394,9 +481,22 @@ struct HomeView: View {
         }
     }
 
-    private func exitDemo() {
+    private func cancelPracticeReading() {
+        guard isShowingPractice, phase == .sampling || phase == .stopping else { return }
+        isHolding = false
         runID = nil
-        isShowingDemo = false
+        startedAt = nil
+        reading = nil
+        phase = .ready
+        practiceWasCancelled = true
+    }
+
+    private func exitPractice() {
+        practiceWasCancelled = false
+        isHolding = false
+        practiceError = nil
+        runID = nil
+        isShowingPractice = false
         readings = []
         reading = nil
         phase = .ready
@@ -405,15 +505,15 @@ struct HomeView: View {
     }
 
     private func gaugeAccessibilityValue(progress: Double) -> String {
-        if !isShowingDemo {
-            if let measurement = deviceFlow.test?.measurement {
+        if !isShowingPractice {
+            if let measurement = displayedTest?.measurement {
                 if let reading = measurement.bacReading { return "Estimated BAC \(reading.value.formatted())." }
                 return "\(measurement.durationAccessibilityValue). No BAC estimate. Raw sensor reading \(measurement.raw.value) \(measurement.raw.unit)."
             }
             return instruction
         }
         if phase.showsResult, let reading {
-            return "Simulated demo. \(reading.value.formatted(.number.precision(.fractionLength(2)))) grams per deciliter. \(reading.band.title)."
+            return "App reading. \(reading.value.formatted(.number.precision(.fractionLength(2)))) grams per deciliter. \(reading.band.title)."
         }
         return phase == .sampling ? "Keep blowing. \(Int(progress * 100)) percent complete" : instruction
     }
@@ -439,4 +539,4 @@ private extension BACBand {
     }
 }
 
-#Preview("Home · Dark") { HomeView(session: AuthSession(configuration: nil), deviceFlow: DeviceSessionStore()).preferredColorScheme(.dark) }
+#Preview("Home · Dark") { HomeView(session: AuthSession(configuration: nil), deviceFlow: DeviceSessionStore()).environment(PracticeReadingStore(directory: .temporaryDirectory.appending(path: "KickBACPracticePreview"))).preferredColorScheme(.dark) }

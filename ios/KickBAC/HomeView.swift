@@ -87,6 +87,16 @@ struct HomeView: View {
                 Text(message).font(.footnote).foregroundStyle(.secondary).padding(.horizontal, 24)
             }
 
+            if !isShowingDemo, let measurement = deviceFlow.test?.measurement,
+               let notice = measurement.acquisitionNotice {
+                Text(notice)
+                    .font(.system(.footnote, design: .rounded))
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 24).padding(.top, 8)
+                    .accessibilityIdentifier("homeAcquisitionNotice")
+            }
+
             GeometryReader { geometry in
                 let metricSize = min(52, max(30, geometry.size.height * 0.1))
                 let gaugeSide = max(0, min(geometry.size.width - 64, 300, geometry.size.height - 220))
@@ -251,7 +261,7 @@ struct HomeView: View {
             }
             if !isShowingDemo, let measurement = deviceFlow.test?.measurement, displayReading == nil {
                 VStack(spacing: 10) {
-                    Text(measurement.isTestReading ? "Test reading saved" : "Reading saved")
+                    Text(measurement.sourceTitle)
                         .font(.system(.headline, design: .rounded))
                     Text("No BAC estimate").font(.system(.subheadline, design: .rounded))
                     Text("\(measurement.raw.value) \(measurement.raw.unit.replacingOccurrences(of: "_", with: " "))")
@@ -276,7 +286,8 @@ struct HomeView: View {
                         Text("Demo · \(elapsedTime(at: timeline.date), format: .number.precision(.fractionLength(2))) s").monospacedDigit()
                     }
                 } else if let measurement = deviceFlow.test?.measurement {
-                    Text("\(Double(measurement.breathDurationMS) / 1000, format: .number.precision(.fractionLength(2))) s").monospacedDigit()
+                    Text(measurement.durationText).monospacedDigit()
+                        .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
                 } else if isGameCheckIn {
                     Text("— s")
                 } else {
@@ -305,7 +316,7 @@ struct HomeView: View {
     private var timerAccessibilityValue: String {
         if isGameCheckIn && !isShowingDemo && deviceFlow.test?.measurement == nil { return "Breath test duration unavailable" }
         if !isShowingDemo {
-            if let measurement = deviceFlow.test?.measurement { return "Recorded breath duration: \(measurement.breathDurationMS) milliseconds" }
+            if let measurement = deviceFlow.test?.measurement { return measurement.durationAccessibilityValue }
             return deviceFlow.hasActiveSession ? "Waiting for a device reading" : "No active test"
         }
         return switch visiblePhase {
@@ -326,8 +337,8 @@ struct HomeView: View {
         if isGameCheckIn && !isShowingDemo && deviceFlow.test == nil { return "Take your breath test" }
         if !isShowingDemo {
             switch deviceFlow.test?.status {
-            case .armed: return "Waiting for device"
-            case .sampling: return "Device is sampling"
+            case .armed: return "Armed · awaiting operator start"
+            case .sampling: return "Sensor acquisition · breath not validated"
             case .complete: return "Your saved reading"
             case .cancelled: return "Test cancelled"
             case .expired: return "Test expired"
@@ -428,7 +439,7 @@ struct HomeView: View {
         if !isShowingDemo {
             if let measurement = deviceFlow.test?.measurement {
                 if let reading = measurement.bacReading { return "Estimated BAC \(reading.value.formatted())." }
-                return "\(measurement.isTestReading ? "Simulated test reading. " : "")No BAC estimate. Raw sensor reading \(measurement.raw.value) \(measurement.raw.unit)."
+                return "\(measurement.durationAccessibilityValue). No BAC estimate. Raw sensor reading \(measurement.raw.value) \(measurement.raw.unit)."
             }
             return instruction
         }

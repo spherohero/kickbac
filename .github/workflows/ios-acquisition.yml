@@ -1,0 +1,47 @@
+name: iOS acquisition compatibility
+
+on:
+  pull_request:
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-acquisition.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ios/**'
+      - '.github/workflows/ios-acquisition.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-acquisition-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native:
+    name: Native acquisition checks and unsigned iOS build
+    runs-on: macos-26
+    timeout-minutes: 12
+    steps:
+      - name: Check out exact revision
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Record actual toolchain
+        run: |
+          xcodebuild -version
+          xcrun swiftc --version
+      - name: Execute Swift acquisition decoding fixtures
+        run: |
+          xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/KickBACAPI.swift ios/checks/AcquisitionChecks.swift -o "$RUNNER_TEMP/kickbac-acquisition-checks"
+          "$RUNNER_TEMP/kickbac-acquisition-checks" ios/checks/fixtures/acquisition.json
+      - name: Execute Swift exact-session fixtures
+        run: |
+          xcrun swiftc ios/KickBAC/BACReading.swift ios/KickBAC/DeviceModels.swift ios/KickBAC/KickBACAPI.swift ios/KickBAC/DeviceSessionStore.swift ios/checks/DeviceSessionChecks.swift -o "$RUNNER_TEMP/kickbac-device-checks"
+          "$RUNNER_TEMP/kickbac-device-checks"
+      - name: Compile unsigned simulator app
+        run: |
+          xcodebuild -project ios/KickBAC.xcodeproj -scheme KickBAC -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/kickbac-native-build" CODE_SIGNING_ALLOWED=NO build -quiet
+      - name: Check tests left tracked sources unchanged
+        run: git diff --exit-code

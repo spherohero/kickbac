@@ -1,5 +1,26 @@
 # kickBAC firmware — USB/Wi-Fi bring-up and local signal experiments
 
+**Latest physical checkpoint:**
+Latest readback became stale and a subsequent reset/private reprovision exhausted
+all three reconnect health attempts. Current online state is NOT restored; the
+earlier bounded pass below is not uninterrupted connectivity. No root cause claim.
+[`DEVICE_SESSION_VERIFICATION.md`](../docs/DEVICE_SESSION_VERIFICATION.md) records
+the exact flashed `xiao_device` follow-up at `17ed04b`, USB identity/image hashes,
+actual network/auth9heartbeat/24idle-poll run and independently advancing server
+heartbeat after helper exit. Earlier reconnect failures and stale readback remain
+explicit; no root-cause/reliability claim. Serial released. ADC/sampling/uploads
+remain disabled; unverified electrical protection is not bypassed.
+
+**Earlier source checkpoint (subsequently flashed with the follow-up above):**
+[`FIRMWARE_SESSION_GUARD.md`](../docs/FIRMWARE_SESSION_GUARD.md) records the
+current-base session UUID/expiry retention, fail-closed ticket guard and tested
+immutable RAM retry-byte slot. Host suite/all three cross-builds pass; ADC,
+sampling and uploads remain disabled. Fresh USB enumeration matches the known
+COM3 target, not proof of its current firmware or network state. The assembly is
+now owner-reported complete; minimal measured protection/serial exclusivity and
+truthful deployed acquisition metadata remain physical/integration gates.
+The physical connectivity/image statements below are historical evidence.
+
 **Status:** USB-only, Wi-Fi and authenticated-device diagnostic targets build;
 the new `xiao_device` image is flashed/hash-verified on COM3. Earlier actual
 association/DHCP/DNS/SNTP/trusted health HTTPS and software reconnect passed.

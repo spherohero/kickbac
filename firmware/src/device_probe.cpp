@@ -5,8 +5,10 @@
 
 #include <cstdint>
 #include <cstring>
+#include <ctime>
 #include "device_diagnostic.hpp"
 #include "device_probe.hpp"
+#include "session_safety.hpp"
 #include "tls_root.hpp"
 
 #if !defined(ARDUINO_XIAO_ESP32S3) || !defined(KICKBAC_DEVICE_DIAGNOSTIC)
@@ -15,6 +17,7 @@
 
 namespace {
 kickbac::DeviceCredentialFrame credential;
+kickbac::SessionFence session_fence;
 bool failed = false;
 bool negative_checked = false;
 bool pass_reported = false;
@@ -25,7 +28,13 @@ std::uint32_t last_heartbeat = 0;
 std::uint32_t last_poll = 0;
 char previous_seen[40] = {};
 
+std::int64_t utc_upper_ms() {
+    const std::time_t seconds = std::time(nullptr);
+    return seconds > 0 ? static_cast<std::int64_t>(seconds) * 1000 + 999 : 0;
+}
+
 void stop_probe(const char* stage, int status) {
+    session_fence.clear();
     credential.clear();
     failed = true;
     Serial.printf("DEVICE_FAIL stage=%s status=%d credential=cleared uploads=disabled\n", stage, status);
@@ -70,6 +79,7 @@ int request(bool heartbeat, bool authenticated, char (&body)[769]) {
 void device_probe_loop() {
     if (failed) return;
     const auto now = static_cast<std::uint32_t>(millis());
+    session_fence.tick(now, utc_upper_ms());
     if (!credential.ready()) {
         credential.expire(now);
         if (now - last_ready >= 3000U) {
@@ -109,8 +119,10 @@ void device_probe_loop() {
     }
     if (polls == 0 || now - last_poll >= 2000U) {
         const int status = request(false, true, body);
-        const kickbac::PollState state = kickbac::poll_response(status, body);
+        kickbac::PollSnapshot snapshot;
+        const kickbac::PollState state = kickbac::poll_response(status, body, snapshot);
         if (state == kickbac::PollState::Invalid) { stop_probe("poll", status); return; }
+        session_fence.observe(snapshot, static_cast<std::uint32_t>(millis()), utc_upper_ms());
         const char* label = state == kickbac::PollState::Idle ? "IDLE" :
                             (state == kickbac::PollState::Armed ? "ARMED" : "SAMPLING");
         last_poll = static_cast<std::uint32_t>(millis());

@@ -1,0 +1,2689 @@
+{
+  "paths": {
+    "/health": {
+      "get": {
+        "summary": "Health",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me": {
+      "get": {
+        "summary": "Me",
+        "operationId": "me_v1_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "UserAccessToken": []
+          }
+        ]
+      }
+    },
+    "/d/{device_id}": {
+      "get": {
+        "summary": "Resolve",
+        "operationId": "resolve_d__device_id__get",
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResolveResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/v1/devices/{device_id}": {
+      "get": {
+        "summary": "Get Device",
+        "operationId": "get_device_v1_devices__device_id__get",
+        "security": [
+          {
+            "UserAccessToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/v1/devices/{device_id}/sessions": {
+      "post": {
+        "summary": "Arm",
+        "operationId": "arm_v1_devices__device_id__sessions_post",
+        "security": [
+          {
+            "UserAccessToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "device_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Device Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Empty"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "200": {
+            "description": "Existing owner session",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/sessions/{session_id}": {
+      "get": {
+        "summary": "Get Session",
+        "operationId": "get_session_v1_sessions__session_id__get",
+        "security": [
+          {
+            "UserAccessToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/v1/device/heartbeat": {
+      "post": {
+        "summary": "Heartbeat",
+        "operationId": "heartbeat_v1_device_heartbeat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Empty"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HeartbeatResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DeviceCredential": []
+          }
+        ]
+      }
+    },
+    "/v1/device/session": {
+      "get": {
+        "summary": "Poll",
+        "operationId": "poll_v1_device_session_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DevicePoll"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DeviceCredential": []
+          }
+        ]
+      }
+    },
+    "/v1/device/sessions/{session_id}/sampling": {
+      "post": {
+        "summary": "Sampling",
+        "operationId": "sampling_v1_device_sessions__session_id__sampling_post",
+        "security": [
+          {
+            "DeviceCredential": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Empty"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeviceSession"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/v1/sessions/{session_id}/cancel": {
+      "post": {
+        "summary": "Cancel",
+        "operationId": "cancel_v1_sessions__session_id__cancel_post",
+        "security": [
+          {
+            "UserAccessToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Empty"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/v1/device/measurements": {
+      "post": {
+        "summary": "Upload",
+        "operationId": "upload_v1_device_measurements_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MeasurementUpload"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasurementResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "200": {
+            "description": "Identical upload replay",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeasurementResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "DeviceCredential": []
+          }
+        ]
+      }
+    },
+    "/v1/measurements": {
+      "get": {
+        "summary": "History",
+        "operationId": "history_v1_measurements_get",
+        "security": [
+          {
+            "UserAccessToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 0,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HistoryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          }
+        }
+      }
+    },
+    "/v1/me/profile": {
+      "get": {
+        "summary": "Get Profile",
+        "description": "Read only this token subject's profile; uninitialized fields are null.\n\nNo row is inserted and no session expiration writes occur on this GET.\nPhone identity is managed by Auth0, never supplied through this API.",
+        "operationId": "get_profile_v1_me_profile_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request exceeds 1 MiB or decoded picture exceeds 512 KiB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "UserAccessToken": []
+          }
+        ]
+      },
+      "put": {
+        "summary": "Put Profile",
+        "description": "Atomically replace display name and picture for the validated token subject.\n\nBoth fields are required; null explicitly removes the picture. No phone,\nowner ID, URL or onboarding policy fields are accepted. Name is a strict\nstring, Unicode-whitespace trimmed, 1..80 codepoints; controls/surrogates\nare rejected. Picture is strict canonical base64 of JPEG/PNG, <=512 KiB,\n<=2048 per side and <=4,194,304 pixels, not animated or truncated, matching\nits declared MIME type. Output is metadata-free JPEG with EXIF orientation\napplied, alpha flattened on white, longest edge <=512 (never upscaled).\nRetries replace one row; created_at is preserved, updated_at is server UTC.\nThe request body is bounded to 1 MiB even without Content-Length.",
+        "operationId": "put_profile_v1_me_profile_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfilePut"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request exceeds 1 MiB or decoded picture exceeds 512 KiB.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "UserAccessToken": []
+          }
+        ]
+      }
+    },
+    "/v1/me/game-results": {
+      "post": {
+        "summary": "Store Result",
+        "description": "Store a client-reported completed game, owned only by the validated subject.\n\nServer awards 10 participation points per unique UUID under completion_v1,\nindependent of score or outcome. This is not verified gameplay or anti-cheat.\nEvery field is required; extra owner/points/phone fields are rejected.\nIdentical canonical replay returns the original result/timestamp (200).\nChanged accepted fields return 409; another owner's UUID returns 404.\nBody is bounded to 32768 bytes, even when Content-Length is missing/false.\nNo profile, reading history, device, session, or mutable points total is changed.",
+        "operationId": "store_result_v1_me_game_results_post",
+        "security": [
+          {
+            "UserAccessToken": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GameResultPut"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameResultResponse"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "200": {
+            "description": "Identical replay",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameResultResponse"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request exceeds 32768 bytes or canonical data exceeds 4096 UTF-8 bytes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "summary": "History",
+        "description": "Private read-only ledger, ordered by created_at DESC, result_id DESC.",
+        "operationId": "history_v1_me_game_results_get",
+        "security": [
+          {
+            "UserAccessToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "game_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[a-z][a-z0-9_-]{0,63}$"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Game Id"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 50,
+              "title": "Limit"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "default": 0,
+              "title": "Offset"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GameHistoryResponse"
+                }
+              }
+            },
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            }
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unauthorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Not Found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Conflict"
+          },
+          "410": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Gone"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Unprocessable Entity"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Internal Server Error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            },
+            "description": "Service Unavailable"
+          },
+          "413": {
+            "description": "Request exceeds 32768 bytes or canonical data exceeds 4096 UTF-8 bytes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/me/stats": {
+      "get": {
+        "summary": "Stats",
+        "description": "Read-only points/counts derived from the immutable owner ledger.\n\nUnplayed users receive zero totals and an empty per_game array. Per-game\naggregates are ordered by game_id ASC; best_score is MAX of raw score.\nNo parties count, public leaderboard or verified gameplay claims.",
+        "operationId": "stats_v1_me_stats_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "const": "no-store"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StatsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "410": {
+            "description": "Gone",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request exceeds 32768 bytes or canonical data exceeds 4096 UTF-8 bytes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "UserAccessToken": []
+          }
+        ]
+      }
+    }
+  },
+  "schemas": {
+    "DevicePoll": {
+      "properties": {
+        "device_id": {
+          "type": "string",
+          "title": "Device Id"
+        },
+        "active_session": {
+          "anyOf": [
+            {
+              "$ref": "#/components/schemas/DeviceSession"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "type": "object",
+      "required": [
+        "device_id",
+        "active_session"
+      ],
+      "title": "DevicePoll"
+    },
+    "DeviceResponse": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "Id"
+        },
+        "state": {
+          "type": "string",
+          "enum": [
+            "AVAILABLE",
+            "ARMED",
+            "SAMPLING"
+          ],
+          "title": "State"
+        },
+        "online": {
+          "type": "boolean",
+          "title": "Online"
+        },
+        "last_seen_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Last Seen At"
+        }
+      },
+      "type": "object",
+      "required": [
+        "id",
+        "state",
+        "online",
+        "last_seen_at"
+      ],
+      "title": "DeviceResponse"
+    },
+    "DeviceSession": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "Id"
+        },
+        "device_id": {
+          "type": "string",
+          "title": "Device Id"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ARMED",
+            "SAMPLING"
+          ],
+          "title": "Status"
+        },
+        "expires_at": {
+          "type": "string",
+          "title": "Expires At"
+        }
+      },
+      "type": "object",
+      "required": [
+        "id",
+        "device_id",
+        "status",
+        "expires_at"
+      ],
+      "title": "DeviceSession"
+    },
+    "Empty": {
+      "properties": {},
+      "additionalProperties": false,
+      "type": "object",
+      "title": "Empty"
+    },
+    "ErrorDetail": {
+      "properties": {
+        "code": {
+          "type": "string",
+          "title": "Code"
+        },
+        "message": {
+          "type": "string",
+          "title": "Message"
+        }
+      },
+      "type": "object",
+      "required": [
+        "code",
+        "message"
+      ],
+      "title": "ErrorDetail"
+    },
+    "ErrorEnvelope": {
+      "properties": {
+        "error": {
+          "$ref": "#/components/schemas/ErrorDetail"
+        }
+      },
+      "type": "object",
+      "required": [
+        "error"
+      ],
+      "title": "ErrorEnvelope"
+    },
+    "GameHistoryResponse": {
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/components/schemas/GameResultResponse"
+          },
+          "type": "array",
+          "title": "Items"
+        },
+        "limit": {
+          "type": "integer",
+          "title": "Limit"
+        },
+        "offset": {
+          "type": "integer",
+          "title": "Offset"
+        },
+        "has_more": {
+          "type": "boolean",
+          "title": "Has More"
+        }
+      },
+      "type": "object",
+      "required": [
+        "items",
+        "limit",
+        "offset",
+        "has_more"
+      ],
+      "title": "GameHistoryResponse"
+    },
+    "GameResultPut": {
+      "properties": {
+        "result_id": {
+          "type": "string",
+          "format": "uuid",
+          "title": "Result Id"
+        },
+        "game_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{0,63}$",
+          "title": "Game Id"
+        },
+        "score": {
+          "type": "integer",
+          "maximum": 1000000.0,
+          "minimum": 0.0,
+          "title": "Score"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "win",
+            "loss",
+            "draw",
+            "completed"
+          ],
+          "title": "Outcome"
+        },
+        "data": {
+          "additionalProperties": true,
+          "type": "object",
+          "title": "Data",
+          "description": "Strict JSON object, canonical sorted-key compact ensure_ascii=False serialization <=4096 UTF-8 bytes; <=128 value nodes including root (depth 0), maximum depth 4; object keys 1..64 codepoints, lists <=64 items, strings <=512 codepoints; finite numbers with absolute value <=1e12. Invalid tree: 422; encoded size overflow: 413."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "result_id",
+        "game_id",
+        "score",
+        "outcome",
+        "data"
+      ],
+      "title": "GameResultPut"
+    },
+    "GameResultResponse": {
+      "properties": {
+        "result_id": {
+          "type": "string",
+          "title": "Result Id"
+        },
+        "user_id": {
+          "type": "string",
+          "title": "User Id"
+        },
+        "game_id": {
+          "type": "string",
+          "title": "Game Id"
+        },
+        "score": {
+          "type": "integer",
+          "title": "Score"
+        },
+        "outcome": {
+          "type": "string",
+          "enum": [
+            "win",
+            "loss",
+            "draw",
+            "completed"
+          ],
+          "title": "Outcome"
+        },
+        "data": {
+          "additionalProperties": true,
+          "type": "object",
+          "title": "Data"
+        },
+        "awarded_points": {
+          "type": "integer",
+          "const": 10,
+          "title": "Awarded Points"
+        },
+        "scoring_policy": {
+          "type": "string",
+          "const": "completion_v1",
+          "title": "Scoring Policy"
+        },
+        "source": {
+          "type": "string",
+          "const": "client_reported",
+          "title": "Source"
+        },
+        "created_at": {
+          "type": "string",
+          "title": "Created At"
+        }
+      },
+      "type": "object",
+      "required": [
+        "result_id",
+        "user_id",
+        "game_id",
+        "score",
+        "outcome",
+        "data",
+        "awarded_points",
+        "scoring_policy",
+        "source",
+        "created_at"
+      ],
+      "title": "GameResultResponse"
+    },
+    "GameStats": {
+      "properties": {
+        "game_id": {
+          "type": "string",
+          "title": "Game Id"
+        },
+        "total_points": {
+          "type": "integer",
+          "title": "Total Points"
+        },
+        "games_played": {
+          "type": "integer",
+          "title": "Games Played"
+        },
+        "wins": {
+          "type": "integer",
+          "title": "Wins"
+        },
+        "best_score": {
+          "type": "integer",
+          "title": "Best Score"
+        }
+      },
+      "type": "object",
+      "required": [
+        "game_id",
+        "total_points",
+        "games_played",
+        "wins",
+        "best_score"
+      ],
+      "title": "GameStats"
+    },
+    "HeartbeatResponse": {
+      "properties": {
+        "device_id": {
+          "type": "string",
+          "title": "Device Id"
+        },
+        "online": {
+          "type": "boolean",
+          "title": "Online"
+        },
+        "last_seen_at": {
+          "type": "string",
+          "title": "Last Seen At"
+        }
+      },
+      "type": "object",
+      "required": [
+        "device_id",
+        "online",
+        "last_seen_at"
+      ],
+      "title": "HeartbeatResponse"
+    },
+    "HistoryResponse": {
+      "properties": {
+        "items": {
+          "items": {
+            "$ref": "#/components/schemas/MeasurementResponse"
+          },
+          "type": "array",
+          "title": "Items"
+        },
+        "limit": {
+          "type": "integer",
+          "title": "Limit"
+        },
+        "offset": {
+          "type": "integer",
+          "title": "Offset"
+        },
+        "has_more": {
+          "type": "boolean",
+          "title": "Has More"
+        }
+      },
+      "type": "object",
+      "required": [
+        "items",
+        "limit",
+        "offset",
+        "has_more"
+      ],
+      "title": "HistoryResponse"
+    },
+    "MeResponse": {
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "title": "User Id"
+        }
+      },
+      "type": "object",
+      "required": [
+        "user_id"
+      ],
+      "title": "MeResponse"
+    },
+    "MeasurementResponse": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "Id"
+        },
+        "session_id": {
+          "type": "string",
+          "title": "Session Id"
+        },
+        "device_id": {
+          "type": "string",
+          "title": "Device Id"
+        },
+        "raw": {
+          "$ref": "#/components/schemas/RawReading"
+        },
+        "breath_duration_ms": {
+          "type": "integer",
+          "title": "Breath Duration Ms"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "device",
+            "simulator"
+          ],
+          "title": "Source"
+        },
+        "measured_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Measured At"
+        },
+        "received_at": {
+          "type": "string",
+          "title": "Received At"
+        },
+        "estimated_bac_percent": {
+          "type": "null",
+          "title": "Estimated Bac Percent"
+        }
+      },
+      "type": "object",
+      "required": [
+        "id",
+        "session_id",
+        "device_id",
+        "raw",
+        "breath_duration_ms",
+        "source",
+        "measured_at",
+        "received_at"
+      ],
+      "title": "MeasurementResponse"
+    },
+    "MeasurementUpload": {
+      "properties": {
+        "measurement_id": {
+          "type": "string",
+          "format": "uuid",
+          "title": "Measurement Id"
+        },
+        "session_id": {
+          "type": "string",
+          "format": "uuid",
+          "title": "Session Id"
+        },
+        "raw": {
+          "$ref": "#/components/schemas/RawReading"
+        },
+        "breath_duration_ms": {
+          "type": "integer",
+          "maximum": 60000.0,
+          "minimum": 1.0,
+          "title": "Breath Duration Ms"
+        },
+        "source": {
+          "type": "string",
+          "enum": [
+            "device",
+            "simulator"
+          ],
+          "title": "Source"
+        },
+        "measured_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Measured At"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "measurement_id",
+        "session_id",
+        "raw",
+        "breath_duration_ms",
+        "source"
+      ],
+      "title": "MeasurementUpload"
+    },
+    "ProfilePicture": {
+      "properties": {
+        "content_type": {
+          "type": "string",
+          "enum": [
+            "image/jpeg",
+            "image/png"
+          ],
+          "title": "Content Type"
+        },
+        "data_base64": {
+          "type": "string",
+          "maxLength": 699052,
+          "title": "Data Base64"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "content_type",
+        "data_base64"
+      ],
+      "title": "ProfilePicture"
+    },
+    "ProfilePictureResponse": {
+      "properties": {
+        "content_type": {
+          "type": "string",
+          "const": "image/jpeg",
+          "title": "Content Type"
+        },
+        "data_base64": {
+          "type": "string",
+          "title": "Data Base64"
+        }
+      },
+      "type": "object",
+      "required": [
+        "content_type",
+        "data_base64"
+      ],
+      "title": "ProfilePictureResponse"
+    },
+    "ProfilePut": {
+      "properties": {
+        "display_name": {
+          "type": "string",
+          "maxLength": 80,
+          "minLength": 1,
+          "title": "Display Name"
+        },
+        "profile_picture": {
+          "anyOf": [
+            {
+              "$ref": "#/components/schemas/ProfilePicture"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "display_name",
+        "profile_picture"
+      ],
+      "title": "ProfilePut"
+    },
+    "ProfileResponse": {
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "title": "User Id"
+        },
+        "display_name": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Display Name"
+        },
+        "profile_picture": {
+          "anyOf": [
+            {
+              "$ref": "#/components/schemas/ProfilePictureResponse"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "created_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Created At"
+        },
+        "updated_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Updated At"
+        }
+      },
+      "type": "object",
+      "required": [
+        "user_id",
+        "display_name",
+        "profile_picture",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "ProfileResponse"
+    },
+    "RawReading": {
+      "properties": {
+        "sensor": {
+          "type": "string",
+          "const": "mq3",
+          "title": "Sensor"
+        },
+        "value": {
+          "type": "integer",
+          "maximum": 4095.0,
+          "minimum": 0.0,
+          "title": "Value"
+        },
+        "unit": {
+          "type": "string",
+          "const": "adc_counts",
+          "title": "Unit"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "sensor",
+        "value",
+        "unit"
+      ],
+      "title": "RawReading"
+    },
+    "ResolveResponse": {
+      "properties": {
+        "device_id": {
+          "type": "string",
+          "title": "Device Id"
+        }
+      },
+      "type": "object",
+      "required": [
+        "device_id"
+      ],
+      "title": "ResolveResponse"
+    },
+    "SessionResponse": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "title": "Id"
+        },
+        "device_id": {
+          "type": "string",
+          "title": "Device Id"
+        },
+        "user_id": {
+          "type": "string",
+          "title": "User Id"
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "ARMED",
+            "SAMPLING",
+            "COMPLETE",
+            "CANCELLED",
+            "EXPIRED"
+          ],
+          "title": "Status"
+        },
+        "created_at": {
+          "type": "string",
+          "title": "Created At"
+        },
+        "expires_at": {
+          "type": "string",
+          "title": "Expires At"
+        },
+        "completed_at": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Completed At"
+        },
+        "measurement": {
+          "anyOf": [
+            {
+              "$ref": "#/components/schemas/MeasurementResponse"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "type": "object",
+      "required": [
+        "id",
+        "device_id",
+        "user_id",
+        "status",
+        "created_at",
+        "expires_at",
+        "completed_at",
+        "measurement"
+      ],
+      "title": "SessionResponse"
+    },
+    "StatsResponse": {
+      "properties": {
+        "user_id": {
+          "type": "string",
+          "title": "User Id"
+        },
+        "total_points": {
+          "type": "integer",
+          "title": "Total Points"
+        },
+        "games_played": {
+          "type": "integer",
+          "title": "Games Played"
+        },
+        "wins": {
+          "type": "integer",
+          "title": "Wins"
+        },
+        "per_game": {
+          "items": {
+            "$ref": "#/components/schemas/GameStats"
+          },
+          "type": "array",
+          "title": "Per Game"
+        }
+      },
+      "type": "object",
+      "required": [
+        "user_id",
+        "total_points",
+        "games_played",
+        "wins",
+        "per_game"
+      ],
+      "title": "StatsResponse"
+    }
+  },
+  "securitySchemes": {
+    "UserAccessToken": {
+      "type": "http",
+      "description": "Auth0 RS256 user-delegated API access token (not an ID/M2M token).",
+      "scheme": "bearer"
+    },
+    "DeviceCredential": {
+      "type": "http",
+      "description": "Privately provisioned per-device credential; never a user JWT.",
+      "scheme": "bearer"
+    }
+  }
+}

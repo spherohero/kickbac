@@ -1,5 +1,74 @@
 # kickBAC firmware bot — current startup handoff
 
+## Latest physical checkpoint — no-ADC image flashed, real device auth passed
+
+**Latest state supersedes the earlier pass:** at07:56:14UTC heartbeat was stale
+(57.797157s); following authorized reset/reprovision passed initial trusted health
+but exhausted all three reconnect attempts with HTTPClient/TLS `-1` around7s each.
+Device bearer was not forwarded on that final run. Current board online state is
+NOT restored. Source PR31 merged `97b30a17739ed84cec562dfdfe365c28fa8a5c26`, exact
+merged-main firmware CI passed. Read the latest-state section in the evidence
+below; network root cause unresolved, serial released, ADC remains disabled.
+Public OpenAPI now exposes33operations/manual metadata/schema6-era routes; no
+manual upload/actual-user acquisition acceptance is inferred from its presence.
+
+Read [DEVICE_SESSION_VERIFICATION.md](DEVICE_SESSION_VERIFICATION.md). Nicholas
+authorized exclusive COM3 open/reset/flash/private provisioning. Current flashed
+`xiao_device` runtime is `17ed04ba393f8d5e6124c65d0eb07d926db85d43` on
+`firmware/session-guard-device-verification`, base `3fd50c7`. Actual target/image
+hashes, two preserved reconnect failures, a stale short-helper readback, subsequent
+9-heartbeat/24-idle-poll continuous physical pass and independent advancing
+persisted heartbeat after helper exit are documented there. No serial owner left.
+Extra bounded reconnect retries were not needed in the pass; a later run
+physically exhausted all three (no recovery).
+Root cause of earlier intermittent failures remains unknown. No reliability claim.
+
+Nicholas declines further electrical measurements/photos; assembly correctness
+remains owner-reported, not independently verified. ADC/sampling/uploads stay
+disabled; do not bypass safety or repeat the checklist in a loop. Separate manual
+duration support/deployment/native/real-user measurement acceptance remain gates.
+Earlier “not flashed”/unavailable serial authorization paragraphs below are
+historical checkpoints, superseded by this authorized physical execution.
+
+## Latest firmware integration checkpoint — session guard, not flashed
+
+Merged [PR #28](https://github.com/spherohero/kickbac/pull/28) at
+`706d5bb27ab2aa00b620375b27b7a93adaf6addf`; reviewed source head `11b5e38`,
+exact remote merge/tree verified. Merged-main firmware/backend CI both passed;
+links and limits are in the checkpoint below. No physical patch was applied.
+
+Read [FIRMWARE_SESSION_GUARD.md](FIRMWARE_SESSION_GUARD.md). Firmware owner branch
+`firmware/session-ownership-guard`, base `86adb12b4c1f669aafb1ee5ee1726f6da87454bb`,
+adds exact session UUID/expiry retention, fail-closed acquisition tickets and a
+transport-neutral immutable retry-byte slot. Full host suite and all three pinned
+cross-builds passed; no ADC/sampling/upload is enabled and no flash occurred.
+Fresh USB enumeration matches COM3 / `303A:1001` / `80:B5:4E:F1:B7:30`; private
+read-only relay verified the existing `kb-demo-01` credential hash/record without
+USB provisioning. Currently running image/online status remain unverified.
+
+Nicholas now reports the completed board plugged in/electrically correct, relayed
+by backend Bot. Treat the older placement-only paragraphs below as historical,
+not a denial of that owner report. Minimal actual electrical measurements/photos
+and exclusive serial access remain unavailable to firmware; clarification was
+undelivered in unattended mode. Reuse existing check evidence rather than repeat
+completed setup. No manual-timed contract deployment or acceptance is inferred;
+coordinate truthful fields/client compatibility before enabling production sends.
+
+## Latest owner decision — USB-C-only demo
+
+Nicholas has removed battery operation from this demo. Read
+[USB_ONLY_COMMISSIONING.md](USB_ONLY_COMMISSIONING.md) for the current conditional
+single-cable VBUS-to-MQ schematic, keep/remove list, capacitor identification,
+power budget and commissioning report. BAT pads stay unconnected; no battery,
+boost or external charging/balancing parts are needed. USB source/cable and actual
+XIAO VBUS path must be accepted for MCU plus heater load before powering that
+assembly. The two reported 10 kOhm resistors remain; reported two 10 uF ceramics
+and one 100 nF electrolytic are NOT silently relabelled to match the old BOM.
+Markings/ratings, wiring and full-scale divider checks remain unverified. ADC lead
+stays physically OPEN. No new ADC, serial, Wi-Fi, upload or native test is claimed.
+The older separate-supply and battery paragraphs below are historical alternatives,
+not the current positive-rail wiring. No API/iOS change; no client action.
+
 ## Scope and precedence
 
 This is the firmware specialist's startup checkpoint, not a backend implementation brief. Nicholas is creating a Hermes Bots group with a backend/webserver bot and a firmware/ESP32 bot. The firmware bot owns MCU code, safe physical integration, sensor experiments and the device-side API client. Server implementation/hosting belongs to the backend bot; SwiftUI/native acceptance belongs to Liam; mechanical/perfboard work belongs to Austin.
@@ -13,7 +82,7 @@ Read the applicable `AGENTS.md` chain, this document and linked firmware evidenc
 3. Read `firmware/README.md`, `docs/DEVICE_CONNECTIVITY.md`, `docs/WIFI_CONNECTIVITY.md`, `docs/HARDWARE_BRINGUP.md`, `docs/AUSTIN_PERFBOARD_GUIDE.md`, `docs/FIRMWARE_DURATION_PROPOSAL.md`, then the device portions of current `docs/API.md` and their actual models/client code. Load available `swamphacks-planning` references, collaboration, TDD and debugging skills as relevant.
 4. Identify the actual backend bot from the group roster and agree ownership/contract handoff. Ask it for current public contract/reachability or a secure operator-access arrangement only when needed—not for secrets in chat. No need to relearn its server architecture here.
 5. Re-enumerate USB before serial/flash. Coordinate exclusive access; monitor control lines can reset this board. Do not automatically flash or enable ADC as part of orientation.
-6. Nicholas's latest group clarification: components are only placed in isolated-pad perfboard, not soldered or electrically connected. **No boost converter, no pressure sensor, no installed JP1.** Continue backend/firmware communication verification without waiting on construction photos or electrical measurements. When actual powered acquisition is requested, establish the revised MQ heater supply/protection and open ADC connection first; omission of the boost does not identify a replacement power source.
+6. Components are only placed in isolated-pad perfboard in the latest assembly report, not permanently connected. **No boost converter, no pressure sensor, no installed JP1.** Nicholas now selects USB-C-only operation: use the current USB guide above, with battery absent and ADC lead open. Continue software communication verification independently; actual source/path/current and protection sign-off remain gates for powered acquisition.
 
 ## Verified controller and module
 
@@ -48,7 +117,7 @@ No verified perfboard assembly, module heater current, checked supply/divider, p
 
 ## Electrical gate before ADC
 
-**Latest authoritative status:** Nicholas confirms placement-only parts, no soldered/connected assembly, **no boost converter, no air-pressure sensor, no installed JP1**. The MQ heater's intended approved power source and final battery topology are not established by that clarification. Do not infer XIAO 3V3/GPIO/VBUS heater power or silently add a boost. This is an acquisition safety gate, **not a blocker for host/backend communication tests**. Keep any eventual ADC connection physically disconnected until the actual supply/divider is accepted; a removable insulated lead can provide isolation without a JP1 component.
+**Current topology:** USB-C-only by Nicholas's explicit decision; battery operation is dropped. Placement-only assembly, **no boost, pressure sensor or installed JP1** remains the latest construction evidence. [USB-only commissioning](USB_ONLY_COMMISSIONING.md) proposes USB VBUS for the MQ, conditional on verified source/cable/board path and current. It does not authorize an unchecked VBUS load. Never use GPIO/3V3 for the heater. Keep the ADC lead physically disconnected until source/divider sign-off. These physical gates do not block host/backend communication tests.
 
 **Historical group-shared proposal, not the current bill of materials:** `docs/BATTERY_BOOST_COMMISSIONING.md` preserves the earlier LiPo + switched-boost plan and its conditional safety review. It does not establish that a converter is present or authorize that topology. The older USB/external-supply guide below is also conditional; neither is an as-built report.
 

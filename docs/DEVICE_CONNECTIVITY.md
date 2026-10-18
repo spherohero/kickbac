@@ -1,5 +1,12 @@
 # Authenticated ESP32 heartbeat / session-poll diagnostic
 
+**Newer physical run:** see [DEVICE_SESSION_VERIFICATION.md](DEVICE_SESSION_VERIFICATION.md).
+Latest state is stale heartbeat/final reconnect exhaustion, NOT currently online.
+That document records the flashed session-guard follow-up, actual9heartbeat/24idle-poll continuous
+capture and advancing persisted heartbeat after helper exit. It also preserves
+earlier reconnect failures/stale readback; no root-cause/reliability/sensor claim.
+Historical evidence below remains provenance, not current-image identity.
+
 ## Result: physical DEVICE_PASS and persisted ongoing heartbeat verified
 
 The `xiao_device` target built and was flashed/hash-verified to the same

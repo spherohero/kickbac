@@ -35,16 +35,17 @@ def instant(request):
 
 
 @contextmanager
-def session_transaction(request):
+def session_transaction(request, *, with_now=False):
     """Serialize state checks/writes; retain lazy expiry on domain errors.
 
     HTTPException is only used for expected rejections, before business writes.
     Unexpected failures still roll back the entire operation.
     """
     with transaction(request.app.state.settings.db_path) as db:
+        now = instant(request)
         expired = db.execute(
             "UPDATE sessions SET status='EXPIRED' WHERE status IN ('ARMED','SAMPLING') AND expires_at<=? RETURNING id,device_id,user_id",
-            (instant(request).isoformat(),),
+            (now.isoformat(),),
         ).fetchall()
         for row in expired:
             log.info(
@@ -54,7 +55,7 @@ def session_transaction(request):
                 row["user_id"],
             )
         try:
-            yield db
+            yield (db, now) if with_now else db
         except HTTPException:
             db.commit()
             raise

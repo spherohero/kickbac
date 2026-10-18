@@ -1,6 +1,21 @@
 # Games, profile-wide points and private reading history
 
-Status: **LIVE at https://api.kickbac.vodka**, published and merged in [PR #7](https://github.com/spherohero/kickbac/pull/7). Explicit backed-up schema3→4 upgrade, staged target-host HTTP/profile/game/restart/migration checks and public17-operation contract verification passed. All14 earlier operations/18 component schemas are unchanged. See [BACKEND_RELEASE_VERIFICATION.md](BACKEND_RELEASE_VERIFICATION.md) and [LIAM_BACKEND_HANDOFF.md](LIAM_BACKEND_HANDOFF.md). Real native token/profile/history/game acceptance remains Liam-owned and unverified.
+Status: **LIVE at https://api.kickbac.vodka**, now schema6/33 operations with the party/context additions below. Generic results were originally published in [PR #7](https://github.com/spherohero/kickbac/pull/7); the following schema3→4/17-operation evidence is historical. Explicit backed-up schema3→4 upgrade, staged target-host HTTP/profile/game/restart/migration checks and public17-operation contract verification passed. All14 earlier operations/18 component schemas are unchanged. See [BACKEND_RELEASE_VERIFICATION.md](BACKEND_RELEASE_VERIFICATION.md) and [LIAM_BACKEND_HANDOFF.md](LIAM_BACKEND_HANDOFF.md). Real native token/profile/history/game acceptance remains Liam-owned and unverified.
+
+## Party/context additions — deployed, not a gameplay engine
+
+The reviewed source in [PR #26](https://github.com/spherohero/kickbac/pull/26)
+adds host-controlled parties/device assignment/game instances, one own completion
+per instance, explicit owned measurement links, and `GET /v1/me/game-history`.
+Read [PARTIES.md](PARTIES.md) for the exact contract. Generic live routes and their
+five-field requests/responses below stay unchanged; party results share the same
+immutable ledger and fixed 10-point award. Rich history returns explicit null
+context for legacy rows, not guessed party/placement/BAC. All accepted readings
+remain in ordinary private history. These source additions passed independent
+review and CI and are deployed with schema6; this is not shared gameplay, anti-cheat, a public
+leaderboard or native acceptance. Backend ARM-time context is now deployed
+through [NFC check-ins](NFC_CHECK_IN.md); a check-in-linked reading cannot
+be attached to another party/game or promoted from party-only into game context.
 
 ## Figma scope inspected read-only
 

@@ -44,29 +44,86 @@ inline bool heartbeat_response_ok(int status, const char* body, char (&seen)[40]
     return true;
 }
 
-inline PollState poll_response(int status, const char* body) {
+inline bool uuid_text(const char* id) {
+    if (id == nullptr || std::strlen(id) != 36) return false;
+    for (std::size_t i = 0; i < 36; ++i) {
+        if (i == 8 || i == 13 || i == 18 || i == 23) {
+            if (id[i] != '-') return false;
+        } else if (!((id[i] >= '0' && id[i] <= '9') || (id[i] >= 'a' && id[i] <= 'f') ||
+                     (id[i] >= 'A' && id[i] <= 'F'))) return false;
+    }
+    return true;
+}
+
+// UTC calendar validation and conversion, independent of host timezone/time_t width.
+// Fractional milliseconds are rounded DOWN, conservatively shortening a lease.
+inline bool utc_epoch_ms(const char* text, std::int64_t& output) {
+    output = 0;
+    if (!utc_timestamp(text)) return false;
+    const auto number = [text](std::size_t at, std::size_t count) {
+        int value = 0;
+        for (std::size_t i = 0; i < count; ++i) value = value * 10 + text[at + i] - '0';
+        return value;
+    };
+    const int year = number(0, 4), month = number(5, 2), day = number(8, 2);
+    const int hour = number(11, 2), minute = number(14, 2), second = number(17, 2);
+    if (year < 1970 || month < 1 || month > 12 || hour > 23 || minute > 59 || second > 59) return false;
+    const auto leap = [](int y) { return y % 4 == 0 && (y % 100 != 0 || y % 400 == 0); };
+    const int months[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    if (day < 1 || day > months[month - 1] + (month == 2 && leap(year) ? 1 : 0)) return false;
+    const auto leaps_before = [](int y) { return (y - 1) / 4 - (y - 1) / 100 + (y - 1) / 400; };
+    std::int64_t days = 365LL * (year - 1970) + leaps_before(year) - leaps_before(1970);
+    for (int m = 1; m < month; ++m) days += months[m - 1] + (m == 2 && leap(year) ? 1 : 0);
+    days += day - 1;
+    int milliseconds = 0;
+    if (text[19] == '.') {
+        std::size_t at = 20;
+        for (int place = 100; place > 0; place /= 10) {
+            if (text[at] >= '0' && text[at] <= '9') milliseconds += (text[at++] - '0') * place;
+        }
+    }
+    output = ((days * 24 + hour) * 60 + minute) * 60000 + second * 1000 + milliseconds;
+    return true;
+}
+
+struct PollSnapshot {
+    PollState state = PollState::Invalid;
+    char id[37] = {};
+    char expires_at[40] = {};
+};
+
+inline PollState poll_response(int status, const char* body, PollSnapshot& snapshot) {
+    snapshot = PollSnapshot{};
     if (status != 200 || body == nullptr || std::strlen(body) > 768) return PollState::Invalid;
     StaticJsonDocument<1024> document;
     if (deserializeJson(document, body, DeserializationOption::NestingLimit(3))) return PollState::Invalid;
     const JsonObjectConst root = document.as<JsonObjectConst>();
     if (root.size() != 2 || root["device_id"] != "kb-demo-01" ||
         !root.containsKey("active_session")) return PollState::Invalid;
-    if (root["active_session"].isNull()) return PollState::Idle;
+    if (root["active_session"].isNull()) {
+        snapshot.state = PollState::Idle;
+        return snapshot.state;
+    }
     const JsonObjectConst active = root["active_session"].as<JsonObjectConst>();
     if (active.size() != 4 || active["device_id"] != "kb-demo-01" ||
         !active["id"].is<const char*>() || !active["expires_at"].is<const char*>()) return PollState::Invalid;
     const char* id = active["id"].as<const char*>();
-    if (std::strlen(id) != 36) return PollState::Invalid;
-    for (std::size_t i = 0; i < 36; ++i) {
-        if (i == 8 || i == 13 || i == 18 || i == 23) {
-            if (id[i] != '-') return PollState::Invalid;
-        } else if (!((id[i] >= '0' && id[i] <= '9') || (id[i] >= 'a' && id[i] <= 'f') ||
-                     (id[i] >= 'A' && id[i] <= 'F'))) return PollState::Invalid;
-    }
-    if (!utc_timestamp(active["expires_at"].as<const char*>())) return PollState::Invalid;
-    if (active["status"] == "ARMED") return PollState::Armed;
-    if (active["status"] == "SAMPLING") return PollState::Sampling;
-    return PollState::Invalid;
+    const char* expires = active["expires_at"].as<const char*>();
+    std::int64_t epoch = 0;
+    if (!uuid_text(id) || !utc_epoch_ms(expires, epoch)) return PollState::Invalid;
+    const PollState state = active["status"] == "ARMED" ? PollState::Armed :
+                            (active["status"] == "SAMPLING" ? PollState::Sampling : PollState::Invalid);
+    if (state == PollState::Invalid) return state;
+    std::strcpy(snapshot.id, id);
+    std::strcpy(snapshot.expires_at, expires);
+    snapshot.state = state;
+    return state;
+}
+
+// Existing callers that only need status retain their interface.
+inline PollState poll_response(int status, const char* body) {
+    PollSnapshot snapshot;
+    return poll_response(status, body, snapshot);
 }
 
 // Current operator-issued token_urlsafe(32) bearer, relayed over trusted local USB.

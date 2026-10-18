@@ -2,6 +2,384 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+### Latest ownership — Liam controls all remaining iOS work
+
+Nicholas's newer direction: Liam is back and controls the rest of the app.
+This **ends** the temporary backend-led iOS implementation, including the
+previously lifted04:00 cutoff below. Backend stopped client worker
+`deleg_0dd745ec` immediately; interruption completed and exact worktree/ref status
+was independently checked. No more client edits, client publication or PR32 merge
+are being performed by backend under the temporary authorization.
+
+- Original `liam/party-setup` remains `0e5a6e4c87e650d5ea40090d7d232e9807d9dc2f`.
+  Published [draft PR32](https://github.com/spherohero/kickbac/pull/32) remains
+  `ios/manual-acquisition-notice@f9cbce63553712806b8d39760261975e5f817088`,
+  **OPEN/DRAFT/UNMERGED** at handoff. Existing native CIgreen predates fixes below.
+- Preserved isolated local worktree
+  `C:/Users/nicho/Desktop/SwampHacks26/kickbac-ios-acquisition-worker` is clean at
+  `3600a57a8aa511097d5945ab9b962d3fdf47df11`: worker only merged verified main74fd612
+  locally. The `ios/` subtree is byte-for-byte the published PR32. No review fix,
+  new test, remote push or merge was completed; do not call the findings fixed.
+  Liam may inspect/use this preserved work, not assume it is his own checkout.
+- Independent SPEC review found three concrete blockers in PR32: (1) normal
+  party/create/join/invite screens do not clearly disclose local unsaved fixture
+  code/membership; (2) trivia advertises sensor/NFC check-in but Release cannot
+  progress and the fresh Home store is not connected; (3) local score/leaderboard/
+  solo podium provenance is not continuously visible/accessibly labelled or
+  distinguished from server participation points. No new privacy leak found.
+  See `PartyView.swift`, `PartyPreview.swift`, `TriviaView.swift`, `TriviaPodium.swift`.
+  Proposed minimal correction was disclosures plus explicit no-sample local
+  progression, not fake sensor completion or a gameplay backend; **NOT implemented**.
+- **NON-BREAKING handoff; existing API unchanged.** Liam owns resolution, review,
+  native acceptance and further client work. Core nullable acquisition/fences are
+  already on main/live-backend support and passed real Swift/unsigned CI in PR30;
+  no signed phone/NFC/real acquisition acceptance is implied.
+
+### Backend-only network investigation — actual rollout502, later TLS unresolved
+
+Owner backend, `docs/host-tls-liam-return`, base74fd612; publishing PR records exact
+head/state. [HOST_TLS_INVESTIGATION.md](HOST_TLS_INVESTIGATION.md) records read-only
+host evidence requested by firmware: one device-session poll502 at07:55:19UTC
+during API replacement, Caddy never restarted, host TCP443 permitted, no configured
+proxy limiter or logged443drops. Diagnostic source permanently stops after bad
+poll; this is a mechanism, not proof that exact board saw502. Later reconnect-1
+root cause remains unknown; access logs intentionally absent, no packet capture.
+No services/protections/TLS/logging changed, no reset/private entry/live arm.
+**NON-BREAKING; no Liam action.** Endpoints/schema/examples/cadence remain as in
+[API.md](API.md); only firmware/backend continue their owned diagnosis.
+
+### Current live acquisition/NFC release — historical client authorization
+
+Nicholas lifted the04:00 cutoff and authorizes continuing necessary iOS work;
+preserve Liam's concurrent work/branches and existing designs. Backend is NOW
+live at `https://api.kickbac.vodka`:33 operations/schema6, release source
+`172e54c1604356e3e83db2fc0672706829841795`, activated07:55:20UTC October18.
+PR30 merged as `c78a042`; exact PR and merged-main backend/native CI passed,
+including actual Swift acquisition/session fixtures and unsigned simulator build.
+Signing/install, native NFC, rendering and real sensor acceptance remain separate.
+Full immutable provenance, backups/old-row preservation and target/public readback:
+[BACKEND_RELEASE_VERIFICATION.md](BACKEND_RELEASE_VERIFICATION.md).
+
+**BREAKING for older required-Int clients:** manual measurements use null breath
+duration, `acquisition_method:"manual_timed"`, actual `sample_duration_ms`1..60000.
+Existing legacy JSON/retries remain exact; paths/identity/session ownership and
+participation points are unchanged. Show "Timed sensor sample — breath not
+validated" and never call the sensor window breath duration or BAC. Canonical
+examples: [FIRMWARE_DURATION_PROPOSAL.md](FIRMWARE_DURATION_PROPOSAL.md).
+
+Original `liam/party-setup@0e5a6e4` is preserved. Combined compatible preview branch
+`ios/manual-acquisition-notice@f9cbce63553712806b8d39760261975e5f817088`
+([draft PR32](https://github.com/spherohero/kickbac/pull/32)) retains Liam's
+Party/Trivia work and integrates current verified main/fences. Its independent
+full-preview review/native CI is separate from the already-green core main and
+must pass before merging; no live-party/gameplay or phone installation claim.
+
+Every lower pending/not-deployed/unapproved statement describes its historical
+checkpoint unless explicitly reconfirmed; do not restart setup or erase evidence.
+No production user creation/grant/arm/measurement was performed by deployment.
+
+### Physical diagnostic follow-up — reconnect failure investigation
+
+- **Latest status / MERGED, but not currently online:**
+  [PR31](https://github.com/spherohero/kickbac/pull/31) integrated head `aadca18`
+  merged `97b30a17739ed84cec562dfdfe365c28fa8a5c26`; exact remote merge/tree and
+  [main firmware CI](https://github.com/spherohero/kickbac/actions/runs/39109491333)
+  verified. Earlier physical pass is bounded evidence, NOT uninterrupted uptime:
+  later heartbeat stale57.797157s; final reset/private reprovision exhausted
+  reconnect health attempts2..4, HTTP/TLS-1 around7s each, before device auth.
+  Current online state NOT restored; serial released. No root cause inferred.
+  Current public OpenAPI has33operations/manual metadata; no physical upload.
+  Docs closeout `docs/device-session-closeout`, base that merge; no runtime change.
+- **New physical result:** [DEVICE_SESSION_VERIFICATION.md](DEVICE_SESSION_VERIFICATION.md)
+  records exact flashed runtime `17ed04ba393f8d5e6124c65d0eb07d926db85d43`, app
+  SHA256, actual9heartbeat200/24idle-poll200 continuous serial run and independent
+  advancing persisted heartbeat after helper exit. Serial released. Earlier two
+  reconnect failures and a stale short-helper readback are preserved, not hidden;
+  root cause/reliability remain unestablished. Extra retries were not needed in
+  the successful run; later physical exhaustion is recorded above. No ADC/user-arm/upload/native
+  acceptance. Current source checkpoint paragraphs below preceded this run.
+- Owner firmware Bot, `firmware/session-guard-device-verification`, base
+  `3fd50c7f2520982696a4f2e4ac095a06e34d1887`; publishing commits/PR record exact
+  head/state. Nicholas authorizes exclusive COM3 open/reset/flash/private entry.
+  Owner reports electrically correct assembly but declines measurements/photos;
+  no electrical sign-off is invented and ADC remains disabled.
+- Original reviewed session-guard image flashed/hash-verified to the known XIAO.
+  Two physical runs passed initial trusted health200, then failed reconnect HTTPS
+  with HTTPClient -1 after successful rejoin/DNS; device auth was not reached.
+  Preserve both failed traces. A small reviewed/tested follow-up adds numeric-only
+  TLS error/elapsed diagnostics and at most three trusted public health attempts
+  after reconnect, one-second waits between failures. All use unchanged trust and
+  body validation; exhaustion remains failure, not a pass. No auth retry change.
+- **NON-BREAKING; no Liam action.** No endpoint, schema, measurement meaning,
+  auth, state, unit or example payload changes. Nominal heartbeat10s/poll2s remains.
+  No ADC/acquisition/upload or app edits. Manual acquisition remains held pending
+  verified backend release; no fabricated duration/BAC or hidden simulator.
+- Full host suite, pinned helper lint/format and all three cross-builds passed;
+  independent no-ADC code review approved. New policy/allowlist tests started RED,
+  then passed. Follow-up physical execution/heartbeat persistence is not yet
+  claimed at this source checkpoint; final evidence will be recorded separately.
+
+### Manual acquisition implementation — bounded iOS ownership until04:00, not deployed
+
+Nicholas authorizes backend/manual-timed support and necessary iOS changes until
+04:00 Eastern October18; preserve Liam's tip/dirty work and implement on isolated
+branches, not directly on main. Backend base3fd50c7; refreshed client tip0e5a6e4.
+No native build/physical acceptance is inferred. Firmware owns the actual board.
+The focused worker client patch5cc081d (based on Liam0e5a6e4) is integrated into
+the backend candidate as38a4188. Only its compatibility changes are cherry-picked;
+Liam's unrelated Party/Trivia preview is not taken over or reset. Home's one
+context conflict retains current-main layout and new mode-aware duration text.
+Five Python source guards/branding pass, but these do not compile Swift. A
+single public-repo macOS26 CI job runs actual Swift acquisition/session fixtures
+and an unsigned simulator build. No signing account/resource is created; no
+native build, rendering or iPhone acceptance is claimed before real output.
+Per Nicholas's fast-path request, backend feature checks now run on PRs rather
+than duplicate feature-push+PR matrices; merged-main checks and protections stay.
+
+**BREAKING:** current client requires integer breath duration. New manual samples
+require `breath_duration_ms:null`, `acquisition_method:"manual_timed"`, actual
+`sample_duration_ms`1..60000. Existing paths/session IDs/auth remain unchanged;
+legacy request/response/retry JSON remains exact. Full frozen request/response,
+normalization and gates: [FIRMWARE_DURATION_PROPOSAL.md](FIRMWARE_DURATION_PROPOSAL.md).
+Update nullable decoding, mode-aware Home/history and accessibility notice:
+"Timed sensor sample — breath not validated." SAMPLING is acquisition, not proof
+of breath. Preserve null BAC, no-trigger/no-result, owner-scoped caches/retries.
+This notice was given to Nicholas before implementation. New API not live yet.
+
+### Firmware session ownership guard — historical pre-flash checkpoint; no wire change
+
+- **MERGED / not flashed:** [PR #28](https://github.com/spherohero/kickbac/pull/28),
+  exact reviewed head `11b5e38d40eb0868096a6dc1830bd3660b5fb6b2`, merge
+  `706d5bb27ab2aa00b620375b27b7a93adaf6addf`; remote parents/tree equality verified.
+  Exact merged-main [firmware CI](https://github.com/spherohero/kickbac/actions/runs/39107522328)
+  and [backend/decoder CI](https://github.com/spherohero/kickbac/actions/runs/39107522329)
+  passed. Docs closeout owner firmware Bot, `docs/firmware-session-closeout`, base
+  that merge; its publishing PR records its own state. Runtime is unchanged by
+  the closeout. No deployment, flash or physical/native acceptance.
+- Owner: firmware Bot, `firmware/session-ownership-guard`, base
+  `86adb12b4c1f669aafb1ee5ee1726f6da87454bb`. Exact reviewed head and verified
+  merge/CI are recorded above; no deployment, flash or physical/native acceptance.
+- **NON-BREAKING; no Liam action.** Exact retained server UUID/expiry, stale/lost/
+  expired-session acquisition fencing and transport-neutral immutable pending
+  bytes are documented in [FIRMWARE_SESSION_GUARD.md](FIRMWARE_SESSION_GUARD.md).
+  Current versus proposed API is identical: endpoints, payload examples in
+  [API.md](API.md)/[NFC_CHECK_IN.md](NFC_CHECK_IN.md), fields, states, auth, units,
+  errors and nominal 10 s heartbeat / 2 s device polling remain unchanged.
+- Host suite and all three XIAO cross-builds pass; actual adapter retention/idle
+  fencing and clock-rollback/new-ticket regression are synthetic fixtures. USB
+  identity was freshly matched and existing private registered credential hash
+  verified read-only without sending credentials to USB. New source not flashed.
+- ADC/sampling/uploads remain OFF. Newer owner reports complete/electrically
+  correct assembly, but actual minimal measured protection and exclusive serial
+  access were not available in this unattended delivery. No setup redo requested.
+- Separate truthful acquisition support remains coordinated, not implemented by
+  this patch: nullable duration/manual mode is BREAKING and requires Nicholas's
+  exact decision, backend deployed acceptance and Liam's nullable decode/notice.
+  Do not convert ADC to BAC or claim confirmed breath. No app source is edited.
+- Reproduce: `bash firmware/test_host.sh` and pinned PlatformIO commands in
+  [the checkpoint](FIRMWARE_SESSION_GUARD.md#verification-executed). Next gates:
+  accepted electrical report, exclusive serial/private provisioning, protected
+  ADC traces, deployed truthful contract and real same-session private readback.
+
+### NFC check-ins merged — main CI verified; NOT deployed
+
+This is the current checkpoint; older implementation/proposal entries below are
+historical and do not override it. [PR #26](https://github.com/spherohero/kickbac/pull/26)
+head `8cdab3a5b52e7d59115586719a90ff69233e46e6` merged as
+`67c46916bda95250cdae739fd99e19cde8634667`. Both merge parents, remote-main
+ancestry and complete tree equality with the reviewed head were independently
+verified. Runtime reviewed at `2f0407483bc5f2b539de79495a171d86c0571b67`
+is unchanged in the merge; later changes are documentation only.
+Both independent final reviews approved SPEC and QUALITY/security/integration
+with no actionable blockers. The integration reviewer ran528 tests and20
+scratch-only actual-HTTP race probes; parent repeated528 tests/lint/71-file
+formatting/compile/simulator after receiving the reviews. The final PR head,
+check status and merge commit are authoritative for publication/merge, never
+evidence of production availability. Final status documentation is owned by
+backend Bot on `docs/nfc-merge-verification`, based on that verified merge; its
+publishing PR records its own head/state. No branches/worktrees were deleted.
+
+- Backend integration branch `backend/party-profile-completion`; publishing branch
+  `backend/party-profile-contract`, [PR #26](https://github.com/spherohero/kickbac/pull/26),
+  based on main `dd19b404210517b1b0c8b8f8a1809ba988bb250d`. Integrated runtime
+  checkpoint `2f0407483bc5f2b539de79495a171d86c0571b67`; schema6,33 operations.
+  Existing live production remains schema4/17 operations; no migration/deployment,
+  grants, SMS, real user writes, device arming, flash or sensor enablement.
+- **Additive / NON-BREAKING:** `POST /v1/parties/{party_id}/check-ins` and private
+  `GET /v1/me/check-ins` are now implemented. Exact request/response/lifecycle,
+  nullable party-only game context and examples are in [NFC_CHECK_IN.md](NFC_CHECK_IN.md).
+  Both use current API access-token identity. Existing session/measurement/firmware
+  payloads, profile full replacement and fixed10-point game awards are unchanged.
+- Liam: scan the stable official device URL only after selecting a deliberate
+  link/join/start-test intent. For a player test, persist the check-in UUID/payload,
+  submit POST and poll its existing session. Retried completed/expired attempts
+  never arm again. Load own check-ins to recover party/game association even if no
+  game completion exists. No roster, other-person BAC or public leaderboard is
+  exposed. Preserve native NFC entitlement/Universal Link gates and explicit
+  unavailable/simulator labels; this source does not resolve them.
+- Parent executed **528 tests on Python3.11 and3.12**, including the new signed
+  real-loopback reservation→device poll→upload→private party/game/history→restart
+  acceptance and seven HTTP/streaming cases. Ruff lint/71-file formatting, compile,
+  original simulator and unchanged old17-operation/23-schema compatibility passed.
+  Both independent final reviews passed. Exact5a8d8e0
+  [push CI](https://github.com/spherohero/kickbac/actions/runs/39105274853) and
+  [PR CI](https://github.com/spherohero/kickbac/actions/runs/39105277114) passed:
+  each Python version ran521 backend/deployment tests plus7 party HTTP checks;
+  decoder job passed2 checks and Node22 passed78 non-sending Auth0 fixtures.
+  Final8cdab3a [PR CI](https://github.com/spherohero/kickbac/actions/runs/39105861628)
+  and exact67c4691 [merged-main CI](https://github.com/spherohero/kickbac/actions/runs/39105975584)
+  also passed; actual logs confirm the same counts and `SIMULATOR_OK`. This final
+  docs-only closeout changes no runtime/workflow path and does not claim a new
+  path-filtered CI run.
+- Refreshed client source: `liam/party-setup@4d34436` is now published (no open PR
+  observed), adding a local Party UI preview. Its owner handoff still contains
+  historical “local/uncommitted” wording; Git confirms publication, not native
+  acceptance. It deliberately makes no live party calls, NFC read, binding,
+  completion, shared scores or fake players. Preserve Liam's work/branch; adopt
+  live operations after verified deployment, not by reassigning completed UI work.
+- Reproduction: commands in [NFC_CHECK_IN.md](NFC_CHECK_IN.md#executed-local-verification).
+  Current backend source requires explicit migrations005+006 over backed-up
+  schema4 or006 over schema5. Startup never migrates; old runtime cannot blindly
+  run over upgraded schema6. Production rollout remains a separate verified task.
+
+### Frozen NFC check-in implementation contract — not live
+
+Independent core and game/history reviews passed spec and quality/privacy checks
+with no blocking findings; parent combined verification is recorded below. The
+NFC design review approved atomic arming context after freezing exact policies in
+[NFC_CHECK_IN.md](NFC_CHECK_IN.md#frozen-check-in-contract--approved-for-test-first-implementation-not-live).
+
+**Additive / NON-BREAKING to legacy routes.** New `POST /v1/parties/{party_id}/check-ins`
+accepts required `check_in_id` UUID and `device_id`, optional `game_instance_id`
+UUID/null (omission=null; explicitly party-only, no automatic current-game choice).
+Returns `{check_in_id,party_id,game_instance_id,session}` with unchanged session
+shape;201 new/200 exact retry with current status/result and original ID/expiry.
+New owner-private `GET /v1/me/check-ins?limit=50&offset=0` returns paginated wrappers,
+including after leave/close and without game completion. Same32KiB write cap,
+no-store/error envelope; migration006/schema6 preserves populated schema5.
+
+Liam: persist exact attempt UUID/payload before requesting, consume accepted
+session via existing polling, never silently rearm on repeated URL/scan delivery,
+and use an explicit new attempt only after deliberate user action. Existing
+ordinary active session is409busy, never retroactively relabeled as party context.
+Game close/member leave retain an accepted session/context; upload stays subject
+to existing owner/device/expiry checks, while a new late game completion remains
+rejected. New result measurement links cannot cross the check-in's party/game;
+party-only cannot later become game-specific (422). Exact accepted result retries
+remain replayable. Existing firmware polling/upload payloads are unchanged.
+
+The parent reported this exact POST+GET impact to Nicholas before implementation.
+No native NFC, rawADC-to-BAC, acquisition-duration revision, hardware enablement or
+production deployment is approved or claimed by this contract freeze.
+
+### Integrated party/profile source — review checkpoint, not deployed
+
+- Owner: backend Bot; integration `backend/party-profile-completion`, publishing
+  `backend/party-profile-contract` in [PR #26](https://github.com/spherohero/kickbac/pull/26).
+  Base remains main `dd19b404210517b1b0c8b8f8a1809ba988bb250d`; combined router/race
+  checkpoint is `802f5c4`. Worker source is cherry-picked and parent-executed,
+  not accepted solely from worker summaries. PR remains draft; no merge/deployment.
+- **Additive / NON-BREAKING:** 31 local operations/schema5; all existing 17 public
+  operations, 23 component schemas and security definitions pass the immutable
+  compatibility fixture. Exact new methods/payloads/errors/examples are in
+  [PARTIES.md](PARTIES.md); current production remains schema4/17 operations.
+  Liam retains current UI and integration until deployment availability. No iOS
+  or firmware source changes, production grants, user writes, SMS or arming.
+- Implemented locally: host create/read/membership lifecycle; code/device join and
+  persisted attempt limits; operator-granted binding and busy-session fences;
+  host game instances; atomic own result/context with one award; rich all-game
+  history; SQL reading summary. Parent combined Python 3.12 run passed **447 tests**
+  including six actual loopback HTTP acceptance cases, Ruff lint/65-file formatting,
+  compilation and the original simulator. Two further parent cross-app race tests
+  passed (join limit; arm-before-rebind). Independent core/game review is in progress.
+- NFC ARM-time authoritative context is still the next implementation, not proved
+  by existing result-link history. Nicholas confirmed tap before measurement to
+  arm for the specific user, then live app status. Initial app updates use session
+  polling and accepted server completion, not fabricated or preaccepted results.
+  Native entitlement/routing and truthful physical acquisition remain separate.
+- Reproduce from `backend/` with `PYTHONPATH` unset:
+  `uv run --locked --python 3.12 pytest -q tests ../deploy/ubuntu/tests integration/test_party_http.py`,
+  `uv run --locked ruff check . ../deploy/ubuntu`,
+  `uv run --locked ruff format --check . ../deploy/ubuntu`,
+  `uv run --locked python -m compileall -q kickbac ../deploy/ubuntu`,
+  `uv run --locked python -m kickbac.simulator`.
+  New CI explicitly executes party HTTP acceptance rather than only collecting unit tests.
+
+### NFC-first product priority — proposed check-in context
+
+Nicholas clarified that the primary slice is host tap-to-link, then player tap
+→ exclusive next measurement → correct person and party/game. Read
+[NFC_CHECK_IN.md](NFC_CHECK_IN.md) before extending generic party/game work.
+The sticker contains one static NDEF HTTPS device URI, for example
+`https://api.kickbac.vodka/d/kb-demo-01`, never a user/party ID or secret.
+
+**Additive / NON-BREAKING proposal, not implemented/deployed:** existing host
+binding, authenticated join and legacy session/device endpoints are preserved.
+A new candidate `POST /v1/parties/{party_id}/check-ins` with
+`{check_in_id,device_id,game_instance_id}` would atomically snapshot party/game
+context while creating the exclusive session; its response wraps the existing
+session shape. Exact retry returns the original attempt even after completion.
+This candidate requires contract freeze/tests before client adoption; it is not
+already provided by game-result measurement linking. Existing physical device
+poll/upload payloads remain unchanged and user/party ownership stays server-side.
+
+Liam owns entitled foreground NFC and/or Universal Link delivery. Current owner
+handoff records Personal Team NFC provisioning limits and no configured Universal
+Links; writing the sticker alone does not make native launch work. QR/manual
+fallback remains. The parent notified Nicholas before this proposal and asked
+the firmware owner for current cadence/acquisition constraints; no claim of peer
+acknowledgment, implemented native routing or physical uploads is made. Raw ADC
+is not BAC; the unapproved duration proposal is not adopted by this change.
+
+### Direct-chat implementation continuation — PR #26 still draft
+
+- Nicholas moved party/profile implementation into the backend Bot's direct chat;
+  the earlier group run is being stopped. Integration worktree is
+  `kickbac-party-completion`, local branch `backend/party-profile-completion`,
+  retaining all published ancestry through `ad495315840b21b66407da146547311078f57594`.
+  The existing publication target remains [PR #26](https://github.com/spherohero/kickbac/pull/26)
+  on `backend/party-profile-contract`, based on main `dd19b404210517b1b0c8b8f8a1809ba988bb250d`.
+  Earlier dirty/untracked work, including the initial party-create RED test, is preserved.
+- **NON-BREAKING; not deployed.** Same proposed methods, schemas and examples in
+  [PARTIES.md](PARTIES.md); no change to auth, existing operation shapes, session
+  behavior, firmware metadata, null BAC or fixed 10-point participation awards.
+  Liam retains his current integration until actual release availability. No iOS
+  or firmware source edits, production grants, SMS, user writes or device arming.
+- Parent execution on foundation `73d66be`: Python 3.12 **372 backend/deployment
+  tests passed**, Ruff lint and 56-file formatting passed; existing real-loopback
+  simulator returned COMPLETE, one measurement, zero duplicates, foreign 404 and
+  restart OK. Exact-head [PR CI](https://github.com/spherohero/kickbac/actions/runs/39101672443)
+  was read back successful for Python 3.11/3.12, Auth0 fixtures and firmware decoder.
+  These are foundation checks, not completed party API/native/physical acceptance.
+- Party core and game/context/history implementations run in separate backend-owned
+  worker worktrees. Independent migration/reading-summary review is also running.
+  The real HTTP party lifecycle acceptance and additional chunked-body tests are
+  currently RED at the missing party routes, as expected before implementation.
+  Do not mark PR ready or merge until integrated source review, full tests, exact-head
+  CI, immutable compatibility checks and updated canonical docs pass. Deployment
+  and schema5 production migration remain separate backup/target-host gates.
+
+### Additive reading summary — implemented foundation, not deployed
+
+This slice is published in PR #26 as `73d66be` (cherry-picked from worker commit
+`5008c7f`). The original worker-local checkpoint below is historical; the parent
+has executed the combined 372-test foundation run recorded above.
+
+- Owner: backend reading-summary worker, `backend/reading-summary`, base
+  `d9aeb744663cc77a25a1012cf62c9d876b35c451`. Local commit only; no PR, push,
+  merge or deployment. Parent owns integration and the wider party contract.
+- **NON-BREAKING:** `GET /v1/me/reading-summary` adds exact lifetime owned SQL
+  count and latest accepted measurement, independent of profile/history pages.
+  Existing operations/models are unchanged. Optional client adoption only; keep
+  errors unavailable, null BAC unavailable, and caches scoped to the validated subject.
+- Bodyless authenticated GET; response example and semantics:
+  [API.md](API.md#private-reading-summary). Private success and errors are no-store.
+- Local Python 3.12 signed-token/simulator fixtures exercise empty totals, retries,
+  receipt-time/ID ordering, ownership, profile edits, restart, expiry read-only
+  behavior and private 401/500. Reproduce from `backend/` with
+  `uv run --locked --python 3.12 pytest -q tests/test_reading_summary.py`.
+  This is not live Auth0, iPhone, deployed API or physical sensor acceptance.
+
 ## Read first — agent sync and latest branch/change checkpoint
 
 ### Local iOS trivia interaction revision — October 18, 2026
@@ -20,10 +398,146 @@ git status --short --branch
 git fetch origin --prune
 git show origin/main:docs/LIAM_BACKEND_HANDOFF.md
 git log -5 --oneline origin/main
-git rev-parse origin/main origin/liam/ios-profile-handoff
+git rev-parse origin/main
+git branch -r
+# liam/ios-profile-handoff was merged via PR #24 and retired; inspect current refs.
 ```
 
 Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his branch. If main has not been integrated, read these shared docs directly from `origin/main`; do not reset, stash automatically, overwrite local edits or merge blindly. Documentation publication cannot prove an already-running remote agent has read it. Liam/his agent should report the main and client SHAs read when next giving a substantive integration update; no repeated acknowledgment pings or new user-run native tests are requested.
+
+### Requested party/profile implementation — contract candidate, not live
+
+- Owner: backend Bot, `backend/party-profile-contract`, base
+  `dd19b404210517b1b0c8b8f8a1809ba988bb250d`. Nicholas authorized continuing
+  implementation of the recorded profile/history and party create/join requirements.
+- [Party contract candidate](PARTIES.md) specifies new authenticated create/code-or-
+  device join/lifecycle/host-binding operations, game instances, one private completed
+  result per user/instance, exact owned measurement links and rich all-game history.
+  [Implementation plan](plans/party-profile-backend.md) orders test-first vertical
+  slices. Both are designs until actual tested implementation/release evidence.
+- **Additive / NON-BREAKING proposed:** all existing 17 routes, schemas, Auth0 access
+  tokens, 60-second sessions, required duration, null BAC and 10 participation points
+  remain unchanged. New reads: `GET /v1/me/reading-summary` (SQL count/latest accepted
+  measurement), `GET /v1/me/game-history` (all own results, nullable party/placement/
+  measurement context). Existing exact lifetime games/wins/points stay on `/v1/me/stats`.
+- Examples: `POST /v1/parties` with `{"party_id":"<UUID>","name":"Friday"}`;
+  `POST /v1/parties/join` with exactly one of `{"join_code":"ABCDEFGH"}` or
+  `{"device_id":"kb-demo-01"}`. New game-result route accepts the original five
+  fields plus optional owned `measurement_id` and nullable `placement`; canonical
+  complete request/response/status/error examples are in the candidate, not live API.
+- Liam: preserve existing app/UI; consume new fields only after published implementation
+  and production availability. Join does not arm. Group by stable party UUID and use
+  its server UTC creation date; legacy context/null BAC remain unavailable. QR/manual
+  remains fallback; current Personal Team NFC capability/Universal Links are not fixed
+  by a backend change. No action for firmware; device upload/polling remains identical.
+- Security decision: public device ID/NFC is not ownership. Binding requires host role
+  plus a backend-operator grant for that subject/device; no phone/device credentials
+  sent to iOS. Join invitation locators do not prove physical presence. No production
+  grant, user write, SMS, device arm, migration or deployment is authorized by publishing
+  the design. New join limits are per-subject persisted10/60s, not global anti-abuse.
+- Independent design/spec/security review approved test-first implementation at
+  `d9aeb744663cc77a25a1012cf62c9d876b35c451`; firmware Bot separately reports no
+  firmware-interface blocker (contract/source review, not endpoint execution).
+  Clarified fixed join window, immutable cross-route UUID/context retries and the
+  distinction between party-assignment grants and unchanged legacy arming rights.
+- First source slice: additive schema5 migration, populated schema4 old-row/table-SQL
+  preservation, repeated initialization, backup restoration, failed-upgrade rollback
+  and new-table startup checks. Upgrade test observed RED (schema4 versus required5)
+  before implementation, then GREEN. Local Python3.12 backend/deployment run returned
+  **348 passed**, excluding the separate not-yet-implemented reading-summary RED
+  test; Ruff lint and changed-file formatting passed. Feature PR remains draft;
+  party/game endpoints, full integration/CI/native/target-host acceptance and runtime
+  migration/deployment are not claimed complete. Summary is an independent test-first
+  slice in a backend-owned worker worktree, not client work.
+
+### Backend review of iOS PR #22 and requested profile/party follow-up
+
+- Owner: backend Bot, isolated `review/ios-pr22`, live base
+  `8dce54179366aaeff669525ef414e7f228d44e40`, Liam head
+  `bba989d978b146b50335621039ab9949629e5f2c` ([PR #22](https://github.com/spherohero/kickbac/pull/22)).
+  Nicholas requests review/ready merge and obsolete iOS branch cleanup. The only
+  current integration conflict is this shared handoff; retain both the USB-only
+  safety entry and Liam's integration/earlier-cleanup entries. App source remains
+  byte-for-byte Liam's; backend/firmware runtime remains byte-for-byte live main.
+- **MERGED and independently read back:** [PR #24](https://github.com/spherohero/kickbac/pull/24)
+  merged as `734a82228e6a1c561005fa80e30caba99bd768fe`; GitHub also marks
+  [PR #22](https://github.com/spherohero/kickbac/pull/22) **MERGED** by inclusion.
+  Remote main's parents/ancestry and complete tree equality with reviewed head
+  `f09781db7c456ee475dff1b34f74b49a4e37f66b` were verified. Liam's exact head remains
+  an ancestor; the merged iOS tree is byte-for-byte his source. Parent inspection
+  and two independent source reviews found no blocking auth/profile/privacy/device/
+  session/game/provenance defect. **No backend deployment or physical/native
+  acceptance was performed.** This docs-only closeout is owned by backend Bot on
+  `docs/ios-merge-verification`; its publishing PR records its own merge state.
+- Nonblocking follow-ups: Home daily Avg/Max use loaded pages (already owner-accepted);
+  device online state is a lookup snapshot; history's “Test reading” simulator badge
+  would be clearer as “Simulated reading”. No app source was changed for these notes.
+- **NON-BREAKING:** existing endpoints, fields, payload examples, authentication,
+  units, states, duration and participation-point policy are unchanged. Liam keeps
+  ownership of the app and native acceptance; no source redesign is requested.
+  See canonical examples below and [API.md](API.md).
+- Current local checks on the combined tree: Python 3.12 **338** backend/deployment
+  tests; Ruff lint/format (**54** files), compile and real-loopback simulator passed
+  (COMPLETE, one measurement, zero duplicates, foreign 404, restart OK). Branding
+  check and **78** non-sending Auth0 fixtures passed on Node 24.18.1. Windows has
+  no Swift/Swiftc/Xcodebuild; Liam's reported signed Debug build/eight Swift checks
+  are owner evidence, not independently reproduced here. Path-filtered iOS/docs
+  changes do not trigger the existing backend/firmware workflows.
+- [Profile and party requirements](PROFILE_PARTY_REQUIREMENTS.md) captures Nicholas's
+  later scope: all saved readings including game-start tests, latest check, lifetime
+  stats, party/date-grouped game rows with score/points, placement and exact owned
+  measurement, plus create/join by host code or assigned-device NFC. It is not an
+  implemented party engine or an adopted wire schema. Do not invent unavailable
+  placement/BAC/party data or change the existing 10-point participation policy.
+- Authorized cleanup completed only after exact remote-tip and main-ancestry checks:
+  deleted remote `liam/ios-profile-handoff@bba989d978b146b50335621039ab9949629e5f2c`
+  and backend-owned `review/ios-pr22@f09781db7c456ee475dff1b34f74b49a4e37f66b`
+  in one ordinary atomic push; independent remote listing confirmed both absent.
+  The reviewer branch was detached then safely deleted locally with `git branch -d`.
+  Older `ios` and `feat/ios-setup` remote refs were already absent, not newly deleted
+  here. Exact SHA/ref/worktree recovery inventory was retained privately. Firmware
+  refs, unrelated docs branches, active peer worktrees and the backend startup
+  worktree's dirty `AGENTS.md` were preserved. This follow-up branch is backend-owned
+  and may be retired after its verified merge; no teammate worktree is removed.
+- Reproduce from repository root: `python ios/checks/BrandingChecks.py` and
+  `node --test backend/auth0/test-twilio-verify.cjs`; from `backend/`:
+  `uv run --locked --python 3.12 pytest -q tests ../deploy/ubuntu/tests`,
+  `uv run --locked ruff check . ../deploy/ubuntu`,
+  `uv run --locked ruff format --check . ../deploy/ubuntu`,
+  `uv run --locked python -m compileall -q kickbac ../deploy/ubuntu`,
+  `uv run --locked python -m kickbac.simulator`. Native commands remain in
+  `ios/README.md`; native/physical acceptance is not established by these checks.
+
+### USB-C-only hardware revision — firmware owner
+
+- Owner/branch/base: firmware Bot, `docs/usb-only-commissioning`, based on
+  `22f06354e85ad04afe522e6d870b5bf3bb206af8`. The publishing PR/commits provide
+  exact reviewed head and merge status; documentation publication is not hardware
+  approval, deployment or native acceptance.
+- Nicholas drops battery operation for this demo. New
+  [USB-only commissioning guide](USB_ONLY_COMMISSIONING.md) provides the
+  conditional single-cable VBUS schematic, keep/remove list, capacitor marking
+  checks, illustrative current budget and required actual measurements. Older
+  separate-supply/battery guides are marked superseded for current topology.
+- **NON-BREAKING; no client action.** Existing methods, payloads, schemas, auth,
+  states, units, examples and duration semantics in [API.md](API.md) are unchanged.
+  No firmware runtime, backend or iOS source changes; no deployment or flash.
+  USB supplies power/serial; API traffic still uses Wi-Fi. On reset/unplug the
+  diagnostic loses RAM-only credentials and needs private operator provisioning.
+  Do not infer battery-percentage support from the earlier battery proposal.
+- Local verification passed: seven Markdown files, 49 relative link targets,
+  balanced fences, `git diff --check`, divider/RC/current arithmetic and safety
+  text assertions. Independent engineering/doc review passed for conditional
+  documentation, not electrical approval. Its clarity suggestions were applied:
+  explicitly historical old parts/revision text and maximum-bound divider testing.
+  No sensor measurements, rated USB path, physical execution or app acceptance
+  is established by these checks. ADC remains physically isolated; MCU+heater power path/current,
+  capacitor identification and full-scale divider tests remain physical gates.
+  Duration proposal remains unapproved; hardware completion/uploads stay disabled.
+  Publication: [PR #23](https://github.com/spherohero/kickbac/pull/23), initial
+  reviewed head `d3c58cb2b9528186157cc0efaf97eb26a4f62873` plus the focused
+  review-clarification commit shown in that PR. PR state/merge commit are
+  authoritative for subsequent merge status. No deployment.
 
 ### Authorized iOS branch cleanup — October 18, 2026
 

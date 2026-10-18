@@ -107,7 +107,9 @@ nonisolated struct APIMeasurement: Decodable, Identifiable, Sendable {
     let sessionID: String
     let deviceID: String
     let raw: Raw
-    let breathDurationMS: Int
+    let breathDurationMS: Int?
+    let acquisitionMethod: String?
+    let sampleDurationMS: Int?
     let source: String
     let measuredAt: String?
     let receivedAt: String
@@ -124,9 +126,45 @@ nonisolated struct APIMeasurement: Decodable, Identifiable, Sendable {
     }
 
     var isTestReading: Bool { source == "simulator" }
+    var isManualTimed: Bool { acquisitionMethod == "manual_timed" }
+
+    // A sensor acquisition window is never a measured breath duration.
+    var hasValidAcquisition: Bool {
+        if isManualTimed {
+            return breathDurationMS == nil && sampleDurationMS.map { (1...60000).contains($0) } == true
+                && estimatedBACPercent == nil
+        }
+        return acquisitionMethod == nil && sampleDurationMS == nil
+            && breathDurationMS.map { (1...60000).contains($0) } == true
+    }
+
+    var acquisitionNotice: String? {
+        if isManualTimed { return "Timed sensor sample — breath not validated" }
+        return hasValidAcquisition ? nil : "Acquisition details unavailable"
+    }
+
+    var sourceTitle: String {
+        switch source {
+        case "simulator": "Simulated sensor reading"
+        case "device": "Device sensor reading"
+        default: "Unknown reading source"
+        }
+    }
+
+    var durationText: String {
+        guard hasValidAcquisition, let duration = isManualTimed ? sampleDurationMS : breathDurationMS else {
+            return "Duration unavailable"
+        }
+        let seconds = String(format: "%.2f", locale: Locale(identifier: "en_US_POSIX"), Double(duration) / 1000)
+        return "\(isManualTimed ? "Sample window" : "Breath duration"): \(seconds) s"
+    }
+
+    var durationAccessibilityValue: String {
+        [sourceTitle, acquisitionNotice, durationText].compactMap { $0 }.joined(separator: ". ")
+    }
 
     var bacReading: BACReading? {
-        guard !isTestReading, let value = estimatedBACPercent, value.isFinite, value >= 0,
+        guard hasValidAcquisition, !isManualTimed, !isTestReading, source == "device", let value = estimatedBACPercent, value.isFinite, value >= 0,
               let date = recordedDate else { return nil }
         return BACReading(value: value, date: date)
     }
@@ -136,6 +174,8 @@ nonisolated struct APIMeasurement: Decodable, Identifiable, Sendable {
         case sessionID = "session_id"
         case deviceID = "device_id"
         case breathDurationMS = "breath_duration_ms"
+        case acquisitionMethod = "acquisition_method"
+        case sampleDurationMS = "sample_duration_ms"
         case measuredAt = "measured_at"
         case receivedAt = "received_at"
         case estimatedBACPercent = "estimated_bac_percent"

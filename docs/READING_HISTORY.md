@@ -10,8 +10,10 @@ saved measurement in one read-only snapshot; details in
 simulator readings independently of profile existence or loaded pages. The new
 party result context references an existing owned measurement; it does not
 remove it from this history, create a second reading, award test points or make
-its unavailable BAC numeric. NFC ARM-time context is still proposed separately
-in [NFC_CHECK_IN.md](NFC_CHECK_IN.md). Existing live history below is unchanged.
+its unavailable BAC numeric. NFC ARM-time context is implemented locally and
+retained before/without completion via private `GET /v1/me/check-ins`; exact
+semantics are in [NFC_CHECK_IN.md](NFC_CHECK_IN.md). Existing live history below
+is unchanged; native NFC and physical samples are not established by this source.
 
 ## === LIAM / iOS IMPACT ===
 

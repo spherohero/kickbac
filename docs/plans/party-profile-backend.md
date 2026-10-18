@@ -17,6 +17,20 @@ never silently change firmware metadata or treat tag possession as host approval
 
 **Tech Stack:** Existing FastAPI, Pydantic, sqlite3, Auth0 verifier, pytest, uv and Ruff; no new dependency, service or paid resource.
 
+## Execution checkpoint — NFC source integrated, not deployed
+
+The original tasks1–9 are implemented and their independent scoped reviews
+passed. Task10's real HTTP/restart/streaming/compatibility checks pass locally;
+exact final-head CI, final review and merge are still gates. Additional
+NFC-first scope is frozen and implemented in migration006/schema6 with atomic
+check-in POST/private GET and exact party/game result fencing; see
+`docs/NFC_CHECK_IN.md`. Parent combined execution at2f04074 returned528 tests on
+each Python3.11/3.12. Current source has33 operations, while production remains
+schema4/17 operations. The remaining original numbered tasks below describe
+historical implementation sequencing, not permission to rebuild completed work
+or deploy schema5-only code over schema6.
+
+
 ---
 
 ## Preconditions

@@ -4,18 +4,17 @@
 backend Bot, integration branch `backend/party-profile-completion`, publishing
 branch `backend/party-profile-contract` in [draft PR #26](https://github.com/spherohero/kickbac/pull/26),
 based on main `dd19b404210517b1b0c8b8f8a1809ba988bb250d`. The combined local
-application currently exposes 31 operations on schema5. Its real-loopback
-party→join→game→simulator upload→completion→private history/restart acceptance
-passes. Existing live API remains the 17-operation schema4 release until a
-backed-up, target-verified release is deployed. Exact head CI/review/merge and
-production deployment are separate gates.
+application currently exposes33 operations on schema6. Its real-loopback
+party→join→game→check-in reservation→simulator upload→completion→private
+history/restart acceptance passes. Existing live API remains the17-operation
+schema4 release until a backed-up, target-verified release is deployed. Exact
+head CI/review/merge and production deployment are separate gates.
 
-**NFC-first follow-up:** the host-binding/member/game storage below does not yet
-implement authoritative party/game association at arming time. Nicholas explicitly
-confirmed player tap before measurement to arm that person's next test. See
-[NFC_CHECK_IN.md](NFC_CHECK_IN.md) for the proposed additive retry-safe check-in
-operation and native provisioning gates. Do not present client-selected result
-links as implemented NFC attribution.
+**NFC-first flow:** host binding identifies the assigned unit; new authenticated
+check-in creates the exclusive session and immutable owner/party/game context
+BEFORE acquisition. Exact POST/GET/retry/lifecycle semantics are canonical in
+[NFC_CHECK_IN.md](NFC_CHECK_IN.md). Backend context is implemented and locally
+exercised; this is not native tag-reading or physical sensing acceptance.
 
 ## === LIAM / iOS IMPACT ===
 
@@ -117,6 +116,14 @@ Count all accepted owned measurements in SQL, independently of profile existence
 
 Use one explicit `005_parties.sql` migration to schema5, adding party/membership/device-host grants/device bindings/game instance/context/join-attempt tables and indexes, without modifying existing ledger/profile/measurement rows or their schemas. Keep schema4 runtime and production database untouched until backed-up migration/release approval. Upgrade-copy/rollback/backup validation must preserve every old table's row digests; old schema4 code cannot run against schema5 by blind rollback. Include new tables in backup/restore acceptance and operator schema reporting.
 
-Backend-only command candidate: `python -m kickbac.cli grant-party-device <registered-device-id> <validated-opaque-user-subject>` against the explicitly selected configured DB. It grants assignment authority only, never returns a credential or arms anything. Exercise with synthetic identities locally, not production users. Real-host grant is a separate authorized operator action after deployment readiness.
+Keep legacy migration005 unchanged, then apply explicit
+`006_party_check_ins.sql` to schema6 for immutable NFC arming context; populated
+schema5 upgrades and complete backups/restores are tested. Current source fails
+closed without schema6. Production schema4 requires both reviewed migrations005
+and006 after backup/copy validation; neither schema4-only nor schema5-only code
+may be blindly restarted against schema6. This is source readiness, not an
+executed production upgrade.
+
+Backend-only command: `python -m kickbac.cli grant-party-device <registered-device-id> <validated-opaque-user-subject>` against the explicitly selected configured DB. It grants assignment authority only, never returns a credential or arms anything. Exercise with synthetic identities locally, not production users. Real-host grant is a separate authorized operator action after deployment readiness.
 
 Required tests: create/retry/changed/foreign IDs; code/device join convergence, guessing limit and restart/boundary; host/member authorization, close/leave, binding/reassignment contention and active sessions; game snapshot and result/check-in ownership, completion uniqueness and exact retries after close; old generic/profile/session/firmware contracts unchanged; summary/all-history and rich pagination, null legacy context and BAC, account isolation, malformed/streamed bodies/no-store/500/log privacy; migration from populated schema4, repeated initialize, backup/restart; real-loopback HTTP party→join→game→simulated check→completion→history/stats with no duplicate award. Source/local/CI/target-host/native/physical evidence must remain separate.

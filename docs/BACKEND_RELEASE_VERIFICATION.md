@@ -1,6 +1,23 @@
 # Backend release verification — games, profiles and private history
 
-## Local party/profile implementation — not a production release
+## NFC context integration checkpoint — not a production release
+
+Integrated runtime `2f0407483bc5f2b539de79495a171d86c0571b67` now includes
+migration006/schema6 and33 operations. Parent ran the full backend/deployment and
+signed-fixture real-HTTP acceptance command on **both Python3.11 and3.12:528
+passed on each**. Seven HTTP cases include the actual party-aware reservation,
+unchanged device session poll/upload, private party/game/ordinary reading history,
+terminal replay after leave/close and new server restart, plus streaming bounds.
+Ruff lint,71-file formatting, compile, original `SIMULATOR_OK` and immutable old
+17-operation/23-schema compatibility checks passed.
+
+Final independent NFC and cross-feature reviews and exact-head GitHub CI are
+pending. No native tag scan, live Auth0 acceptance, physical sensing, target-host
+isolated test or production upgrade is claimed. Production remains the deployed
+schema4/17-operation runtime below. Upgrades require verified backup/copy testing
+for both005+006; source/merge does not automatically deploy.
+
+## Earlier party/profile foundation checkpoint — historical, not production
 
 Draft [PR #26](https://github.com/spherohero/kickbac/pull/26) has been integrated
 locally on backend-owned `backend/party-profile-completion`, with worker commits

@@ -11,11 +11,14 @@
   retaining opaque ownership, exact retries, fixed participation awards and all
   saved readings. Public device identifiers are not ownership grants; NFC tags
   carry only a stable HTTPS unit URI and GET remains read-only.
-- **NFC priority:** snapshot owner plus party/game at explicit arming, not by
-  timestamp-nearest inference or a mutable latest-reading field. This next check-in
-  operation is under design review, not yet provided by explicit result links.
-  Retain existing ESP32 session ID/expiry/upload wire shapes and separate native
-  entitlement, physical acquisition and production deployment gates.
+- **NFC implementation:** schema006 adds immutable session-owned party/game check-in
+  context. Explicit authenticated arming snapshots it before acquisition, never by
+  timestamp-nearest inference or a mutable latest-reading field. Exact attempt
+  retries return the original session through terminal states; private check-in
+  history survives without game completion. New result links must match that exact
+  context. Existing ESP32 session ID/expiry/upload and all legacy response shapes
+  remain unchanged; native entitlement, physical acquisition and production
+  deployment are independent gates.
 
 ## Shared game ledger and profile-wide points
 - **Choice:** one immutable owner-scoped game_results table and additive POST/GET `/v1/me/game-results`, GET `/v1/me/stats`; SQL aggregates derive profile-wide/per-game totals. Fixed10 server-assigned participation points per unique accepted completion under `completion_v1`; raw score stays separate.

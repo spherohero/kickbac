@@ -64,8 +64,8 @@ Environment:
 | `AUTH0_DOMAIN` | Actual tenant DNS name only, e.g. `dev-EXAMPLE.us.auth0.com`; no scheme, port, path or trailing slash. |
 | `AUTH0_AUDIENCE` | Exact custom API identifier, coordinated as `https://kickbac-api` (no trailing slash). A logical identifier, **not a backend host**. |
 
-`init-db` in this feature source explicitly applies migrations001–005, preserving
-existing device/session/history/profile/game rows. The source requires schema5;
+`init-db` in this feature source explicitly applies migrations001–006, preserving
+existing device/session/history/profile/game rows. The source requires schema6;
 production is still the separately deployed schema4 release. Party/NFC status is
 in [PARTIES.md](docs/PARTIES.md) and [NFC_CHECK_IN.md](docs/NFC_CHECK_IN.md).
 Re-running initialization is safe. Normal startup never initializes or upgrades

@@ -1,6 +1,6 @@
 # NFC-first party check-in — implementation direction
 
-**Status: design proposal, not an implemented/deployed check-in API.** Nicholas clarified that the primary product slice is host NFC linking, then player tap → next measurement → correct authenticated person and party/game. This takes priority over general party/game extras. Published foundation: draft [PR #26](https://github.com/spherohero/kickbac/pull/26), head `31f986e91d530e885b7cf8bc16049cfb21fea110`; main at inspection `dd19b404210517b1b0c8b8f8a1809ba988bb250d`. The existing [party contract candidate](PARTIES.md) does not yet implement authoritative party context at session creation.
+**Status: implemented locally and exercised over real HTTP; final independent review/CI pending; NOT deployed.** Nicholas confirmed host NFC linking, then player tap BEFORE measurement to reserve that person's next test and show accepted app status/result. Draft [PR #26](https://github.com/spherohero/kickbac/pull/26) publishes this source; the final PR head and merge state are authoritative, not an older checkpoint. Current local API has33 operations/schema6; production remains17/schema4. Native NFC/Universal Link delivery and physical sensor acquisition are separate, unverified gates. The [party contract](PARTIES.md) and this immutable session context preserve all existing public operation/schema shapes.
 
 ## What to write to each sticker
 
@@ -53,6 +53,31 @@ unchanged existing `SessionResponse`; poll `GET /v1/sessions/{session_id}` for l
 status and accepted result.201 first acceptance /200 exact accepted retry. The
 session ID/context/expiry never change; status/measurement reflect its current
 server state, not an immutable first-response snapshot.
+
+Illustrative accepted response (fixture identifiers/times, not a live record):
+
+```json
+{
+  "check_in_id":"11111111-1111-4111-8111-111111111111",
+  "party_id":"c16e61fc-dbad-42c0-9ec5-3aa908ec605a",
+  "game_instance_id":"22222222-2222-4222-8222-222222222222",
+  "session":{
+    "id":"3b0c0a9e-2604-4b78-a487-3fd8fa1d4a4b",
+    "device_id":"kb-demo-01",
+    "user_id":"sms|opaque-example",
+    "status":"ARMED",
+    "created_at":"2026-10-17T01:00:00Z",
+    "expires_at":"2026-10-17T01:01:00Z",
+    "completed_at":null,
+    "measurement":null
+  }
+}
+```
+
+A fresh account's private history is
+`{"items":[],"limit":50,"offset":0,"has_more":false}`. Completed entries retain
+the same context and include the accepted existing measurement inside `session`;
+null BAC stays unavailable and simulator source stays explicit.
 
 Use one `BEGIN IMMEDIATE` transaction shared with legacy arming/upload/lifecycle
 serialization. Capture server time after acquiring the lock; expire sessions at
@@ -112,6 +137,29 @@ sharing policy is implemented; this does not expose BAC to other party members.
 
 The device upload still references only its server-issued session ID. Backend
 SQL derives owner and immutable party/game context without firmware knowing either.
+
+### Executed local verification
+
+Parent integration at `2f04074` passed528 tests on each of Python3.11 and3.12,
+including signed-fixture real-loopback HTTP reservation→unchanged device poll→
+simulator upload→owned party/game/reading history→fresh-server restart and terminal
+check-in replay. Seven HTTP cases include streamed32KiB limits. Ruff lint,
+71-file formatting, compile and original simulator passed. Independent final
+spec/security/integration review and new exact-head CI are pending; no native
+NFC, Auth0 delivery, physical sensor or deployment acceptance is inferred.
+
+Reproduce from `backend/` with `PYTHONPATH` unset:
+
+```bash
+uv run --locked --python 3.12 pytest -q tests ../deploy/ubuntu/tests integration/test_party_http.py
+uv run --locked ruff check . ../deploy/ubuntu
+uv run --locked ruff format --check . ../deploy/ubuntu
+uv run --locked python -m compileall -q kickbac ../deploy/ubuntu
+uv run --locked python -m kickbac.simulator
+```
+
+For concurrent reviews/interpreter matrices, give each runner its own
+`UV_PROJECT_ENVIRONMENT`; do not replace an active Windows `.venv`.
 
 
 ### Native launch prerequisite

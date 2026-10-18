@@ -12,8 +12,10 @@ five-field requests/responses below stay unchanged; party results share the same
 immutable ledger and fixed 10-point award. Rich history returns explicit null
 context for legacy rows, not guessed party/placement/BAC. All accepted readings
 remain in ordinary private history. These source additions are under independent
-review, not production availability, NFC ARM-time attribution, shared gameplay,
-anti-cheat, a public leaderboard or native acceptance.
+review, not production availability, shared gameplay, anti-cheat, a public
+leaderboard or native acceptance. Backend ARM-time context is now implemented
+locally through [NFC check-ins](NFC_CHECK_IN.md); a check-in-linked reading cannot
+be attached to another party/game or promoted from party-only into game context.
 
 ## Figma scope inspected read-only
 

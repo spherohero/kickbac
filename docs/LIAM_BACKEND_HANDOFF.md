@@ -2,6 +2,43 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+### NFC check-ins implemented — final review/CI pending, not deployed
+
+- Backend integration branch `backend/party-profile-completion`; publishing branch
+  `backend/party-profile-contract`, [PR #26](https://github.com/spherohero/kickbac/pull/26),
+  based on main `dd19b404210517b1b0c8b8f8a1809ba988bb250d`. Integrated runtime
+  checkpoint `2f0407483bc5f2b539de79495a171d86c0571b67`; schema6,33 operations.
+  Existing live production remains schema4/17 operations; no migration/deployment,
+  grants, SMS, real user writes, device arming, flash or sensor enablement.
+- **Additive / NON-BREAKING:** `POST /v1/parties/{party_id}/check-ins` and private
+  `GET /v1/me/check-ins` are now implemented. Exact request/response/lifecycle,
+  nullable party-only game context and examples are in [NFC_CHECK_IN.md](NFC_CHECK_IN.md).
+  Both use current API access-token identity. Existing session/measurement/firmware
+  payloads, profile full replacement and fixed10-point game awards are unchanged.
+- Liam: scan the stable official device URL only after selecting a deliberate
+  link/join/start-test intent. For a player test, persist the check-in UUID/payload,
+  submit POST and poll its existing session. Retried completed/expired attempts
+  never arm again. Load own check-ins to recover party/game association even if no
+  game completion exists. No roster, other-person BAC or public leaderboard is
+  exposed. Preserve native NFC entitlement/Universal Link gates and explicit
+  unavailable/simulator labels; this source does not resolve them.
+- Parent executed **528 tests on Python3.11 and3.12**, including the new signed
+  real-loopback reservation→device poll→upload→private party/game/history→restart
+  acceptance and seven HTTP/streaming cases. Ruff lint/71-file formatting, compile,
+  original simulator and unchanged old17-operation/23-schema compatibility passed.
+  Final independent NFC/cross-feature review and exact new-head GitHub CI remain
+  pending. Earlier party foundation CI at66d23e1 was green, not this runtime's CI.
+- Refreshed client source: `liam/party-setup@4d34436` is now published (no open PR
+  observed), adding a local Party UI preview. Its owner handoff still contains
+  historical “local/uncommitted” wording; Git confirms publication, not native
+  acceptance. It deliberately makes no live party calls, NFC read, binding,
+  completion, shared scores or fake players. Preserve Liam's work/branch; adopt
+  live operations after verified deployment, not by reassigning completed UI work.
+- Reproduction: commands in [NFC_CHECK_IN.md](NFC_CHECK_IN.md#executed-local-verification).
+  Current backend source requires explicit migrations005+006 over backed-up
+  schema4 or006 over schema5. Startup never migrates; old runtime cannot blindly
+  run over upgraded schema6. Production rollout remains a separate verified task.
+
 ### Frozen NFC check-in implementation contract — not live
 
 Independent core and game/history reviews passed spec and quality/privacy checks

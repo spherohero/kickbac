@@ -64,6 +64,7 @@ void provision_fixture() {
 
 void assert_latched_stop(const std::string& expected_line) {
     assert(failed && !credential.ready());
+    assert(session_fence.snapshot().id[0] == '\0');
     for (std::size_t i = 0; i < 44; ++i) assert(credential.token()[i] == '\0');
     assert(!fixture_lines.empty() && fixture_lines.back() == expected_line);
     for (const auto& line : fixture_lines) {
@@ -112,6 +113,7 @@ void fault_matrix() {
         {"begin failure", -2, std::string::npos, 200, false, false, "", -1, false},
         {"transport failure", -2, std::string::npos, -11, true, false, "", -11, false},
         {"server error", -2, std::string::npos, 503, true, false, "", 503, false},
+        {"rollout bad gateway", -2, std::string::npos, 502, true, false, "", 502, false},
         {"redirect", -2, std::string::npos, 302, true, false, "", 302, false},
         {"unauthorized", -2, std::string::npos, 401, true, false, "", 401, false}
     };
@@ -126,6 +128,15 @@ void fault_matrix() {
             const unsigned before_posts = fixture_posts;
             const unsigned before_gets = fixture_gets;
             fixture_now = heartbeat ? 10000U : 2000U;
+            kickbac::PollSnapshot live_session;
+            live_session.state = kickbac::PollState::Armed;
+            std::strcpy(live_session.id, "3b0c0a9e-2604-4b78-a487-3fd8fa1d4a4b");
+            const std::time_t expiry_time = std::time(nullptr) + 30;
+            assert(std::strftime(live_session.expires_at, sizeof(live_session.expires_at),
+                                 "%Y-%m-%dT%H:%M:%SZ", std::gmtime(&expiry_time)) > 0);
+            assert(session_fence.observe(live_session, fixture_now, utc_upper_ms()));
+            kickbac::SessionTicket ticket;
+            assert(session_fence.begin(ticket, fixture_now, utc_upper_ms()));
             fixture_length = fault.length;
             fixture_read_limit = fault.read_limit;
             fixture_status = fault.status;
@@ -147,6 +158,7 @@ void fault_matrix() {
             assert(fixture_posts == before_posts + (heartbeat && fault.begin_ok ? 1U : 0U));
             assert(fixture_gets == before_gets + (!heartbeat && fault.begin_ok ? 1U : 0U));
             assert(heartbeats == 1 && polls == 1 && !pass_reported);
+            assert(!session_fence.matches(ticket, fixture_now, utc_upper_ms()));
             std::cout << "PASS: " << stage << " " << fault.name << " (synthetic fault)\n";
         }
     }

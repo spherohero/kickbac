@@ -7,7 +7,9 @@
 #include <esp_wifi.h>
 
 #include <cstdint>
+#include <ctime>
 #include "tls_root.hpp"
+#include "transport_probe.hpp"
 #include "wifi_diagnostic.hpp"
 #if defined(KICKBAC_DEVICE_DIAGNOSTIC)
 #include "device_probe.hpp"
@@ -81,6 +83,21 @@ bool sync_clock() {
     return false;
 }
 
+kickbac::TransportStamp transport_stamp() {
+    kickbac::TransportStamp stamp;
+    stamp.monotonic_ms = static_cast<std::uint32_t>(millis());
+    stamp.utc_s = kickbac::diagnostic_utc_seconds(static_cast<std::int64_t>(std::time(nullptr)));
+    return stamp;
+}
+
+void report_transport(const char* stage, unsigned attempt, const kickbac::TransportBoundary& event) {
+    Serial.printf("probe_transport stage=%s attempt=%u phase=%s monotonic_ms=%lu utc_s=%lld status=%d duration_ms=%lu\n",
+                  stage, attempt, event.begin ? "BEGIN" : "END",
+                  static_cast<unsigned long>(event.stamp.monotonic_ms),
+                  static_cast<long long>(event.stamp.utc_s), event.status,
+                  static_cast<unsigned long>(event.duration_ms));
+}
+
 bool check_https(unsigned attempt) {
     WiFiClientSecure tls;
     tls.setCACert(KICKBAC_ISRG_ROOT_X1);
@@ -91,8 +108,16 @@ bool check_https(unsigned attempt) {
     http.setFollowRedirects(HTTPC_DISABLE_FOLLOW_REDIRECTS);
     http.setReuse(false);
     if (!http.begin(tls, "https://api.kickbac.vodka/health")) return false;
-    const auto request_started = static_cast<std::uint32_t>(millis());
+    kickbac::TransportBoundary boundary;
+    boundary.stamp = transport_stamp();
+    const auto request_started = boundary.stamp.monotonic_ms;
+    report_transport("HTTPS", attempt, boundary);
     const int status = http.GET();
+    boundary.stamp = transport_stamp();
+    boundary.begin = false;
+    boundary.status = status;
+    boundary.duration_ms = boundary.stamp.monotonic_ms - request_started;
+    report_transport("HTTPS", attempt, boundary);
     if (status <= 0) {
         char description[128] = {}; // SDK buffer only; NEVER print error text/config.
         const int code = tls.lastError(description, sizeof(description));
@@ -109,6 +134,12 @@ bool check_https(unsigned attempt) {
     Serial.printf("probe_https attempt=%u status=%d trusted_tls=%d health_ok=%d\n",
                   attempt, status, status > 0 ? 1 : 0, ok ? 1 : 0);
     http.end();
+    tls.stop();
+    if (kickbac::should_probe_tcp(attempt, status)) {
+        WiFiClient control;
+        kickbac::tcp_connect_probe(control, transport_stamp,
+            [attempt](const kickbac::TransportBoundary& event) { report_transport("TCP", attempt, event); });
+    }
     return ok;
 }
 

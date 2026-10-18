@@ -71,6 +71,7 @@ class AcquisitionContractChecks(unittest.TestCase):
         self.assertIn('loaded.id == id, loaded.deviceID == targetID, loaded.userID == owner', store)
         self.assertIn('reading.sessionID == id, reading.deviceID == targetID', store)
         self.assertIn('reading.hasValidAcquisition', store)
+        self.assertIn('started.status.isActive, started.measurement == nil', store)
         self.assertIn('loaded.status == .complete', store)
         self.assertIn('func retryPolling() { pollID = UUID() }', store)
         checks = (IOS / 'checks/DeviceSessionChecks.swift').read_text(encoding='utf-8')

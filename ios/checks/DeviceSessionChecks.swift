@@ -21,6 +21,11 @@ struct DeviceSessionChecks {
         flow.switchOwner("sms|owner-a")
         await inspect(flow)
         precondition(flow.device?.online == false) // Offline and available are independent.
+        for status in [APITestSession.Status.armed, .sampling] {
+            await flow.arm { _ in session(status, measurement: reading()) }
+            precondition(!flow.hasActiveSession && flow.test == nil && flow.message != nil,
+                         "Active arm response exposed a premature measurement")
+        }
         await flow.arm { _ in session(.armed) }
         precondition(flow.hasActiveSession && flow.test?.status == .armed)
         await flow.arm { _ in preconditionFailure("Silently rearmed an active session") }

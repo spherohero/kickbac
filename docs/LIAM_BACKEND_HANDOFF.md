@@ -11,7 +11,9 @@ git status --short --branch
 git fetch origin --prune
 git show origin/main:docs/LIAM_BACKEND_HANDOFF.md
 git log -5 --oneline origin/main
-git rev-parse origin/main origin/liam/ios-profile-handoff
+git rev-parse origin/main
+git branch -r
+# liam/ios-profile-handoff was merged via PR #24 and retired; inspect current refs.
 ```
 
 Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his branch. If main has not been integrated, read these shared docs directly from `origin/main`; do not reset, stash automatically, overwrite local edits or merge blindly. Documentation publication cannot prove an already-running remote agent has read it. Liam/his agent should report the main and client SHAs read when next giving a substantive integration update; no repeated acknowledgment pings or new user-run native tests are requested.
@@ -25,11 +27,16 @@ Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his bran
   current integration conflict is this shared handoff; retain both the USB-only
   safety entry and Liam's integration/earlier-cleanup entries. App source remains
   byte-for-byte Liam's; backend/firmware runtime remains byte-for-byte live main.
-- Status: integration candidate in [PR #24](https://github.com/spherohero/kickbac/pull/24),
-  not yet merged or deployed. Parent inspection and two independent source reviews
-  found no blocking auth/profile/privacy/device/session/game/provenance defect at
-  the exact Liam head above. The integration PR and its exact merge SHA/state are
-  authoritative after merge. Native execution remains a separate evidence level.
+- **MERGED and independently read back:** [PR #24](https://github.com/spherohero/kickbac/pull/24)
+  merged as `734a82228e6a1c561005fa80e30caba99bd768fe`; GitHub also marks
+  [PR #22](https://github.com/spherohero/kickbac/pull/22) **MERGED** by inclusion.
+  Remote main's parents/ancestry and complete tree equality with reviewed head
+  `f09781db7c456ee475dff1b34f74b49a4e37f66b` were verified. Liam's exact head remains
+  an ancestor; the merged iOS tree is byte-for-byte his source. Parent inspection
+  and two independent source reviews found no blocking auth/profile/privacy/device/
+  session/game/provenance defect. **No backend deployment or physical/native
+  acceptance was performed.** This docs-only closeout is owned by backend Bot on
+  `docs/ios-merge-verification`; its publishing PR records its own merge state.
 - Nonblocking follow-ups: Home daily Avg/Max use loaded pages (already owner-accepted);
   device online state is a lookup snapshot; history's “Test reading” simulator badge
   would be clearer as “Simulated reading”. No app source was changed for these notes.
@@ -50,10 +57,16 @@ Read root `AGENTS.md` as well as Liam's `ios/AGENTS.md` when present on his bran
   measurement, plus create/join by host code or assigned-device NFC. It is not an
   implemented party engine or an adopted wire schema. Do not invent unavailable
   placement/BAC/party data or change the existing 10-point participation policy.
-- Cleanup is restricted to unchanged, verified merged iOS refs requested by Nicholas;
-  preserve active worktrees, private/dirty work and firmware branches. Older `ios`
-  and `feat/ios-setup` remote refs are already absent at initial readback. No deletion
-  of Liam's current PR branch is authorized by this entry before verified merge.
+- Authorized cleanup completed only after exact remote-tip and main-ancestry checks:
+  deleted remote `liam/ios-profile-handoff@bba989d978b146b50335621039ab9949629e5f2c`
+  and backend-owned `review/ios-pr22@f09781db7c456ee475dff1b34f74b49a4e37f66b`
+  in one ordinary atomic push; independent remote listing confirmed both absent.
+  The reviewer branch was detached then safely deleted locally with `git branch -d`.
+  Older `ios` and `feat/ios-setup` remote refs were already absent, not newly deleted
+  here. Exact SHA/ref/worktree recovery inventory was retained privately. Firmware
+  refs, unrelated docs branches, active peer worktrees and the backend startup
+  worktree's dirty `AGENTS.md` were preserved. This follow-up branch is backend-owned
+  and may be retired after its verified merge; no teammate worktree is removed.
 - Reproduce from repository root: `python ios/checks/BrandingChecks.py` and
   `node --test backend/auth0/test-twilio-verify.cjs`; from `backend/`:
   `uv run --locked --python 3.12 pytest -q tests ../deploy/ubuntu/tests`,

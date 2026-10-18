@@ -2,6 +2,46 @@
 
 This replaces the older local/unpublished-profile handoff. **Backend profile, phone source, deployment, auth-cache fix and games are published and merged. Games are live.** Preserve Liam's actual local/unpublished SwiftUI work; no UI redesign, branch takeover or provider reprovisioning is requested.
 
+### Current priority — communication first, then app-request coverage
+
+Nicholas prioritizes reliable device→webserver data, accepting clearly simulated
+sample data for the demo if real BAC is unavailable. Raw MQ3 is not calibrated
+BAC. **Liam still owns all app work**; backend has not resumed its client worker.
+Backend owner, `backend/communication-demo-readiness`, basea0bd77b; its publishing
+PR records exact head/merge state. This is an audit/test/demo-direction handoff,
+not another runtime release, app merge or physical acceptance claim.
+
+[APP_REQUEST_READINESS.md](APP_REQUEST_READINESS.md) supplies all11actual app
+methods/paths/bodies/statuses, deployed feature mapping and acceptance commands.
+Parent independently reparsed the exact Swift method definitions and compared
+live OpenAPI:11connected +17available-unconsumed +4device-only +1health =33.
+No missing backend handler found for the existing requests. OriginalLiam0e5a6e4
+still requires Int breath duration and cannot decode manual null; main PR30 and
+compatible draftf9cbce6 have nullable models. Liam should integrate focused
+compatibility without assuming whole previewPR32 is merge-ready.
+
+Fresh parent execution:570backend/deployment/actual-HTTPparty tests passed,
+standalone real-loopback simulator COMPLETE/1row/0duplicates/foreign404/restartOK,
+2actualHTTP→C++decoder tests, Ruff/74files format passed. These do not establish
+ESP32 transport/ADC/native login. Public health200/OpenAPI33 recaptured; no live
+user/arm/measurement inserted. Hardware uploader/reconnect remains firmware-owned.
+At08:32:13UTC authorized read-only production check, board heartbeat was still
+07:55:16UTC/offline,0measurements and0unexpired tests. There are0party-host device
+grants. Fastest existing client slice is Connect→standalone arm→poll→private
+history, which requires no party-management grant; do not wait for party/game UI
+to prove transport. Actual party binding requires a private operator grant to the
+validated host subject; none was invented or configured by this audit.
+
+**NON-BREAKING; no new endpoint or schema change.** Demo fixtures use existing
+`source:"simulator"`, `estimated_bac_percent:null`; source and synthetic metadata
+must remain visible/accessibly labelled. Never display raw ADC or unavailable
+BAC as a real BAC/zero/safe-driving verdict. The report's complete fixture payload
+is illustrative only; actual live operation needs a consenting real app session,
+original session/measurement IDs and exact frozen retry bytes. No fabricated
+Auth0 user or guessed profile assignment. Party/game context/rich-history routes
+already exist; current preview has not connected them. Multiplayer round/answer/
+drawing synchronization is not silently included by this storage API.
+
 ### Latest ownership — Liam controls all remaining iOS work
 
 Nicholas's newer direction: Liam is back and controls the rest of the app.

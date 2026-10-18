@@ -1,5 +1,16 @@
 # Firmware duration / manual acquisition — implementation contract
 
+**Latest scope:** Nicholas prioritizes device→webserver delivery and permits
+explicitly simulated demo data if real acquisition/BAC is unavailable. Existing
+`source:"simulator"` fixture mode needs no new API and cannot claim real sensor
+values, observed breath duration or calibrated BAC. See
+[APP_REQUEST_READINESS.md](APP_REQUEST_READINESS.md) for exact demo acceptance and
+already-deployed app request coverage. Liam has resumed ALL remaining iOS control;
+the temporary takeover/cutoff wording below is historical, not current authority.
+Real manual samples still require measured timing and physical acquisition gates.
+No live Auth0 user/arm may be manufactured for a demo; use a consenting real app
+session and freeze its original IDs/payload across retries.
+
 **DEPLOYED; source/replay/Ubuntu/native CI verified; physical acceptance separate.** Nicholas
 authorizes truthful unvalidated acquisition with a notice and, until 04:00 Eastern
 on October18, necessary iOS implementation in parallel. Backend owner is working

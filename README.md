@@ -27,6 +27,7 @@ instead of assuming uninterrupted device connectivity. ADC/uploads remain unveri
 - [`docs/READING_HISTORY.md`](docs/READING_HISTORY.md): every accepted test persists privately by the same account as its profile; unavailable BAC is null, not zero.
 - [`docs/LIAM_BACKEND_HANDOFF.md`](docs/LIAM_BACKEND_HANDOFF.md): published client catch-up; real native acceptance remains Liam-owned.
 - [`docs/BACKEND_RELEASE_VERIFICATION.md`](docs/BACKEND_RELEASE_VERIFICATION.md): actual tests/deployment/source provenance and remaining limits.
+- [`docs/APP_REQUEST_READINESS.md`](docs/APP_REQUEST_READINESS.md): current communication-first demo acceptance, all11existing client requests covered, unconsumed deployed party/history features and honest simulated-data fallback; Liam retains app ownership.
 - [`docs/SETUP.md`](docs/SETUP.md): Auth0 account/Native app and hosting checklist.
 - [`docs/PHONE_LOGIN.md`](docs/PHONE_LOGIN.md): configured primary SMS OTP flow, versioned Auth0 Actions and remaining native acceptance; no repeat provider setup needed.
 - [`docs/CLOUDFLARE_DNS.md`](docs/CLOUDFLARE_DNS.md): DNS setup history; public delegation and HTTPS now verified.
